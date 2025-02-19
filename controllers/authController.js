@@ -1,3 +1,5 @@
+const ActivityLog = require('../models/activityLog');
+
 const jwt = require('jsonwebtoken');
 const {
 	signupSchema,
@@ -79,7 +81,13 @@ exports.signin = async (req, res) => {
 				expiresIn: '8h',
 			}
 		);
-
+// ➤ Enregistrer l'historique de connexion
+await ActivityLog.create({
+	userId: existingUser._id,
+	action: 'LOGIN',
+	ipAddress: req.ip || 'Unknown',
+	userAgent: req.headers['user-agent'] || 'Unknown',
+});
 		res
 			.cookie('Authorization', 'Bearer ' + token, {
 				expires: new Date(Date.now() + 8 * 3600000),
@@ -97,6 +105,15 @@ exports.signin = async (req, res) => {
 };
 
 exports.signout = async (req, res) => {
+	
+	// ➤ Enregistrer l'activité de déconnexion
+	await ActivityLog.create({
+		userId: req.user.userId,
+		action: 'LOGOUT',
+		ipAddress: req.ip || 'Unknown',
+		userAgent: req.headers['user-agent'] || 'Unknown',
+	});
+
 	res
 		.clearCookie('Authorization')
 		.status(200)
@@ -240,6 +257,15 @@ exports.changePassword = async (req, res) => {
 		const hashedPassword = await doHash(newPassword, 12);
 		existingUser.password = hashedPassword;
 		await existingUser.save();
+
+		// ➤ Enregistrer l'activité de changement de mot de passe
+		await ActivityLog.create({
+			userId: userId,
+			action: 'PASSWORD_CHANGE',
+			ipAddress: req.ip || 'Unknown',
+			userAgent: req.headers['user-agent'] || 'Unknown',
+		});
+
 		return res
 			.status(200)
 			.json({ success: true, message: 'Password updated!!' });
@@ -347,3 +373,18 @@ exports.verifyForgotPasswordCode = async (req, res) => {
 		console.log(error);
 	}
 };
+
+
+exports.getActivityLogs = async (req, res) => {
+	try {
+		const logs = await ActivityLog.find({ userId: req.user.userId }).sort({
+			createdAt: -1,
+		});
+
+		res.status(200).json({ success: true, logs });
+	} catch (error) {
+		console.log(error);
+		res.status(500).json({ success: false, message: 'Server error' });
+	}
+};
+

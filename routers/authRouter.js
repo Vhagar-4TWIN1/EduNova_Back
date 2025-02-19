@@ -27,4 +27,7 @@ router.patch(
 	authController.verifyForgotPasswordCode
 );
 
+router.get('/activity-logs', identifier, authController.getActivityLogs);
+
+
 module.exports = router;
