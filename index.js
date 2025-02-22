@@ -9,6 +9,9 @@ const cookieParser = require('cookie-parser');
 const mongoose = require('mongoose');
 const authRouter = require('./routers/authRouter');
 const app = express();
+const passport = require('./middlewares/passport');
+const session = require('express-session');
+console.log("Session Secret:", process.env.SESSION_SECRET);
 
 app.use(cors());
 app.use(helmet());
@@ -25,11 +28,31 @@ mongoose
 		console.error('MongoDB connection error:', error);
 	});
 
+// **Move session setup above passport middleware**
+app.use(session({
+  secret: process.env.SESSION_SECRET, 
+  resave: false,
+  saveUninitialized: true,
+}));
+
+// **Initialize Passport and session middleware after session setup**
+app.use(passport.initialize());
+app.use(passport.session());
+
+// Routes
 app.use('/api/auth', authRouter);
-app.get('/', (req, res) => {
-	res.json({ message: 'Hello from the server' });
-});
+
+app.get('/auth/google/callback', 
+  passport.authenticate('google', { failureRedirect: '/login' }), 
+  (req, res) => {
+    res.json({
+      message: 'Login successful!',
+      user: req.user.user,
+      token: req.user.token,
+    });
+  }
+);
 
 app.listen(process.env.PORT || 3000, () => {
-	console.log(`Listening on port ${process.env.PORT || 3000}...`); // FIXED string interpolation
+	console.log(`Listening on port ${process.env.PORT || 3000}...`);
 });

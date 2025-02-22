@@ -1,6 +1,8 @@
 const express = require('express');
 const authController = require('../controllers/authController');
 const { identifier } = require('../middlewares/identification');
+const passport = require('../middlewares/passport');
+
 const router = express.Router();
 
 router.post('/signup', authController.signup);
@@ -28,6 +30,21 @@ router.patch(
 );
 
 router.get('/activity-logs', identifier, authController.getActivityLogs);
+router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
+router.get('/google/callback',
+    passport.authenticate('google', { session: false }),
+    (req, res) => {
+        const { token } = req.user;
 
+        // Send token as a cookie or JSON response
+        res.cookie('Authorization', 'Bearer ' + token, {
+            expires: new Date(Date.now() + 8 * 3600000),
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+        });
+
+        res.json({ success: true, token, message: 'Google login successful!' });
+    }
+);
 
 module.exports = router;

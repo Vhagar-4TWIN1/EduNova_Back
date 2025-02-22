@@ -1,5 +1,4 @@
 const ActivityLog = require('../models/activityLog');
-
 const jwt = require('jsonwebtoken');
 const {
 	signupSchema,
@@ -11,6 +10,7 @@ const {
 const User = require('../models/usersModel');
 const { doHash, doHashValidation, hmacProcess } = require('../utils/hashing');
 const transport = require('../middlewares/sendMail');
+
 
 exports.signup = async (req, res) => {
 	const { email, password } = req.body;
