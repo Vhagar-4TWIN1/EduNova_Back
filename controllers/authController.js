@@ -1,4 +1,3 @@
-const ActivityLog = require('../models/activityLog');
 
 const jwt = require('jsonwebtoken');
 const {
@@ -374,6 +373,7 @@ exports.verifyForgotPasswordCode = async (req, res) => {
 	}
 };
 
+const ActivityLog = require('../models/activityLog');
 
 exports.getActivityLogs = async (req, res) => {
 	try {
@@ -387,4 +387,8 @@ exports.getActivityLogs = async (req, res) => {
 		res.status(500).json({ success: false, message: 'Server error' });
 	}
 };
+
+
+
+  
 
