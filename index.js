@@ -1,70 +1,73 @@
-console.log("MongoDB URI:", process.env.MONGODB_URI); // Debugging
-console.log("Port:", process.env.PORT);
-const axios=require('axios')
-const path=require('path')
-const express=require('express')
+const axios = require('axios');
+const path = require('path');
+const express = require('express');
 const helmet = require('helmet');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const mongoose = require('mongoose');
 require('dotenv').config();
+
 const app = express();
-
-
 
 // Routers
 const userRouter = require('./routers/userRouter');
+const authRouter = require('./routers/authRouter');
+const passport = require('./middlewares/passport');
+const session = require('express-session');
 
+console.log("MongoDB URI:", process.env.MONGODB_URI); // Debugging
+console.log("Port:", process.env.PORT);
+console.log("Session Secret:", process.env.SESSION_SECRET);
 
-
-
+// Middleware
+app.use(helmet());
 app.use(cors({
     origin: 'http://localhost:5173',  // CORS autorisé pour le frontend React
     credentials: true,               // Autorise l'envoi de cookies
     allowedHeaders: ['Authorization', 'Content-Type'] // En-têtes autorisés
 }));
-
-  
-const authRouter = require('./routers/authRouter');
-const passport = require('./middlewares/passport');
-const session = require('express-session');
-console.log("Session Secret:", process.env.SESSION_SECRET);
-
-app.use(cors());
-app.use(helmet());
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-
-
-
-
+// Database connection
 mongoose
-	.connect(process.env.MONGODB_URI)
-	.then(() => {
-		console.log('Connected to MongoDB');
-	})
-	.catch((error) => {
-		console.error('MongoDB connection error:', error);
-	});
+    .connect(process.env.MONGODB_URI)
+    .then(() => {
+        console.log('Connected to MongoDB');
+    })
+    .catch((error) => {
+        console.error('MongoDB connection error:', error);
+    });
 
+// Session setup
+app.use(
+    session({
+        secret: process.env.SESSION_SECRET,
+        resave: false,
+        saveUninitialized: true,
+        cookie: {
+            secure: process.env.NODE_ENV === 'production', // En mode développement, mettez secure: false
+            httpOnly: true, // Cela empêche l'accès aux cookies via JavaScript
+            sameSite: 'strict', // Vous pouvez aussi essayer 'lax' si cela pose problème
+            maxAge: 3600000, // Durée de validité du cookie (1 heure ici)
+        },
+    })
+);
+app.use(passport.initialize());
+app.use(passport.session());
+
+// Routes
 app.use('/api/auth', authRouter);
-// Add the user routes
 app.use('/api/users', userRouter);
 
 app.get('/', (req, res) => {
-	res.json({ message: 'Hello from the server' });
+    res.json({ message: 'Hello from the server' });
 });
 
-app.listen(process.env.PORT || 3000, () => {
-	console.log(`Listening on port ${process.env.PORT || 3000}...`); // FIXED string interpolation
-});
-
-
+// LinkedIn OAuth Strategy
 const LinkedInStrategy = require('passport-linkedin-oauth2').Strategy;
 
-// Configurez la stratégie LinkedIn
 passport.use(new LinkedInStrategy({
     clientID: process.env.LINKEDIN_CLIENT_ID, // Clé API LinkedIn
     clientSecret: process.env.LINKEDIN_CLIENT_SECRET, // Secret LinkedIn
@@ -105,49 +108,7 @@ passport.deserializeUser(async (id, done) => {
     done(null, user);
 });
 
-
-app.use(
-    session({
-        secret: process.env.SESSION_SECRET,
-        resave: false,
-        saveUninitialized: true,
-		cookie: {
-            secure: process.env.NODE_ENV === 'production', // En mode développement, mettez secure: false
-            httpOnly: true, // Cela empêche l'accès aux cookies via JavaScript
-            sameSite: 'strict', // Vous pouvez aussi essayer 'lax' si cela pose problème
-            maxAge: 3600000, // Durée de validité du cookie (1 heure ici)
-        },
-    })
-);
-app.use(passport.initialize());
-app.use(passport.session());
-
-
-// **Move session setup above passport middleware**
-app.use(session({
-  secret: process.env.SESSION_SECRET, 
-  resave: false,
-  saveUninitialized: true,
-}));
-
-// **Initialize Passport and session middleware after session setup**
-app.use(passport.initialize());
-app.use(passport.session());
-
-// Routes
-app.use('/api/auth', authRouter);
-
-app.get('/auth/google/callback', 
-  passport.authenticate('google', { failureRedirect: '/login' }), 
-  (req, res) => {
-    res.json({
-      message: 'Login successful!',
-      user: req.user.user,
-      token: req.user.token,
-    });
-  }
-);
-
+// Start the server
 app.listen(process.env.PORT || 3000, () => {
-	console.log(`Listening on port ${process.env.PORT || 3000}...`);
+    console.log(`Listening on port ${process.env.PORT || 3000}...`);
 });

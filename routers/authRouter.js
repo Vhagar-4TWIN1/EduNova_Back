@@ -14,6 +14,21 @@ router.get('/callback', passport.authenticate('linkedin', {
     failureRedirect: '/login', // Rediriger en cas d'échec
     successRedirect: '/' // Rediriger vers la page d'accueil en cas de succès
 }));
+router.get('/google/callback', 
+  passport.authenticate('google', { session: false }),
+  (req, res) => {
+      const { token } = req.user;
+
+      res.cookie('Authorization', 'Bearer ' + token, {
+          expires: new Date(Date.now() + 8 * 3600000),
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+      });
+
+      res.json({ success: true, token, message: 'Google login successful!' });
+  }
+);
+
 
 router.post('/linkedinAuth', async (req, res) => {
     try {
@@ -142,20 +157,6 @@ router.patch(
 
 router.get('/activity-logs', identifier, authController.getActivityLogs);
 router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
-router.get('/google/callback',
-    passport.authenticate('google', { session: false }),
-    (req, res) => {
-        const { token } = req.user;
 
-        // Send token as a cookie or JSON response
-        res.cookie('Authorization', 'Bearer ' + token, {
-            expires: new Date(Date.now() + 8 * 3600000),
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-        });
-
-        res.json({ success: true, token, message: 'Google login successful!' });
-    }
-);
 
 module.exports = router;
