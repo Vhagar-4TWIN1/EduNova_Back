@@ -1,24 +1,21 @@
-require('dotenv').config();
 console.log("MongoDB URI:", process.env.MONGODB_URI); // Debugging
 console.log("Port:", process.env.PORT);
-
-
 const axios=require('axios')
 const path=require('path')
 const express=require('express')
-
 const helmet = require('helmet');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const mongoose = require('mongoose');
 require('dotenv').config();
+const app = express();
+const session = require('express-session');
+
 
 // Routers
 const authRouter = require('./routers/authRouter');
 const userRouter = require('./routers/userRouter');
 
-const app = express();
-const session = require('express-session');
 
 
 
