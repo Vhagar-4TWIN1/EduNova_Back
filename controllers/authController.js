@@ -1,3 +1,4 @@
+
 const jwt = require('jsonwebtoken');
 const {
 	signupSchema,
@@ -8,7 +9,8 @@ const {
 } = require('../middlewares/validator');
 const User = require('../models/usersModel');
 const { doHash, doHashValidation, hmacProcess } = require('../utils/hashing');
-const transport = require('../middlewares/sendMail');
+const {transport , transport2} = require('../middlewares/sendMail');
+const ActivityLog = require('../models/activityLog');
 
 exports.signup = async (req, res) => {
 	const { email, password } = req.body;
@@ -79,6 +81,38 @@ exports.signin = async (req, res) => {
 				expiresIn: '8h',
 			}
 		);
+		const ipAddress = req.ip || 'Unknown';
+		const userAgent = req.headers['user-agent'] || 'Unknown';
+	
+
+		// Enregistrement de l'historique de connexion
+		await ActivityLog.create({
+			userId: existingUser._id,
+			action: 'LOGIN',
+			ipAddress: req.ip || 'Unknown',
+			userAgent: req.headers['user-agent'] || 'Unknown',
+		});
+		
+
+		// Vérification des connexions actives dans les dernières 8 heures
+		const activeSessions = await ActivityLog.find({
+			userId: existingUser._id,
+			action: 'LOGIN',
+			createdAt: { $gte: new Date(Date.now() - 8 * 3600000) }, // Dernières 8 heures
+		});
+
+		if (activeSessions.length > 1) {
+			// Envoi de l'email d'alerte si plus d'une session est active
+			await transport2.sendMail({
+				from: process.env.NODE_CODE_SENDING_EMAIL_ADDRESS_2,
+				to: existingUser.email,
+				subject: 'Alerte de Connexion Inhabituelle',
+				html: `<p>Nous avons détecté une connexion inhabituelle à votre compte depuis une nouvelle localisation/IP.</p>
+					   <p>Si ce n'était pas vous, veuillez changer immédiatement votre mot de passe.</p>`,
+			});
+		}
+
+		
 
 		res
 			.cookie('Authorization', 'Bearer ' + token, {
@@ -97,6 +131,15 @@ exports.signin = async (req, res) => {
 };
 
 exports.signout = async (req, res) => {
+	
+	// ➤ Enregistrer l'activité de déconnexion
+	await ActivityLog.create({
+		userId: req.user.userId,
+		action: 'LOGOUT',
+		ipAddress: req.ip || 'Unknown',
+		userAgent: req.headers['user-agent'] || 'Unknown',
+	});
+
 	res
 		.clearCookie('Authorization')
 		.status(200)
@@ -240,6 +283,15 @@ exports.changePassword = async (req, res) => {
 		const hashedPassword = await doHash(newPassword, 12);
 		existingUser.password = hashedPassword;
 		await existingUser.save();
+
+		// ➤ Enregistrer l'activité de changement de mot de passe
+		await ActivityLog.create({
+			userId: userId,
+			action: 'PASSWORD_CHANGE',
+			ipAddress: req.ip || 'Unknown',
+			userAgent: req.headers['user-agent'] || 'Unknown',
+		});
+
 		return res
 			.status(200)
 			.json({ success: true, message: 'Password updated!!' });
@@ -347,3 +399,22 @@ exports.verifyForgotPasswordCode = async (req, res) => {
 		console.log(error);
 	}
 };
+
+
+exports.getActivityLogs = async (req, res) => {
+	try {
+		const logs = await ActivityLog.find({ userId: req.user.userId }).sort({
+			createdAt: -1,
+		});
+
+		res.status(200).json({ success: true, logs });
+	} catch (error) {
+		console.log(error);
+		res.status(500).json({ success: false, message: 'Server error' });
+	}
+};
+
+
+
+  
+
