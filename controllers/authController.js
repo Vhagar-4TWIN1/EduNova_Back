@@ -11,8 +11,7 @@ const {
 const User = require('../models/usersModel');
 const { doHash, doHashValidation, hmacProcess } = require('../utils/hashing');
 const {transport , transport2} = require('../middlewares/sendMail');
-const ActivityLog = require('../models/activityLog');
-const transport = require('../middlewares/sendMail');
+
 
 
 exports.signup = async (req, res) => {
