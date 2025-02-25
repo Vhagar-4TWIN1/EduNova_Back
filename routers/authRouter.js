@@ -41,6 +41,9 @@ router.post('/linkedinAuth', async (req, res) => {
 });
 
 // Routes pour la gestion des utilisateurs
+const passport = require('../middlewares/passport');
+
+
 router.post('/signup', authController.signup);
 router.post('/signin', authController.signin);
 router.post('/signout', identifier, authController.signout);
@@ -52,7 +55,6 @@ router.patch('/send-forgot-password-code', authController.sendForgotPasswordCode
 router.patch('/verify-forgot-password-code', authController.verifyForgotPasswordCode);
 
 
-<<<<<<< HEAD
 router.get('/activity-logs', identifier , authController.getActivityLogs )
 // Route pour démarrer l'authentification LinkedIn
 router.get('/linkedin', passport.authenticate('linkedin'));
@@ -118,9 +120,44 @@ router.post("/linkedinAuth", async (req, res) => {
     }
   });
 
-=======
 
-router.get('/activity-logs', identifier , authController.getActivityLogs )
->>>>>>> origin/Alert_Session
+
+router.patch(
+	'/send-verification-code',
+	identifier,
+	authController.sendVerificationCode
+);
+router.patch(
+	'/verify-verification-code',
+	identifier,
+	authController.verifyVerificationCode
+);
+router.patch('/change-password', identifier, authController.changePassword);
+router.patch(
+	'/send-forgot-password-code',
+	authController.sendForgotPasswordCode
+);
+router.patch(
+	'/verify-forgot-password-code',
+	authController.verifyForgotPasswordCode
+);
+
+router.get('/activity-logs', identifier, authController.getActivityLogs);
+router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
+router.get('/google/callback',
+    passport.authenticate('google', { session: false }),
+    (req, res) => {
+        const { token } = req.user;
+
+        // Send token as a cookie or JSON response
+        res.cookie('Authorization', 'Bearer ' + token, {
+            expires: new Date(Date.now() + 8 * 3600000),
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+        });
+
+        res.json({ success: true, token, message: 'Google login successful!' });
+    }
+);
 
 module.exports = router;

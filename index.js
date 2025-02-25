@@ -26,6 +26,12 @@ app.use(cors({
 }));
 
   
+const authRouter = require('./routers/authRouter');
+const passport = require('./middlewares/passport');
+const session = require('express-session');
+console.log("Session Secret:", process.env.SESSION_SECRET);
+
+app.use(cors());
 app.use(helmet());
 app.use(cookieParser());
 app.use(express.json());
@@ -119,3 +125,31 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 
+// **Move session setup above passport middleware**
+app.use(session({
+  secret: process.env.SESSION_SECRET, 
+  resave: false,
+  saveUninitialized: true,
+}));
+
+// **Initialize Passport and session middleware after session setup**
+app.use(passport.initialize());
+app.use(passport.session());
+
+// Routes
+app.use('/api/auth', authRouter);
+
+app.get('/auth/google/callback', 
+  passport.authenticate('google', { failureRedirect: '/login' }), 
+  (req, res) => {
+    res.json({
+      message: 'Login successful!',
+      user: req.user.user,
+      token: req.user.token,
+    });
+  }
+);
+
+app.listen(process.env.PORT || 3000, () => {
+	console.log(`Listening on port ${process.env.PORT || 3000}...`);
+});
