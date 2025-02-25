@@ -11,7 +11,7 @@ const app = express();
 const session = require('express-session');
 const moduleRouter = require('./routers/moduleRouter');
 
-const userRouter = require('./routers/userBackRouter');
+const userRouter = require('./routers/userRouter');
 
 
 app.use(cors({
