@@ -9,11 +9,10 @@ const cookieParser = require('cookie-parser');
 const mongoose = require('mongoose');
 require('dotenv').config();
 const app = express();
-const session = require('express-session');
+
 
 
 // Routers
-const authRouter = require('./routers/authRouter');
 const userRouter = require('./routers/userRouter');
 
 
@@ -63,7 +62,6 @@ app.listen(process.env.PORT || 3000, () => {
 });
 
 
-const passport = require('passport');
 const LinkedInStrategy = require('passport-linkedin-oauth2').Strategy;
 
 // Configurez la stratégie LinkedIn
