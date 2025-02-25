@@ -11,14 +11,16 @@ const app = express();
 const session = require('express-session');
 const moduleRouter = require('./routers/moduleRouter');
 
+const userRouter = require('./routers/userBackRouter');
 
 
 app.use(cors({
     origin: 'http://localhost:5173',  // CORS autorisé pour le frontend React
     credentials: true,               // Autorise l'envoi de cookies
-    allowedHeaders: ['Authorization', 'Content-Type'] // En-têtes autorisés
-}));
+    allowedHeaders: ['Authorization', 'Content-Type'], // En-têtes autorisés
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS']  
 
+}));
   
 app.use(helmet());
 app.use(cookieParser());
@@ -37,6 +39,8 @@ mongoose
 	});
 app.use('/module', moduleRouter);
 app.use('/api/auth', authRouter);
+app.use('/api/users', userRouter);
+
 app.get('/', (req, res) => {
 	res.json({ message: 'Hello from the server' });
 });
