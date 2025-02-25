@@ -407,7 +407,6 @@ exports.verifyForgotPasswordCode = async (req, res) => {
 	}
 };
 
-const ActivityLog = require('../models/activityLog');
 
 exports.getActivityLogs = async (req, res) => {
 	try {
