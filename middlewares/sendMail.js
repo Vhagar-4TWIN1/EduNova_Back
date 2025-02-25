@@ -5,7 +5,18 @@ const transport = nodemailer.createTransport({
 	auth: {
 		user: process.env.NODE_CODE_SENDING_EMAIL_ADDRESS,
 		pass: process.env.NODE_CODE_SENDING_EMAIL_PASSWORD,
+		
 	},
 });
 
-module.exports = transport;
+const transport2 = nodemailer.createTransport({
+	service: 'gmail',
+	auth: {
+		user: process.env.NODE_CODE_SENDING_EMAIL_ADDRESS_2,
+		pass: process.env.NODE_CODE_SENDING_EMAIL_PASSWORD_2,
+	},
+});
+
+
+
+module.exports = {transport,transport2};
