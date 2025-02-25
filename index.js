@@ -9,9 +9,13 @@ const helmet = require('helmet');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const mongoose = require('mongoose');
-const authRouter = require('./routers/authRouter');
-const app = express();
+require('dotenv').config();
 
+// Routers
+const authRouter = require('./routers/authRouter');
+const userRouter = require('./routers/userRouter');
+
+const app = express();
 
 app.use(cors());
 app.use(helmet());
@@ -30,6 +34,9 @@ mongoose
 	});
 
 app.use('/api/auth', authRouter);
+// Add the user routes
+app.use('/api/users', userRouter);
+
 app.get('/', (req, res) => {
 	res.json({ message: 'Hello from the server' });
 });
