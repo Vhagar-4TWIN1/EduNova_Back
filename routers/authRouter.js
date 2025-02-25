@@ -3,7 +3,7 @@ const authController = require('../controllers/authController');
 const { identifier } = require('../middlewares/identification');
 const router = express.Router();
 const axios = require('axios');
-const passport = require('passport');
+const passport = require('../middlewares/passport');
 require('dotenv').config(); // Load environment variables from .env file
 
 // Route pour démarrer l'authentification LinkedIn
@@ -41,7 +41,6 @@ router.post('/linkedinAuth', async (req, res) => {
 });
 
 // Routes pour la gestion des utilisateurs
-const passport = require('../middlewares/passport');
 
 
 router.post('/signup', authController.signup);
@@ -57,7 +56,6 @@ router.patch('/verify-forgot-password-code', authController.verifyForgotPassword
 
 router.get('/activity-logs', identifier , authController.getActivityLogs )
 // Route pour démarrer l'authentification LinkedIn
-router.get('/linkedin', passport.authenticate('linkedin'));
 
 // Route de callback après l'authentification LinkedIn
 router.get('/callback', passport.authenticate('linkedin', {
