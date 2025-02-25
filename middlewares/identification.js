@@ -2,6 +2,7 @@ const jwt = require('jsonwebtoken');
 
 exports.identifier = (req, res, next) => {
 	let token;
+
 	if (req.headers.client === 'not-browser') {
 		token = req.headers.authorization;
 	} else {
