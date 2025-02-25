@@ -112,3 +112,18 @@ passport.deserializeUser(async (id, done) => {
 app.listen(process.env.PORT || 3000, () => {
     console.log(`Listening on port ${process.env.PORT || 3000}...`);
 });
+
+app.get('/auth/facebook/callback', 
+  passport.authenticate('facebook', { failureRedirect: '/login' }), 
+  (req, res) => {
+    res.json({
+      message: 'Login successful!',
+      user: req.user.user,
+      token: req.user.token,
+    });
+  }
+);
+
+app.listen(process.env.PORT || 3000, () => {
+	console.log(`Listening on port ${process.env.PORT || 3000}...`);
+});
