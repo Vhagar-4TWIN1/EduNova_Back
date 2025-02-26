@@ -283,19 +283,23 @@ exports.sendForgotPasswordCode = async (req, res) => {
 };
 
 exports.verifyForgotPasswordCode = async (req, res) => {
-	const { email, providedCode, newPassword } = req.body;
+	const { email, providedCode, newPassword, confirmPassword  } = req.body;
 	try {
 		const { error, value } = acceptFPCodeSchema.validate({
 			email,
 			providedCode,
 			newPassword,
+			confirmPassword,
+			
 		});
 		if (error) {
 			return res
 				.status(401)
 				.json({ success: false, message: error.details[0].message });
 		}
-
+		if (newPassword !== confirmPassword) {
+			return res.status(400).json({ success: false, message: "Passwords do not match!" });
+		  }
 		const codeValue = providedCode.toString();
 		const existingUser = await User.findOne({ email }).select(
 			'+forgotPasswordCode +forgotPasswordCodeValidation'

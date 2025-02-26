@@ -33,22 +33,23 @@ app.use('/api/auth', authRouter);
 app.get('/', (req, res) => {
 	res.json({ message: 'Hello from the server' });
 });
-
-app.get('/oauth',(req,res) =>{
+app.get('/oauth', (req, res) => {
 	res.redirect(`https://github.com/login/oauth/authorize?client_id=${process.env.CLIENT_ID}`)
 });
-app.get('/auth',({query:{code}},res) =>{
- const body = {
-	client_id:process.env.CLIENT_ID,
-	client_secret:process.env.CLIENT_SECRET,
-	code
- }
- const opts={Headers:{accept:'application/json'}}
- axios.post('https://github.com/login/oauth/access_token',body,opts)
- .then((_res) => _res.data.access_token)
- .then((token) => {
-	res.redirect(`/?token=${token}`)
- })
+
+app.get('/auth', ({ query: { code } }, res) => {
+	const body = {
+		client_id: process.env.CLIENT_ID,
+		client_secret: process.env.CLIENT_SECRET,
+		code
+	};
+	const opts = { headers: { accept: 'application/json' } };
+	axios.post('https://github.com/login/oauth/access_token', body, opts)
+		.then((_res) => _res.data.access_token)
+		.then((token) => {
+			res.redirect(`http://localhost:5173?token=${token}`); // Redirect to your React app
+		})
+		.catch(err => res.status(500).json({ error: err.message }));
 });
 app.listen(process.env.PORT || 3000, () => {
 	console.log(`Listening on port ${process.env.PORT || 3000}...`); // FIXED string interpolation
