@@ -58,7 +58,7 @@ router.post('/linkedinAuth', async (req, res) => {
 // Routes pour la gestion des utilisateurs
 const ocrController = require('../controllers/ocrController');
 
-
+const diplomaVerificationController = require('../controllers/diplomaVerificationController');
 
 router.post('/signup', authController.signup);
 router.post('/signin', authController.signin);
@@ -139,7 +139,7 @@ router.post('/ocr', ocrController.uploadImage);
 router.post('/upload-image', ocrController.uploadImage);
 router.get('/users', authController.getAllUsers);
 router.get("/facebook", passport.authenticate('facebook', { scope: ['email', 'public_profile', 'user_birthday', 'user_location'] }));
-
+router.post('/verify-diploma', diplomaVerificationController.verifyDiploma);
 
 router.get("/facebook/callback", 
   passport.authenticate('facebook', { session: false }),
