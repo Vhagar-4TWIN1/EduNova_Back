@@ -53,49 +53,86 @@ exports.signup = async (req, res) => {
 };
 
 exports.signin = async (req, res) => {
-  const { email, password } = req.body;
-  try {
-    const { error, value } = signinSchema.validate({ email, password });
-    if (error) {
-      return res.status(401).json({ success: false, message: error.details[0].message });
-    }
+	const { email, password } = req.body;
+	try {
+		const { error, value } = signinSchema.validate({ email, password });
+		if (error) {
+			return res
+				.status(401)
+				.json({ success: false, message: error.details[0].message });
+		}
 
-    const existingUser = await User.findOne({ email }).select('+password');
-    if (!existingUser) {
-      return res.status(401).json({ success: false, message: 'User does not exists!' });
-    }
-    const result = await doHashValidation(password, existingUser.password);
-    if (!result) {
-      return res.status(401).json({ success: false, message: 'Invalid credentials!' });
-    }
-    const token = jwt.sign(
-      {
-        userId: existingUser._id,
-        email: existingUser.email,
-        verified: existingUser.verified,
-      },
-      process.env.TOKEN_SECRET,
-      {
-        expiresIn: '8h',
-      }
-    );
+		const existingUser = await User.findOne({ email }).select('+password');
+		if (!existingUser) {
+			return res
+				.status(401)
+				.json({ success: false, message: 'User does not exists!' });
+		}
+		const result = await doHashValidation(password, existingUser.password);
+		if (!result) {
+			return res
+				.status(401)
+				.json({ success: false, message: 'Invalid credentials!' });
+		}
+		const token = jwt.sign(
+			{
+				userId: existingUser._id,
+				email: existingUser.email,
+				verified: existingUser.verified,
+			},
+			process.env.TOKEN_SECRET,
+			{
+				expiresIn: '8h',
+			}
+		);
+		const ipAddress = req.ip || 'Unknown';
+		const userAgent = req.headers['user-agent'] || 'Unknown';
+	
 
-    res
-      .cookie('Authorization', 'Bearer ' + token, {
-        expires: new Date(Date.now() + 8 * 3600000),
-        httpOnly: process.env.NODE_ENV === 'production',
-        secure: process.env.NODE_ENV === 'production',
-      })
-      .json({
-        success: true,
-        token,
-        message: 'logged in successfully',
-      });
-  } catch (error) {
-    console.log(error);
-  }
+		// Enregistrement de l'historique de connexion
+		await ActivityLog.create({
+			userId: existingUser._id,
+			action: 'LOGIN',
+			ipAddress: req.ip || 'Unknown',
+			userAgent: req.headers['user-agent'] || 'Unknown',
+		});
+		
+
+		// Vérification des connexions actives dans les dernières 8 heures
+		const activeSessions = await ActivityLog.find({
+			userId: existingUser._id,
+			action: 'LOGIN',
+			createdAt: { $gte: new Date(Date.now() - 8 * 3600000) }, // Dernières 8 heures
+		});
+
+		if (activeSessions.length > 1) {
+			// Envoi de l'email d'alerte si plus d'une session est active
+			await transport2.sendMail({
+				from: process.env.NODE_CODE_SENDING_EMAIL_ADDRESS_2,
+				to: existingUser.email,
+				subject: 'Alerte de Connexion Inhabituelle',
+				html: `<p>Nous avons détecté une connexion inhabituelle à votre compte depuis une nouvelle localisation/IP.</p>
+					   <p>Si ce n'était pas vous, veuillez changer immédiatement votre mot de passe.</p>`,
+			});
+		}
+
+		
+
+		res
+			.cookie('Authorization', 'Bearer ' + token, {
+				expires: new Date(Date.now() + 8 * 3600000),
+				httpOnly: process.env.NODE_ENV === 'production',
+				secure: process.env.NODE_ENV === 'production',
+			})
+			.json({
+				success: true,
+				token,
+				message: 'logged in successfully',
+			});
+	} catch (error) {
+		console.log(error);
+	}
 };
-
 exports.signout = async (req, res) => {
   res
     .clearCookie('Authorization')
