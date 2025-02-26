@@ -152,6 +152,7 @@ router.get("/facebook/callback",
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
     });
+    
 
     res.json({ success: true, token, message: 'Facebook login successful!' });
   }
