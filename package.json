@@ -22,6 +22,8 @@
 		"joi": "^17.13.3",
 		"jsonwebtoken": "^9.0.2",
 		"mongoose": "^8.6.3",
-		"nodemailer": "^6.9.15"
+		"nodemailer": "^6.9.15",
+		"passport": "^0.7.0",
+		"passport-github2": "^0.1.12"
 	}
 }
