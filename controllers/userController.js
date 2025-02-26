@@ -1,27 +1,52 @@
-// controllers/userController.js
 const User = require('../models/usersModel');
 
-/**
- * GET ALL USERS
- * Fetch all users, omitting the password field
- */
-exports.getAllUsers = async (req, res) => {
+// Get all users
+ exports.getAllUsers = async (req, res) => {
 	try {
-		// Omit the password field from the result
-		const users = await User.find().select('-password');
-		res.status(200).json({ success: true, data: users });
+		const page = parseInt(req.query.page) || 1; 
+		const limit = parseInt(req.query.limit) || 5; 
+		const skip = (page - 1) * limit;
+
+		// Fetch users with pagination
+		const users = await User.find()
+			.select('-password') 
+			.skip(skip)
+			.limit(limit);
+
+		// Count total users for pagination
+		const totalUsers = await User.countDocuments();
+
+		const totalPages = Math.ceil(totalUsers / limit);
+
+		// Respond with the paginated data
+		res.status(200).json({
+			users,
+			totalPages,
+			currentPage: page,
+			totalUsers
+		});
 	} catch (error) {
-		console.error(error);
-		res
-			.status(500)
-			.json({ success: false, message: 'An error occurred while fetching users.' });
+		res.status(500).json({ message: error.message });
 	}
 };
 
-/**
- * GET USER BY ID
- * Fetch a single user by their ID
- */
+
+// Update user
+exports.updateUser = async (req, res) => {
+	const { id } = req.params;
+
+	try {
+		const updatedUser = await User.findByIdAndUpdate(id, req.body, { new: true, runValidators: true }).select('-password');
+		
+		if (!updatedUser) {
+			return res.status(404).json({ message: 'User not found' });
+		}
+
+		res.status(200).json(updatedUser);
+	} catch (error) {
+		res.status(500).json({ message: error.message });
+	}
+};
 exports.getUserById = async (req, res) => {
 	const { id } = req.params;
 	try {
