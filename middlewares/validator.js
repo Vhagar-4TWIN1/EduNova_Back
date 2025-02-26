@@ -1,6 +1,15 @@
 const Joi = require('joi');
 
 exports.signupSchema = Joi.object({
+
+	firstName: Joi.string().min(2).max(50).required(),
+
+	lastName: Joi.string().min(2).max(50).required(),
+    age: Joi.number().min(18),
+
+	country: Joi.string(),
+    photo: Joi.string().optional(),
+	
 	email: Joi.string()
 		.min(6)
 		.max(60)
@@ -56,9 +65,6 @@ exports.acceptFPCodeSchema = Joi.object({
 		}),
 	providedCode: Joi.number().required(),
 	newPassword: Joi.string()
-		.required()
-		.pattern(new RegExp('^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).{8,}$')),
-	confirmPassword: Joi.string()
 		.required()
 		.pattern(new RegExp('^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).{8,}$')),
 });
