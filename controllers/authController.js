@@ -17,40 +17,60 @@ const transport = require('../middlewares/sendMail');
 
 
 
+const axios = require("axios");
+
+
 exports.signup = async (req, res) => {
-  try {
-    const { firstName, lastName, age, email, password, country, photo } = req.body;
-    const { error } = signupSchema.validate({ firstName, lastName, age, email, password, country, photo });
+    try {
+        const { firstName, lastName, age, email, password, country, photo, recaptchaToken } = req.body;
 
-    if (error) {
-      return res.status(400).json({ success: false, message: error.details[0].message });
+        const recaptchaSecret = process.env.RECAPTCHA_SECRET_KEY;
+        const recaptchaResponse = await axios.post(`https://www.google.com/recaptcha/api/siteverify`, null, {
+          params: {
+            secret: recaptchaSecret,
+            response: recaptchaToken, // Token sent from frontend
+          },
+        });
+        
+        if (!recaptchaResponse.data.success) {
+          return res.status(400).json({ success: false, message: "reCAPTCHA verification failed." });
+        }
+        
+
+        // Validate user input (Assuming you have validation logic)
+        const { error } = signupSchema.validate({ firstName, lastName, age, email, password, country, photo });
+        if (error) {
+            return res.status(400).json({ success: false, message: error.details[0].message });
+        }
+
+        // Check if the user already exists
+        const existingUser = await User.findOne({ email });
+        if (existingUser) {
+            return res.status(400).json({ success: false, message: "Email already exists!" });
+        }
+
+        // Hash password and save user
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const newUser = await User.create({ firstName, lastName, age, email, password: hashedPassword, country, photo });
+
+        res.status(201).json({
+            success: true,
+            message: "User created successfully!",
+            user: {
+                id: newUser._id,
+                firstName: newUser.firstName,
+                lastName: newUser.lastName,
+                age: newUser.age,
+                email: newUser.email,
+                country: newUser.country,
+                photo: newUser.photo,
+            },
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
     }
-
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(400).json({ success: false, message: 'Email already exists!' });
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = await User.create({ firstName, lastName, age, email, password: hashedPassword, country, photo });
-
-    res.status(201).json({
-      success: true,
-      message: 'User created successfully!',
-      user: {
-        id: newUser._id,
-        firstName: newUser.firstName,
-        lastName: newUser.lastName,
-        age: newUser.age,
-        email: newUser.email,
-        country: newUser.country,
-        photo: newUser.photo,
-      },
-    });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
 };
+
 
 exports.signin = async (req, res) => {
 	const { email, password } = req.body;
