@@ -6,10 +6,9 @@ const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const mongoose = require('mongoose');
 require('dotenv').config();
-
+const bodyParser = require('body-parser');
 const app = express();
-
-// Routers
+const moduleRouter = require('./routers/moduleRouter');
 const userRouter = require('./routers/userRouter');
 const authRouter = require('./routers/authRouter');
 const passport = require('./middlewares/passport');
@@ -19,8 +18,8 @@ console.log("MongoDB URI:", process.env.MONGODB_URI); // Debugging
 console.log("Port:", process.env.PORT);
 console.log("Session Secret:", process.env.SESSION_SECRET);
 
-// Middleware
-app.use(helmet());
+app.use(bodyParser.json({ limit: '50mb' }));  // Adjust size as needed
+app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 app.use(cors({
     origin: 'http://localhost:5173',  // CORS autorisé pour le frontend React
     credentials: true,               // Autorise l'envoi de cookies
@@ -41,6 +40,7 @@ mongoose
     });
 
 // Session setup
+
 app.use(
     session({
         secret: process.env.SESSION_SECRET,
@@ -54,6 +54,7 @@ app.use(
         },
     })
 );
+app.use('/module', moduleRouter);
 app.use(passport.initialize());
 app.use(passport.session());
 
