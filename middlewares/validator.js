@@ -58,7 +58,4 @@ exports.acceptFPCodeSchema = Joi.object({
 	newPassword: Joi.string()
 		.required()
 		.pattern(new RegExp('^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).{8,}$')),
-	confirmPassword: Joi.string()
-		.required()
-		.pattern(new RegExp('^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).{8,}$')),
 });
