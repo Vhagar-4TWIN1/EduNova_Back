@@ -1,3 +1,4 @@
+const ActivityLog = require('../models/activityLog');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 
@@ -11,7 +12,11 @@ const {
 } = require('../middlewares/validator');
 const User = require('../models/usersModel');
 const { doHash, doHashValidation, hmacProcess } = require('../utils/hashing');
-const transport = require('../middlewares/sendMail');
+const {transport , transport2} = require('../middlewares/sendMail');
+
+// Sérialisation et désérialisation de l'utilisateur pour Passport
+
+
 
 // Sérialisation et désérialisation de l'utilisateur pour Passport
 
@@ -85,36 +90,42 @@ exports.signin = async (req, res) => {
 				expiresIn: '8h',
 			}
 		);
-		const ipAddress = req.ip || 'Unknown';
-		const userAgent = req.headers['user-agent'] || 'Unknown';
-	
-
-		// Enregistrement de l'historique de connexion
-		await ActivityLog.create({
-			userId: existingUser._id,
-			action: 'LOGIN',
-			ipAddress: req.ip || 'Unknown',
-			userAgent: req.headers['user-agent'] || 'Unknown',
-		});
-		
-
 		// Vérification des connexions actives dans les dernières 8 heures
-		const activeSessions = await ActivityLog.find({
-			userId: existingUser._id,
-			action: 'LOGIN',
-			createdAt: { $gte: new Date(Date.now() - 8 * 3600000) }, // Dernières 8 heures
-		});
+const activeSessions = await ActivityLog.find({
+  userId: existingUser._id,
+  action: 'LOGIN',
+  createdAt: { $gte: new Date(Date.now() - 8 * 3600000) }, // Dernières 8 heures
+});
 
-		if (activeSessions.length > 1) {
-			// Envoi de l'email d'alerte si plus d'une session est active
-			await transport2.sendMail({
-				from: process.env.NODE_CODE_SENDING_EMAIL_ADDRESS_2,
-				to: existingUser.email,
-				subject: 'Alerte de Connexion Inhabituelle',
-				html: `<p>Nous avons détecté une connexion inhabituelle à votre compte depuis une nouvelle localisation/IP.</p>
-					   <p>Si ce n'était pas vous, veuillez changer immédiatement votre mot de passe.</p>`,
-			});
-		}
+// Récupérer les IP et user-agents précédents
+const previousIPs = new Set(activeSessions.map(session => session.ipAddress));
+const previousUserAgents = new Set(activeSessions.map(session => session.userAgent));
+
+const ipAddress = req.ip || 'Unknown';
+const userAgent = req.headers['user-agent'] || 'Unknown';
+
+// Vérifier si c'est une nouvelle machine (nouvelle IP ou nouvel user-agent)
+const isNewDevice = !previousIPs.has(ipAddress) || !previousUserAgents.has(userAgent);
+
+// Enregistrement de l'historique de connexion après la vérification
+await ActivityLog.create({
+  userId: existingUser._id,
+  action: 'LOGIN',
+  ipAddress,
+  userAgent,
+});
+
+// Envoyer l'alerte uniquement si une nouvelle machine est détectée
+if (isNewDevice && activeSessions.length > 0) {
+  await transport2.sendMail({
+    from: process.env.NODE_CODE_SENDING_EMAIL_ADDRESS_2,
+    to: existingUser.email,
+    subject: 'Alerte de Connexion Inhabituelle',
+    html: `<p>Nous avons détecté une connexion inhabituelle à votre compte depuis une nouvelle localisation/IP.</p>
+           <p>IP: ${ipAddress} | Appareil: ${userAgent}</p>
+           <p>Si ce n'était pas vous, veuillez changer immédiatement votre mot de passe.</p>`,
+  });
+}
 
 		
 
@@ -123,12 +134,15 @@ exports.signin = async (req, res) => {
 				expires: new Date(Date.now() + 8 * 3600000),
 				httpOnly: process.env.NODE_ENV === 'production',
 				secure: process.env.NODE_ENV === 'production',
+        
 			})
 			.json({
 				success: true,
 				token,
 				message: 'logged in successfully',
-			});
+
+			})
+    
 	} catch (error) {
 		console.log(error);
 	}
@@ -415,13 +429,12 @@ exports.getAllUsers = async (req, res) => {
 
 exports.getActivityLogs = async (req, res) => {
 	try {
-		const logs = await ActivityLog.find({ userId: req.user.userId }).sort({
-			createdAt: -1,
-		});
+		const filter = req.user ? { userId: req.user.userId } : {}; // Appliquer le filtre seulement si req.user existe
+		const logs = await ActivityLog.find(filter).sort({ createdAt: -1 });
 
 		res.status(200).json({ success: true, logs });
 	} catch (error) {
-		console.log(error);
+		console.error('Erreur lors de la récupération des logs:', error);
 		res.status(500).json({ success: false, message: 'Server error' });
 	}
 };
