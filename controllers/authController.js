@@ -130,12 +130,15 @@ if (isNewDevice && activeSessions.length > 0) {
 				expires: new Date(Date.now() + 8 * 3600000),
 				httpOnly: process.env.NODE_ENV === 'production',
 				secure: process.env.NODE_ENV === 'production',
+        
 			})
 			.json({
 				success: true,
 				token,
 				message: 'logged in successfully',
-			});
+
+			})
+    
 	} catch (error) {
 		console.log(error);
 	}
