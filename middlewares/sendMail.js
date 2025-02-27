@@ -5,6 +5,7 @@ const transport = nodemailer.createTransport({
 	auth: {
 		user: process.env.NODE_CODE_SENDING_EMAIL_ADDRESS,
 		pass: process.env.NODE_CODE_SENDING_EMAIL_PASSWORD,
+<<<<<<< HEAD
 		
 	},
 });
@@ -20,3 +21,9 @@ const transport2 = nodemailer.createTransport({
 
 
 module.exports = {transport,transport2};
+=======
+	},
+});
+
+module.exports = transport;
+>>>>>>> user-crud
