@@ -1,6 +1,7 @@
 const Joi = require('joi');
 
 exports.signupSchema = Joi.object({
+<<<<<<< HEAD
 
 	firstName: Joi.string().min(2).max(50).required(),
 
@@ -10,6 +11,8 @@ exports.signupSchema = Joi.object({
 	country: Joi.string(),
     photo: Joi.string().optional(),
 	
+=======
+>>>>>>> user-crud
 	email: Joi.string()
 		.min(6)
 		.max(60)
