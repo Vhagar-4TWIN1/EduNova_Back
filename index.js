@@ -10,6 +10,7 @@ const bodyParser = require('body-parser');
 const app = express();
 const moduleRouter = require('./routers/moduleRouter');
 const userRouter = require('./routers/userRouter');
+const usersRouter = require('./routers/userBackRouter');
 const authRouter = require('./routers/authRouter');
 const passport = require('./middlewares/passport');
 const session = require('express-session');
@@ -57,7 +58,7 @@ app.use(
 app.use('/module', moduleRouter);
 app.use(passport.initialize());
 app.use(passport.session());
-
+app.use("/api/usersBack", usersRouter);
 // Routes
 app.use('/api/auth', authRouter);
 app.use('/api/users', userRouter);
