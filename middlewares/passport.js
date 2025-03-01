@@ -22,6 +22,11 @@ passport.use(
             email: profile.emails[0].value,
             verified: true,
             password: 'password',
+            country: 'country',
+            age: 20,
+            firstName: profile.name.givenName,
+            lastName: 'profile.name.family'
+
           });
           await user.save();
         }
