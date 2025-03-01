@@ -24,7 +24,7 @@ router.get('/google/callback',
           secure: process.env.NODE_ENV === 'production',
       });
 
-      res.json({ success: true, token, message: 'Google login successful!' });
+      res.redirect('http://localhost:5173/home');
   }
 );
 
