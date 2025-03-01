@@ -2,7 +2,6 @@ const express = require('express');
 const authController = require('../controllers/authController');
 const { identifier } = require('../middlewares/identification');
 const router = express.Router();
-<<<<<<< HEAD
 const axios = require('axios');
 const passport = require('../middlewares/passport');
 require('dotenv').config(); // Load environment variables from .env file
@@ -36,14 +35,11 @@ router.get('/google/callback',
 const ocrController = require('../controllers/ocrController');
 
 const diplomaVerificationController = require('../controllers/diplomaVerificationController');
-=======
->>>>>>> user-crud
 
 router.post('/signup', authController.signup);
 router.post('/signin', authController.signin);
 router.post('/signout', identifier, authController.signout);
 
-<<<<<<< HEAD
 router.patch('/send-verification-code', identifier, authController.sendVerificationCode);
 router.patch('/verify-verification-code', identifier, authController.verifyVerificationCode);
 router.patch('/change-password', identifier, authController.changePassword);
@@ -171,8 +167,6 @@ router.post("/student-info", authController.studentInfo);
 router.post("/teacher-info", authController.teacherInfo);
 
 
-=======
->>>>>>> user-crud
 router.patch(
 	'/send-verification-code',
 	identifier,
