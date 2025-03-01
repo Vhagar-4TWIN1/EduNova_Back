@@ -91,11 +91,6 @@ exports.signin = async (req, res) => {
 			}
 		);
 		// Vérification des connexions actives dans les dernières 8 heures
-const activeSessions = await ActivityLog.find({
-  userId: existingUser._id,
-  action: 'LOGIN',
-  createdAt: { $gte: new Date(Date.now() - 8 * 3600000) }, // Dernières 8 heures
-});
 
 // Récupérer les IP et user-agents précédents
 const previousIPs = new Set(activeSessions.map(session => session.ipAddress));
@@ -111,22 +106,28 @@ const isNewDevice = !previousIPs.has(ipAddress) || !previousUserAgents.has(userA
 await ActivityLog.create({
   userId: existingUser._id,
   action: 'LOGIN',
-  ipAddress,
-  userAgent,
+  ipAddress: req.ip || 'Unknown',
+  userAgent: req.headers['user-agent'] || 'Unknown',
 });
 
-// Envoyer l'alerte uniquement si une nouvelle machine est détectée
-if (isNewDevice && activeSessions.length > 0) {
+
+// Vérification des connexions actives dans les dernières 8 heures
+const activeSessions = await ActivityLog.find({
+  userId: existingUser._id,
+  action: 'LOGIN',
+  createdAt: { $gte: new Date(Date.now() - 8 * 3600000) }, // Dernières 8 heures
+});
+
+if (activeSessions.length > 1) {
+  // Envoi de l'email d'alerte si plus d'une session est active
   await transport2.sendMail({
     from: process.env.NODE_CODE_SENDING_EMAIL_ADDRESS_2,
     to: existingUser.email,
     subject: 'Alerte de Connexion Inhabituelle',
     html: `<p>Nous avons détecté une connexion inhabituelle à votre compte depuis une nouvelle localisation/IP.</p>
-           <p>IP: ${ipAddress} | Appareil: ${userAgent}</p>
-           <p>Si ce n'était pas vous, veuillez changer immédiatement votre mot de passe.</p>`,
+         <p>Si ce n'était pas vous, veuillez changer immédiatement votre mot de passe.</p>`,
   });
 }
-
 		
 
 		res
