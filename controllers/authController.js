@@ -9,82 +9,56 @@ const {
   acceptCodeSchema,
   changePasswordSchema,
   acceptFPCodeSchema,
-} = require('../middlewares/validator');
-const User = require('../models/usersModel');
-const { doHash, doHashValidation, hmacProcess } = require('../utils/hashing');
-const {transport , transport2} = require('../middlewares/sendMail');
-
-// Sérialisation et désérialisation de l'utilisateur pour Passport
-
-
-
-// Sérialisation et désérialisation de l'utilisateur pour Passport
-
-
-
-const axios = require("axios");
-
+} = require("../middlewares/validator");
+const User = require("../models/usersModel");
+const { doHash, doHashValidation, hmacProcess } = require("../utils/hashing");
+const transport = require("../middlewares/sendMail");
 
 exports.signup = async (req, res) => {
-    try {
-        const { firstName, lastName, age, email, password, country, photo, recaptchaToken } = req.body;
+  const { email, password } = req.body;
+  try {
+    const { error, value } = signupSchema.validate({ email, password });
 
-        // Vérification reCAPTCHA
-        const recaptchaSecret = process.env.RECAPTCHA_SECRET_KEY;
-        const recaptchaResponse = await axios.post(
-            `https://www.google.com/recaptcha/api/siteverify`,
-            null,
-            { params: { secret: recaptchaSecret, response: recaptchaToken } }
-        );
-        
-        if (!recaptchaResponse.data.success) {
-            return res.status(400).json({ success: false, message: "reCAPTCHA verification failed." });
-        }
-
-        // Validation des données utilisateur
-        const { error } = signupSchema.validate({ firstName, lastName, age, email, password, country, photo });
-        if (error) {
-            return res.status(400).json({ success: false, message: error.details[0].message });
-        }
-
-        // Vérifier si l'utilisateur existe déjà
-        const existingUser = await User.findOne({ email });
-        if (existingUser) {
-            return res.status(400).json({ success: false, message: "Email already exists!" });
-        }
-
-        // Hachage du mot de passe et création de l'utilisateur
-        const hashedPassword = await bcrypt.hash(password, 10);
-        const newUser = await User.create({ firstName, lastName, age, email, password: hashedPassword, country, photo });
-
-        // Réponse JSON avec les détails de l'utilisateur
-        res.status(201).json({
-            success: true,
-            message: "User created successfully!",
-            user: {
-                id: newUser._id,
-                firstName: newUser.firstName,
-                lastName: newUser.lastName,
-                age: newUser.age,
-                email: newUser.email,
-                country: newUser.country,
-                photo: newUser.photo,
-            },
-        });
-    } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
+    if (error) {
+      return res
+        .status(401)
+        .json({ success: false, message: error.details[0].message });
     }
+    const existingUser = await User.findOne({ email });
+
+    if (existingUser) {
+      return res
+        .status(401)
+        .json({ success: false, message: "User already exists!" });
+    }
+
+    const hashedPassword = await doHash(password, 12);
+
+    const newUser = new User({
+      email,
+      password: hashedPassword,
+    });
+    const result = await newUser.save();
+    result.password = undefined;
+    res.status(201).json({
+      success: true,
+      message: "Your account has been created successfully",
+      result,
+    });
+  } catch (error) {
+    console.log(error);
+  }
 };
 
 exports.signin = async (req, res) => {
-	const { email, password } = req.body;
-	try {
-		const { error, value } = signinSchema.validate({ email, password });
-		if (error) {
-			return res
-				.status(401)
-				.json({ success: false, message: error.details[0].message });
-		}
+  const { email, password } = req.body;
+  try {
+    const { error, value } = signinSchema.validate({ email, password });
+    if (error) {
+      return res
+        .status(401)
+        .json({ success: false, message: error.details[0].message });
+    }
 
 		const existingUser = await User.findOne({ email }).select('+password');
 		if (!existingUser) {
