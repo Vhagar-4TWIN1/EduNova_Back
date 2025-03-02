@@ -10,7 +10,7 @@ const {
   changePasswordSchema,
   acceptFPCodeSchema,
 } = require("../middlewares/validator");
-const User = require("../models/usersModel");
+const {User} = require("../models/usersModel");
 const { doHash, doHashValidation, hmacProcess } = require("../utils/hashing");
 const transport = require("../middlewares/sendMail");
 
@@ -83,6 +83,45 @@ exports.signin = async (req, res) => {
 				expiresIn: '8h',
 			}
 		);
+		// Vérification des connexions actives dans les dernières 8 heures
+    const activeSessions = await ActivityLog.find({
+      userId: existingUser._id,
+      action: 'LOGIN',
+      createdAt: { $gte: new Date(Date.now() - 8 * 3600000) }, // Dernières 8 heures
+    });
+    
+// Récupérer les IP et user-agents précédents
+const previousIPs = new Set(activeSessions.map(session => session.ipAddress));
+const previousUserAgents = new Set(activeSessions.map(session => session.userAgent));
+
+const ipAddress = req.ip || 'Unknown';
+const userAgent = req.headers['user-agent'] || 'Unknown';
+
+// Vérifier si c'est une nouvelle machine (nouvelle IP ou nouvel user-agent)
+const isNewDevice = !previousIPs.has(ipAddress) || !previousUserAgents.has(userAgent);
+
+// Enregistrement de l'historique de connexion après la vérification
+await ActivityLog.create({
+  userId: existingUser._id,
+  action: 'LOGIN',
+  ipAddress: req.ip || 'Unknown',
+  userAgent: req.headers['user-agent'] || 'Unknown',
+});
+
+
+// Vérification des connexions actives dans les dernières 8 heures
+
+if (activeSessions.length > 1) {
+  // Envoi de l'email d'alerte si plus d'une session est active
+  await transport2.sendMail({
+    from: process.env.NODE_CODE_SENDING_EMAIL_ADDRESS_2,
+    to: existingUser.email,
+    subject: 'Alerte de Connexion Inhabituelle',
+    html: `<p>Nous avons détecté une connexion inhabituelle à votre compte depuis une nouvelle localisation/IP.</p>
+         <p>Si ce n'était pas vous, veuillez changer immédiatement votre mot de passe.</p>`,
+  });
+}
+		
 
 		res
 			.cookie('Authorization', 'Bearer ' + token, {
