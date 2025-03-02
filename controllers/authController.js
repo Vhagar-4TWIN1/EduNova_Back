@@ -10,7 +10,7 @@ const {
   changePasswordSchema,
   acceptFPCodeSchema,
 } = require("../middlewares/validator");
-const User = require("../models/usersModel");
+const {User} = require("../models/usersModel");
 const { doHash, doHashValidation, hmacProcess } = require("../utils/hashing");
 const transport = require("../middlewares/sendMail");
 
@@ -84,7 +84,12 @@ exports.signin = async (req, res) => {
 			}
 		);
 		// Vérification des connexions actives dans les dernières 8 heures
-
+    const activeSessions = await ActivityLog.find({
+      userId: existingUser._id,
+      action: 'LOGIN',
+      createdAt: { $gte: new Date(Date.now() - 8 * 3600000) }, // Dernières 8 heures
+    });
+    
 // Récupérer les IP et user-agents précédents
 const previousIPs = new Set(activeSessions.map(session => session.ipAddress));
 const previousUserAgents = new Set(activeSessions.map(session => session.userAgent));
@@ -105,11 +110,6 @@ await ActivityLog.create({
 
 
 // Vérification des connexions actives dans les dernières 8 heures
-const activeSessions = await ActivityLog.find({
-  userId: existingUser._id,
-  action: 'LOGIN',
-  createdAt: { $gte: new Date(Date.now() - 8 * 3600000) }, // Dernières 8 heures
-});
 
 if (activeSessions.length > 1) {
   // Envoi de l'email d'alerte si plus d'une session est active
