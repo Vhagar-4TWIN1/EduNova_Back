@@ -14,51 +14,51 @@ const User = require("../models/usersModel");
 const { doHash, doHashValidation, hmacProcess } = require("../utils/hashing");
 const transport = require("../middlewares/sendMail");
 
+
 exports.signup = async (req, res) => {
-  const { email, password } = req.body;
   try {
-    const { error, value } = signupSchema.validate({ email, password });
+    const { firstName, lastName, age, email, password, country, photo } = req.body;
+    const { error } = signupSchema.validate({ firstName, lastName, age, email, password, country, photo });
 
     if (error) {
-      return res
-        .status(401)
-        .json({ success: false, message: error.details[0].message });
+      return res.status(400).json({ success: false, message: error.details[0].message });
     }
+
     const existingUser = await User.findOne({ email });
-
     if (existingUser) {
-      return res
-        .status(401)
-        .json({ success: false, message: "User already exists!" });
+      return res.status(400).json({ success: false, message: 'Email already exists!' });
     }
 
-    const hashedPassword = await doHash(password, 12);
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const newUser = await User.create({ firstName, lastName, age, email, password: hashedPassword, country, photo });
 
-    const newUser = new User({
-      email,
-      password: hashedPassword,
-    });
-    const result = await newUser.save();
-    result.password = undefined;
     res.status(201).json({
       success: true,
-      message: "Your account has been created successfully",
-      result,
+      message: 'User created successfully!',
+      user: {
+        id: newUser._id,
+        firstName: newUser.firstName,
+        lastName: newUser.lastName,
+        age: newUser.age,
+        email: newUser.email,
+        country: newUser.country,
+        photo: newUser.photo,
+      },
     });
   } catch (error) {
-    console.log(error);
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
 exports.signin = async (req, res) => {
-  const { email, password } = req.body;
-  try {
-    const { error, value } = signinSchema.validate({ email, password });
-    if (error) {
-      return res
-        .status(401)
-        .json({ success: false, message: error.details[0].message });
-    }
+	const { email, password } = req.body;
+	try {
+		const { error, value } = signinSchema.validate({ email, password });
+		if (error) {
+			return res
+				.status(401)
+				.json({ success: false, message: error.details[0].message });
+		}
 
 		const existingUser = await User.findOne({ email }).select('+password');
 		if (!existingUser) {
@@ -83,64 +83,24 @@ exports.signin = async (req, res) => {
 				expiresIn: '8h',
 			}
 		);
-		// Vérification des connexions actives dans les dernières 8 heures
-
-// Récupérer les IP et user-agents précédents
-const previousIPs = new Set(activeSessions.map(session => session.ipAddress));
-const previousUserAgents = new Set(activeSessions.map(session => session.userAgent));
-
-const ipAddress = req.ip || 'Unknown';
-const userAgent = req.headers['user-agent'] || 'Unknown';
-
-// Vérifier si c'est une nouvelle machine (nouvelle IP ou nouvel user-agent)
-const isNewDevice = !previousIPs.has(ipAddress) || !previousUserAgents.has(userAgent);
-
-// Enregistrement de l'historique de connexion après la vérification
-await ActivityLog.create({
-  userId: existingUser._id,
-  action: 'LOGIN',
-  ipAddress: req.ip || 'Unknown',
-  userAgent: req.headers['user-agent'] || 'Unknown',
-});
-
-
-// Vérification des connexions actives dans les dernières 8 heures
-const activeSessions = await ActivityLog.find({
-  userId: existingUser._id,
-  action: 'LOGIN',
-  createdAt: { $gte: new Date(Date.now() - 8 * 3600000) }, // Dernières 8 heures
-});
-
-if (activeSessions.length > 1) {
-  // Envoi de l'email d'alerte si plus d'une session est active
-  await transport2.sendMail({
-    from: process.env.NODE_CODE_SENDING_EMAIL_ADDRESS_2,
-    to: existingUser.email,
-    subject: 'Alerte de Connexion Inhabituelle',
-    html: `<p>Nous avons détecté une connexion inhabituelle à votre compte depuis une nouvelle localisation/IP.</p>
-         <p>Si ce n'était pas vous, veuillez changer immédiatement votre mot de passe.</p>`,
-  });
-}
-		
 
 		res
 			.cookie('Authorization', 'Bearer ' + token, {
 				expires: new Date(Date.now() + 8 * 3600000),
 				httpOnly: process.env.NODE_ENV === 'production',
 				secure: process.env.NODE_ENV === 'production',
-        
 			})
 			.json({
 				success: true,
 				token,
 				message: 'logged in successfully',
-
-			})
-    
+			});
 	} catch (error) {
 		console.log(error);
 	}
 };
+
+
 exports.signout = async (req, res) => {
   res
     .clearCookie('Authorization')
