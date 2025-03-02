@@ -10,10 +10,10 @@ const {
 } = require('../controllers/userController');
 
 // Middleware to verify token (identifier)
-const { identifier } = require('../middlewares/identification');
+//const { identifier } = require('../middlewares/identification');
 
 // Protect all routes below with the identifier middleware
-router.use(identifier);
+//router.use(identifier);
 
 // Read all users
 router.get('/', getAllUsers);
