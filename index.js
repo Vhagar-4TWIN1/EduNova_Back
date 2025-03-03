@@ -16,8 +16,12 @@ const app = express();
 const session = require("express-session");
 const moduleRouter = require("./routers/moduleRouter");
 
+<<<<<<< HEAD
 const usersRouter = require("./routers/userBackRouter");
 const userRouter = require("./routers/userRouter");
+=======
+const userRouter = require('./routers/userRouter');
+>>>>>>> bc19e4d27be111f7932fd839a0e584dddd50aab8
 
 app.use(
   cors({
