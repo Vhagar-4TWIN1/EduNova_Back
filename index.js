@@ -18,6 +18,8 @@ console.log("MongoDB URI:", process.env.MONGODB_URI); // Debugging
 console.log("Port:", process.env.PORT);
 console.log("Session Secret:", process.env.SESSION_SECRET);
 
+// Middleware
+app.use(helmet());
 app.use(bodyParser.json({ limit: '50mb' }));  // Adjust size as needed
 app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 app.use(cors({
@@ -65,6 +67,8 @@ app.get('/', (req, res) => {
     res.json({ message: 'Hello from the server' });
 });
 
+
+
 // LinkedIn OAuth Strategy
 const LinkedInStrategy = require('passport-linkedin-oauth2').Strategy;
 
@@ -107,6 +111,7 @@ passport.deserializeUser(async (id, done) => {
     const user = await User.findById(id);
     done(null, user);
 });
+
 
 
 
