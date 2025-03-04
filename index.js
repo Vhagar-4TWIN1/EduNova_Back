@@ -8,6 +8,7 @@ const mongoose = require('mongoose');
 require('dotenv').config();
 const bodyParser = require('body-parser');
 const app = express();
+const badgeRouter = require('./routers/badgeRouter');
 const moduleRouter = require('./routers/moduleRouter');
 const userRouter = require('./routers/userRouter');
 const authRouter = require('./routers/authRouter');
@@ -54,13 +55,14 @@ app.use(
         },
     })
 );
+
 app.use('/module', moduleRouter);
 app.use(passport.initialize());
 app.use(passport.session());
 // Routes
 app.use('/api/auth', authRouter);
 app.use('/api/users', userRouter);
-
+app.use('/api/badges', badgeRouter);
 app.get('/', (req, res) => {
     res.json({ message: 'Hello from the server' });
 });
