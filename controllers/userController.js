@@ -1,5 +1,5 @@
 const {User} = require('../models/usersModel');
-
+const setTokenCookie = require('../utils/setTokenCookie');
 // Get all users
  exports.getAllUsers = async (req, res) => {
 	try {
@@ -40,9 +40,11 @@ exports.updateUser = async (req, res) => {
 		
 		if (!updatedUser) {
 			return res.status(404).json({ message: 'User not found' });
+			
 		}
-
 		res.status(200).json(updatedUser);
+		const token = setTokenCookie(res, updatedUser);
+  res.status(200).json({ success: true, token, user: updatedUser });
 	} catch (error) {
 		res.status(500).json({ message: error.message });
 	}

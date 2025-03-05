@@ -1,7 +1,7 @@
 const ActivityLog = require('../models/activityLog');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
-
+const setTokenCookie = require('../utils/setTokenCookie');
 
 const {
   signupSchema,
@@ -10,9 +10,9 @@ const {
   changePasswordSchema,
   acceptFPCodeSchema,
 } = require("../middlewares/validator");
-const {User} = require("../models/usersModel");
+const { User } = require("../models/usersModel");
 const { doHash, doHashValidation, hmacProcess } = require("../utils/hashing");
-const transport = require("../middlewares/sendMail");
+const { transport, transport2 } = require("../middlewares/sendMail");
 
 
 exports.signup = async (req, res) => {
@@ -28,9 +28,12 @@ exports.signup = async (req, res) => {
     if (existingUser) {
       return res.status(400).json({ success: false, message: 'Email already exists!' });
     }
-
+  
     const hashedPassword = await bcrypt.hash(password, 10);
     const newUser = await User.create({ firstName, lastName, age, email, password: hashedPassword, country, photo });
+    const authToken = setTokenCookie(res, newUser);
+  res.status(201).json({ success: true, authToken, user: newUser });
+
 
     res.status(201).json({
       success: true,
@@ -72,7 +75,8 @@ exports.signin = async (req, res) => {
 				.status(401)
 				.json({ success: false, message: 'Invalid credentials!' });
 		}
-		const token = jwt.sign(
+
+		const token= jwt.sign(
 			{
 				userId: existingUser._id,
 				email: existingUser.email,
@@ -121,19 +125,14 @@ if (activeSessions.length > 1) {
          <p>Si ce n'était pas vous, veuillez changer immédiatement votre mot de passe.</p>`,
   });
 }
-		
+const authToken = setTokenCookie(res, existingUser);
+res.json({
+  success: true,
+  authToken,
+  message: 'logged in successfully',
+});
 
-		res
-			.cookie('Authorization', 'Bearer ' + token, {
-				expires: new Date(Date.now() + 8 * 3600000),
-				httpOnly: process.env.NODE_ENV === 'production',
-				secure: process.env.NODE_ENV === 'production',
-			})
-			.json({
-				success: true,
-				token,
-				message: 'logged in successfully',
-			});
+  
 	} catch (error) {
 		console.log(error);
 	}
@@ -177,8 +176,8 @@ exports.studentInfo = async (req, res) => {
     await User.findByIdAndUpdate(userId, {
       studentInfo: { identifier, situation, disease, socialCase },
     });
-
-    res.status(200).json({ success: true, message: "Student information saved successfully!" });
+    const token = setTokenCookie(res, updatedUser);
+    res.status(200).json({ success: true, token, message: 'Student information saved successfully!' });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -188,13 +187,12 @@ exports.teacherInfo = async (req, res) => {
   try {
     const { number, bio, cv, diploma, experience, cin } = req.body;
     const userId = req.user.id; // Supposons que l'utilisateur est authentifié
-
     // Mettez à jour l'utilisateur avec les informations de l'enseignant
     await User.findByIdAndUpdate(userId, {
       teacherInfo: { number, bio, cv, diploma, experience, cin },
     });
-
-    res.status(200).json({ success: true, message: "Teacher information saved successfully!" });
+    const token = setTokenCookie(res, updatedUser);
+    res.status(200).json({ success: true, token, message: 'Teacher information saved successfully!' });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -310,6 +308,8 @@ exports.changePassword = async (req, res) => {
     }
     const hashedPassword = await doHash(newPassword, 12);
     existingUser.password = hashedPassword;
+    const token = setTokenCookie(res, updatedUser);
+    res.status(200).json({ success: true, token, message: 'Password updated!!' });
     await existingUser.save();
     return res.status(200).json({ success: true, message: 'Password updated!!' });
   } catch (error) {
@@ -397,6 +397,8 @@ exports.verifyForgotPasswordCode = async (req, res) => {
       await existingUser.save();
       return res.status(200).json({ success: true, message: 'Password updated!!' });
     }
+    const token = setTokenCookie(res, updatedUser);
+    res.status(200).json({ success: true, token, message: 'Password updated!!' });
     return res.status(400).json({ success: false, message: 'unexpected occured!!' });
   } catch (error) {
     console.log(error);
@@ -411,6 +413,8 @@ exports.getAllUsers = async (req, res) => {
       message: 'Users retrieved successfully!',
       users: users,
     });
+    const token = setTokenCookie(res, updatedUser);
+    res.status(200).json({ success: true, token, users });
   } catch (error) {
     console.error(error);
     res.status(500).json({
@@ -426,6 +430,8 @@ exports.getActivityLogs = async (req, res) => {
 		const logs = await ActivityLog.find(filter).sort({ createdAt: -1 });
 
 		res.status(200).json({ success: true, logs });
+    const token = setTokenCookie(res, updatedUser);
+    res.status(200).json({ success: true, token, logs });
 	} catch (error) {
 		console.error('Erreur lors de la récupération des logs:', error);
 		res.status(500).json({ success: false, message: 'Server error' });
