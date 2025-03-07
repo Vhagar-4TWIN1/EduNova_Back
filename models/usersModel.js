@@ -64,6 +64,7 @@ const userSchema = new mongoose.Schema(
 	  password: { type: String, required: true },
 	  country: { type: String, required: true },
 	  role: { type: String, required: true, enum: ["Admin", "Teacher", "Student"] },
+	  photo: { type: String }, // User profile photo path
 	},
 	{ discriminatorKey: "role", timestamps: true }
   );
@@ -96,5 +97,10 @@ const userSchema = new mongoose.Schema(
 	socialCase: { type: Boolean, default: false },
   });
   const Student = User.discriminator("Student", studentSchema);
+<<<<<<< HEAD
   module.exports = { User, Admin, Teacher, Student };
   
+=======
+  
+  module.exports = { User, Admin, Teacher, Student };
+>>>>>>> mariem
