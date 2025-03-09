@@ -57,33 +57,15 @@ const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema(
 	{
-	  firstName: { type: String, required: false },
-	  lastName: { type: String, required: false },
-	  age: { type: Number, required: false },
-	  email: { type: String, required: false, unique: true },
-	  password: { type: String, required: false },
-	  country: { type: String, required: false },
-	  verified: {
-			type: Boolean,
-			default: false,
-		},
-		verificationCode: {
-			type: String,
-			select: false,
-		},
-		verificationCodeValidation: {
-			type: Number,
-			select: false,
-		},
-		forgotPasswordCode: {
-			type: String,
-			select: false,
-		},
-		forgotPasswordCodeValidation: {
-			type: Number,
-			select: false,
-		},
-	  role: { type: String, required: false, enum: ["Admin", "Teacher", "Student"] },
+	  idUser: { type: String, unique: true, required: true },
+	  firstName: { type: String, required: true },
+	  lastName: { type: String, required: true },
+	  age: { type: Number, required: true },
+	  email: { type: String, required: true, unique: true },
+	  password: { type: String, required: true },
+	  country: { type: String, required: true },
+	  role: { type: String, required: true, enum: ["Admin", "Teacher", "Student"] },
+	  photo: { type: String }, // User profile photo path
 	},
 	{ discriminatorKey: "role", timestamps: true }
   );

@@ -69,18 +69,20 @@ exports.signin = async (req, res) => {
 				.status(401)
 				.json({ success: false, message: 'User does not exists!' });
 		}
-		const result = await doHashValidation(password, existingUser.password);
-		if (!result) {
+		
+		// Use bcrypt directly to compare passwords since we're storing hashed passwords with bcrypt
+		const passwordMatch = await bcrypt.compare(password, existingUser.password);
+		if (!passwordMatch) {
 			return res
 				.status(401)
 				.json({ success: false, message: 'Invalid credentials!' });
 		}
-
-		const token= jwt.sign(
+		
+		const token = jwt.sign(
 			{
 				userId: existingUser._id,
 				email: existingUser.email,
-				verified: existingUser.verified,
+				role: existingUser.role,
 			},
 			process.env.TOKEN_SECRET,
 			{
@@ -132,9 +134,81 @@ res.json({
   message: 'logged in successfully',
 });
 
-  
+		
+		// Record login activity
+		try {
+			// Vérification des connexions actives dans les dernières 8 heures
+			const activeSessions = await ActivityLog.find({
+				userId: existingUser._id,
+				action: 'LOGIN',
+				createdAt: { $gte: new Date(Date.now() - 8 * 3600000) }, // Dernières 8 heures
+			});
+			
+			// Récupérer les IP et user-agents précédents
+			const previousIPs = new Set(activeSessions.map(session => session.ipAddress));
+			const previousUserAgents = new Set(activeSessions.map(session => session.userAgent));
+
+			const ipAddress = req.ip || 'Unknown';
+			const userAgent = req.headers['user-agent'] || 'Unknown';
+
+			// Vérifier si c'est une nouvelle machine (nouvelle IP ou nouvel user-agent)
+			const isNewDevice = !previousIPs.has(ipAddress) || !previousUserAgents.has(userAgent);
+
+			// Enregistrement de l'historique de connexion après la vérification
+			await ActivityLog.create({
+				userId: existingUser._id,
+				action: 'LOGIN',
+				ipAddress: req.ip || 'Unknown',
+				userAgent: req.headers['user-agent'] || 'Unknown',
+			});
+
+			// Send alert email if multiple sessions are detected
+			if (activeSessions.length > 1) {
+				try {
+					// Envoi de l'email d'alerte si plus d'une session est active
+					await transport2.sendMail({
+						from: process.env.NODE_CODE_SENDING_EMAIL_ADDRESS_2,
+						to: existingUser.email,
+						subject: 'Alerte de Connexion Inhabituelle',
+						html: `<p>Nous avons détecté une connexion inhabituelle à votre compte depuis une nouvelle localisation/IP.</p>
+							<p>Si ce n'était pas vous, veuillez changer immédiatement votre mot de passe.</p>`,
+					});
+				} catch (emailError) {
+					console.error('Failed to send alert email:', emailError);
+					// Don't block login if email sending fails
+				}
+			}
+		} catch (activityError) {
+			console.error('Failed to record login activity:', activityError);
+			// Don't block login if activity logging fails
+		}
+
+		// Return success response with token
+		return res
+			.cookie('Authorization', 'Bearer ' + token, {
+				expires: new Date(Date.now() + 8 * 3600000),
+				httpOnly: process.env.NODE_ENV === 'production',
+				secure: process.env.NODE_ENV === 'production',
+			})
+			.status(200)
+			.json({
+				success: true,
+				token,
+				message: 'logged in successfully',
+				user: {
+					id: existingUser._id,
+					email: existingUser.email,
+					firstName: existingUser.firstName,
+					lastName: existingUser.lastName,
+					role: existingUser.role
+				}
+			});
 	} catch (error) {
-		console.log(error);
+		console.error('Login error:', error);
+		return res.status(500).json({ 
+			success: false, 
+			message: 'An error occurred during login. Please try again.' 
+		});
 	}
 };
 

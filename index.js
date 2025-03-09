@@ -13,6 +13,7 @@ const moduleRouter = require('./routers/moduleRouter');
 const userRouter = require('./routers/userRouter');
 const authRouter = require('./routers/authRouter');
 const passport = require('./middlewares/passport');
+const lessonRouter = require('./routers/lessonRouter');
 const session = require('express-session');
 
 console.log("MongoDB URI:", process.env.MONGODB_URI); // Debugging
@@ -29,6 +30,9 @@ app.use(cors({
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Serve static files from uploads directory
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Database connection
 mongoose
@@ -63,6 +67,7 @@ app.use(passport.session());
 app.use('/api/auth', authRouter);
 app.use('/api/users', userRouter);
 app.use('/api/badges', badgeRouter);
+app.use('/api/lessons', lessonRouter);
 app.get('/', (req, res) => {
     res.json({ message: 'Hello from the server' });
 });
