@@ -97,10 +97,6 @@ const userSchema = new mongoose.Schema(
 	socialCase: { type: Boolean, default: false },
   });
   const Student = User.discriminator("Student", studentSchema);
-<<<<<<< HEAD
-  module.exports = { User, Admin, Teacher, Student };
   
-=======
   
   module.exports = { User, Admin, Teacher, Student };
->>>>>>> mariem
