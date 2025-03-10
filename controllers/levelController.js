@@ -30,7 +30,7 @@ const getAllLevels = async (req, res) => {
 // READ a single Level by id
 const getLevelById = async (req, res) => {
   try {
-    const level = await Level.findById(req.params.idLevel);
+    const level = await Level.findById(req.params.id);
     if (!level) {
       return res.status(404).json({ error: 'Level not found' });
     }
@@ -45,7 +45,7 @@ const updateLevel = async (req, res) => {
   try {
     const { name, description } = req.body;
     const updatedLevel = await Level.findByIdAndUpdate(
-      req.params.idLevel,
+      req.params.id,
       { name, description },
       { new: true }
     );
@@ -62,7 +62,7 @@ const updateLevel = async (req, res) => {
 // DELETE a Level
 const deleteLevel = async (req, res) => {
   try {
-    const deletedLevel = await Level.findByIdAndDelete(req.params.idLevel);
+    const deletedLevel = await Level.findByIdAndDelete(req.params.id);
     if (!deletedLevel) {
       return res.status(404).json({ error: 'Level not found' });
     }
