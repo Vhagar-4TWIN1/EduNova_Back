@@ -14,6 +14,7 @@ const userRouter = require('./routers/userRouter');
 const authRouter = require('./routers/authRouter');
 const passport = require('./middlewares/passport');
 const session = require('express-session');
+const levelRoutes = require('./routers/levelRouter');
 
 console.log("MongoDB URI:", process.env.MONGODB_URI); // Debugging
 console.log("Port:", process.env.PORT);
@@ -63,6 +64,7 @@ app.use('/module', moduleRouter);
 app.use(passport.initialize());
 app.use(passport.session());
 // Routes
+app.use('/api/level', levelRoutes);
 app.use('/api/auth', authRouter);
 app.use('/api/users', userRouter);
 app.use('/api/badges', badgeRouter);
