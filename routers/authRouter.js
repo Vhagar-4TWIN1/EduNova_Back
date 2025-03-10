@@ -7,7 +7,7 @@ const passport = require('../middlewares/passport');
 require('dotenv').config(); // Load environment variables from .env file
 
 
-const User=require('../models/usersModel')
+const { User, Student }=require('../models/usersModel')
 const bcrypt = require("bcryptjs");
 const jwt = require('jsonwebtoken');
 const ActivityLog= require('../models/activityLog')
@@ -36,54 +36,7 @@ const ocrController = require('../controllers/ocrController');
 
 const diplomaVerificationController = require('../controllers/diplomaVerificationController');
 
-// Route pour démarrer l'authentification LinkedIn
-router.get("/linkedin", passport.authenticate("linkedin"));
 
-// Route de callback après l'authentification LinkedIn
-router.get(
-  "/callback",
-  passport.authenticate("linkedin", {
-    failureRedirect: "/login", // Rediriger en cas d'échec
-    successRedirect: "/", // Rediriger vers la page d'accueil en cas de succès
-  })
-);
-
-router.post("/linkedinAuth", async (req, res) => {
-  try {
-    const { code, redirect_url } = req.body;
-    if (!code || !redirect_url) {
-      return res
-        .status(400)
-        .json({ message: "Code and redirect URL are required" });
-    }
-
-    const response = await axios.post(
-      "https://www.linkedin.com/oauth/v2/accessToken",
-      null,
-      {
-        params: {
-          grant_type: "authorization_code",
-          code,
-          redirect_uri: redirect_url,
-          client_id: process.env.LINKEDIN_CLIENT_ID,
-          client_secret: process.env.LINKEDIN_CLIENT_SECRET,
-        },
-      }
-    );
-
-    const { access_token } = response.data;
-    res.json({ token: access_token });
-  } catch (error) {
-    console.error(
-      "Error during LinkedIn OAuth:",
-      error.response ? error.response.data : error.message
-    );
-    res.status(500).json({
-      message: "Error during LinkedIn OAuth process",
-      details: error.response ? error.response.data : error.message,
-    });
-  }
-});
 
 // Routes pour la gestion des utilisateurs
 router.post("/signup", authController.signup);
@@ -97,17 +50,16 @@ router.patch('/send-forgot-password-code', authController.sendForgotPasswordCode
 router.patch('/verify-forgot-password-code', authController.verifyForgotPasswordCode);
 
 
+router.get('/getUserSessionDuration', authController.getActivityLogs )
 router.get('/activity-logs', authController.getActivityLogs )
 // Route pour démarrer l'authentification LinkedIn
 
-// Route pour démarrer l'authentification LinkedIn
-
 //******************************************************************************Linkedin********************************************************* */
-
+// Route pour démarrer l'authentification LinkedIn
+const { v4: uuidv4 } = require("uuid");
 const CLIENT_ID = process.env.LINKEDIN_CLIENT_ID;
 const CLIENT_SECRET = process.env.LINKEDIN_CLIENT_SECRET;
 const REDIRECT_URI = process.env.LINKEDIN_REDIRECT_URI;
-
 const generateRandomPassword = (length = 12) => {
   const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
   let password = "";
@@ -116,13 +68,11 @@ const generateRandomPassword = (length = 12) => {
   }
   return password;
 };
-// Route pour démarrer l'authentification LinkedIn
 router.get("/linkedin", (req, res) => {
   const linkedInAuthURL = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&scope=openid%20profile%20email`;
   res.redirect(linkedInAuthURL);
 });
-
-// Callback après la connexion
+// Callback après la connexion LinkedIn
 router.get("/callback", async (req, res) => {
   const { code } = req.query;
 
@@ -136,7 +86,7 @@ router.get("/callback", async (req, res) => {
       new URLSearchParams({
         grant_type: "authorization_code",
         code,
-        redirect_uri: process.env.LINKEDIN_REDIRECT_URI, 
+        redirect_uri: process.env.LINKEDIN_REDIRECT_URI,
         client_id: process.env.LINKEDIN_CLIENT_ID,
         client_secret: process.env.LINKEDIN_CLIENT_SECRET,
       }),
@@ -149,41 +99,56 @@ router.get("/callback", async (req, res) => {
       "https://api.linkedin.com/v2/userinfo",
       { headers: { Authorization: `Bearer ${accessToken}` } }
     );
+
     const userEmail = profileResponse.data.email;
     const userName = profileResponse.data.name;
     const userCountry = profileResponse.data.locale.country;
+
+    // Extraire le prénom et le nom de famille
+    const [firstName, lastName] = userName.split(' ');
+
+    // Recherchez l'utilisateur par email
     let user = await User.findOne({ email: userEmail });
 
     if (!user) {
-
       const randomPassword = generateRandomPassword();
       const hashedPassword = await bcrypt.hash(randomPassword, 10);
-      user = new User({
-        nom: userName,
+
+      // Créer un nouvel utilisateur avec le rôle "Student" par défaut
+      user = new Student({
+        idUser: uuidv4(),
+        firstName: firstName,
+        lastName: lastName,
+        age: 18, // Valeur par défaut
         email: userEmail,
-        country:userCountry,
-        password:hashedPassword
+        password: hashedPassword,
+        country: userCountry,
+        role: "Student",
+        identifier: uuidv4(), // Générer un identifiant unique pour l'étudiant
+        situation: "Active", // Valeur par défaut
+        disease: "None", // Valeur par défaut
+        socialCase: false, // Valeur par défaut
       });
+
       await user.save();
     }
-// Générer un token JWT
-const token = jwt.sign(
-  {
-    userId: user._id,
-    email: user.email,
-    verified: user.verified,
-  },
-  process.env.TOKEN_SECRET,
-  { expiresIn: "8h" }
-);
 
-res.redirect(`http://localhost:5173/home?token=${token}`);
+    // Générer un token JWT
+    const token = jwt.sign(
+      {
+        userId: user._id,
+        email: user.email,
+        role: user.role,
+      },
+      process.env.TOKEN_SECRET,
+      { expiresIn: "8h" }
+    );
 
-
-
-} catch (error) {
-res.status(500).json({ error: "Échec de l'authentification LinkedIn" });
-}
+    res.redirect(`http://localhost:5173/home?token=${token}`);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Échec de l'authentification LinkedIn" });
+  }
 });
 
 router.post('/ocr', ocrController.uploadImage);

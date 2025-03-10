@@ -33,6 +33,7 @@
 		"passport-twitter": "^1.0.4",
 		"react-google-recaptcha": "^3.1.0",
 		"sharp": "^0.33.5",
-		"tesseract.js": "^6.0.0"
+		"tesseract.js": "^6.0.0",
+		"uuid": "^11.1.0"
 	}
 }
