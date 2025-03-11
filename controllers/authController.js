@@ -87,53 +87,44 @@ exports.signin = async (req, res) => {
 			}
 		);
 		
-		// Record login activity
-		try {
-			// Vérification des connexions actives dans les dernières 8 heures
-			const activeSessions = await ActivityLog.find({
-				userId: existingUser._id,
-				action: 'LOGIN',
-				createdAt: { $gte: new Date(Date.now() - 8 * 3600000) }, // Dernières 8 heures
-			});
-			
-			// Récupérer les IP et user-agents précédents
-			const previousIPs = new Set(activeSessions.map(session => session.ipAddress));
-			const previousUserAgents = new Set(activeSessions.map(session => session.userAgent));
+	// Vérification des connexions actives dans les dernières 8 heures
+  const activeSessions = await ActivityLog.find({
+    userId: existingUser._id, // Ajoutez cette ligne
+    action: 'LOGIN',
+    createdAt: { $gte: new Date(Date.now() - 8 * 3600000) }, // Dernières 8 heures
+  });
 
-			const ipAddress = req.ip || 'Unknown';
-			const userAgent = req.headers['user-agent'] || 'Unknown';
+// Récupérer les IP et user-agents précédents
+const previousIPs = new Set(activeSessions.map(session => session.ipAddress));
+const previousUserAgents = new Set(activeSessions.map(session => session.userAgent));
 
-			// Vérifier si c'est une nouvelle machine (nouvelle IP ou nouvel user-agent)
-			const isNewDevice = !previousIPs.has(ipAddress) || !previousUserAgents.has(userAgent);
+const ipAddress = req.ip || 'Unknown';
+const userAgent = req.headers['user-agent'] || 'Unknown';
 
-			// Enregistrement de l'historique de connexion après la vérification
-			await ActivityLog.create({
-				userId: existingUser._id,
-				action: 'LOGIN',
-				ipAddress: req.ip || 'Unknown',
-				userAgent: req.headers['user-agent'] || 'Unknown',
-			});
+// Vérifier si c'est une nouvelle machine (nouvelle IP ou nouvel user-agent)
+const isNewDevice = !previousIPs.has(ipAddress) || !previousUserAgents.has(userAgent);
 
-			// Send alert email if multiple sessions are detected
-			if (activeSessions.length > 1) {
-				try {
-					// Envoi de l'email d'alerte si plus d'une session est active
-					await transport2.sendMail({
-						from: process.env.NODE_CODE_SENDING_EMAIL_ADDRESS_2,
-						to: existingUser.email,
-						subject: 'Alerte de Connexion Inhabituelle',
-						html: `<p>Nous avons détecté une connexion inhabituelle à votre compte depuis une nouvelle localisation/IP.</p>
-							<p>Si ce n'était pas vous, veuillez changer immédiatement votre mot de passe.</p>`,
-					});
-				} catch (emailError) {
-					console.error('Failed to send alert email:', emailError);
-					// Don't block login if email sending fails
-				}
-			}
-		} catch (activityError) {
-			console.error('Failed to record login activity:', activityError);
-			// Don't block login if activity logging fails
-		}
+// Enregistrer la session dans ActivityLog
+await ActivityLog.create({
+userId: existingUser._id, 
+email: existingUser.email, 
+ipAddress: req.ip || 'Unknown',
+userAgent: req.headers['user-agent'] || 'Unknown',
+action: 'LOGIN',
+});
+
+// Vérification des connexions actives dans les dernières 8 heures
+
+if (activeSessions.length > 1) {
+// Envoi de l'email d'alerte si plus d'une session est active
+await transport2.sendMail({
+  from: process.env.NODE_CODE_SENDING_EMAIL_ADDRESS_2,
+  to: existingUser.email,
+  subject: 'Alerte de Connexion Inhabituelle',
+  html: `<p>Nous avons détecté une connexion inhabituelle à votre compte depuis une nouvelle localisation/IP.</p>
+       <p>Si ce n'était pas vous, veuillez changer immédiatement votre mot de passe.</p>`,
+});
+}
 
 		// Return success response with token
 		return res
@@ -166,6 +157,32 @@ exports.signin = async (req, res) => {
 
 
 exports.signout = async (req, res) => {
+   if (!req.user || !req.user.userId) {
+      return res.status(401).json({ success: false, message: 'Unauthorized: User not authenticated' });
+    }
+  
+    const userId = req.user.userId;
+  
+    // Trouver la dernière action LOGIN de l'utilisateur
+    const lastLogin = await ActivityLog.findOne({
+      userId,
+      action: 'LOGIN',
+    }).sort({ createdAt: -1 });
+    let totalDuration = 0;
+    if (lastLogin) {
+      const duration = Date.now() - lastLogin.createdAt.getTime();
+      totalDuration += duration;
+  
+      // Enregistrement de l'action LOGOUT avec la durée de la session
+      await ActivityLog.create({
+        userId,
+        email: req.user.email,
+        action: 'LOGOUT',
+        ipAddress: req.ip || 'Unknown',
+        userAgent: req.headers['user-agent'] || 'Unknown',
+        duration,
+      });
+    }
   res
     .clearCookie('Authorization')
     .status(200)
@@ -446,13 +463,123 @@ exports.getAllUsers = async (req, res) => {
 };
 
 exports.getActivityLogs = async (req, res) => {
-	try {
-		const filter = req.user ? { userId: req.user.userId } : {}; // Appliquer le filtre seulement si req.user existe
-		const logs = await ActivityLog.find(filter).sort({ createdAt: -1 });
+  try {
+    // Récupérer tous les utilisateurs
+    const users = await User.find({}).select('-password -verificationCode -forgotPasswordCode');
 
-		res.status(200).json({ success: true, logs });
-	} catch (error) {
-		console.error('Erreur lors de la récupération des logs:', error);
-		res.status(500).json({ success: false, message: 'Server error' });
-	}
+    // Tableau pour stocker les logs avec la durée de session
+    const logsWithDuration = [];
+
+    // Parcourir chaque utilisateur
+    for (const user of users) {
+      // Récupérer tous les logs de l'utilisateur (LOGIN et LOGOUT)
+      const logs = await ActivityLog.find({
+        userId: user._id,
+        action: { $in: ['LOGIN', 'LOGOUT'] },
+      }).sort({ createdAt: 1 }); // Trier par date croissante
+
+      let totalDuration = 0;
+      let lastLogin = null;
+
+      // Calculer la durée totale de session pour cet utilisateur
+      for (const log of logs) {
+        if (log.action === 'LOGIN') {
+          lastLogin = log;
+        } else if (log.action === 'LOGOUT' && lastLogin) {
+          const duration = log.createdAt - lastLogin.createdAt;
+          totalDuration += duration;
+          lastLogin = null;
+        }
+      }
+
+      // Si une session est toujours active (pas de LOGOUT), ajouter la durée jusqu'à maintenant
+      if (lastLogin) {
+        const duration = Date.now() - lastLogin.createdAt.getTime();
+        totalDuration += duration;
+      }
+
+      // Convertir la durée en un format lisible (heures, minutes, secondes)
+      const millisecondsToTime = (duration) => {
+        const seconds = Math.floor((duration / 1000) % 60);
+        const minutes = Math.floor((duration / (1000 * 60)) % 60);
+        const hours = Math.floor((duration / (1000 * 60 * 60)) % 24);
+
+        return `${hours}h ${minutes}m ${seconds}s`;
+      };
+
+      const formattedDuration = millisecondsToTime(totalDuration);
+
+      // Ajouter les logs de l'utilisateur avec la durée de session
+      logsWithDuration.push({
+        userId: user._id,
+        firstName: user.firstName,
+        email: user.email,
+        totalDuration: formattedDuration,
+        logs: logs, // Inclure tous les logs de l'utilisateur
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      logs: logsWithDuration,
+      message: 'Logs retrieved successfully with session duration!',
+    });
+  } catch (error) {
+    console.error('Erreur lors de la récupération des logs:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+exports.getUserSessionDuration = async (req, res) => {
+  try {
+   
+
+    const userId = req.user.userId;
+
+    // Récupérer toutes les actions LOGIN et LOGOUT de cet utilisateur
+    const logs = await ActivityLog.find({
+      userId,
+      action: { $in: ['LOGIN', 'LOGOUT'] },
+    }).sort({ createdAt: 1 }); // Trier par date croissante
+
+    let totalDuration = 0;
+    let lastLogin = null;
+
+    // Parcourir les logs pour calculer la durée totale
+    for (const log of logs) {
+      if (log.action === 'LOGIN') {
+        lastLogin = log;
+      } else if (log.action === 'LOGOUT' && lastLogin) {
+        const duration = log.createdAt - lastLogin.createdAt;
+        totalDuration += duration;
+        lastLogin = null;
+      }
+    }
+
+    // Si une session est toujours active (pas de LOGOUT), ajouter la durée jusqu'à maintenant
+    if (lastLogin) {
+      const duration = Date.now() - lastLogin.createdAt.getTime();
+      totalDuration += duration;
+    }
+
+    const millisecondsToTime = (duration) => {
+      const seconds = Math.floor((duration / 1000) % 60);
+      const minutes = Math.floor((duration / (1000 * 60)) % 60);
+      const hours = Math.floor((duration / (1000 * 60 * 60)) % 24);
+    
+      return `${hours}h ${minutes}m ${seconds}s`;
+    };
+    
+    const formattedDuration = millisecondsToTime(totalDuration);
+
+    res.status(200).json({
+      success: true,
+      email: req.user.email, // Ajoutez cette ligne
+      totalDuration: formattedDuration, // Durée en millisecondes
+      message: 'Total session duration retrieved successfully!',
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'An error occurred while retrieving session duration.' });
+  }
 };
