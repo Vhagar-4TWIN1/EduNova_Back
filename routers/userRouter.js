@@ -127,6 +127,96 @@ router.patch('/:id/student-fields', async (req, res) => {
     }
 });
 
+// Custom endpoint for updating teacher fields
+router.patch('/:id/teacher-fields', async (req, res) => {
+    const { id } = req.params;
+    const { number, bio, cv, diplomas, experience, cin } = req.body;
+    
+    try {
+        console.log("Updating teacher fields for ID:", id);
+        console.log("Teacher data received:", req.body);
+        
+        // Import the Teacher model
+        const { Teacher } = require('../models/usersModel');
+        
+        // First check if the user is a teacher
+        const teacher = await Teacher.findById(id);
+        if (!teacher) {
+            return res.status(404).json({ 
+                message: 'Teacher not found with this ID' 
+            });
+        }
+        
+        // Build update object - only include fields that are provided
+        const updateData = {};
+        if (number !== undefined) updateData.number = number;
+        if (bio !== undefined) updateData.bio = bio;
+        if (cv !== undefined) updateData.cv = cv;
+        if (diplomas !== undefined) updateData.diplomas = diplomas;
+        if (experience !== undefined) updateData.experience = experience;
+        if (cin !== undefined) updateData.cin = cin;
+        
+        console.log("Updating with data:", updateData);
+        
+        // Update the teacher fields directly
+        const updatedTeacher = await Teacher.findByIdAndUpdate(
+            id,
+            updateData,
+            { new: true }
+        );
+        
+        console.log("Updated teacher:", updatedTeacher);
+        
+        res.status(200).json(updatedTeacher);
+    } catch (error) {
+        console.error("Error updating teacher fields:", error);
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// Custom endpoint for updating admin fields
+router.patch('/:id/admin-fields', async (req, res) => {
+    const { id } = req.params;
+    const { cin, number } = req.body;
+    
+    try {
+        console.log("Updating admin fields for ID:", id);
+        console.log("Admin data received:", req.body);
+        
+        // Import the Admin model
+        const { Admin } = require('../models/usersModel');
+        
+        // First check if the user is an admin
+        const admin = await Admin.findById(id);
+        if (!admin) {
+            return res.status(404).json({ 
+                message: 'Admin not found with this ID' 
+            });
+        }
+        
+        // Build update object - only include fields that are provided
+        const updateData = {};
+        if (cin !== undefined) updateData.cin = cin;
+        if (number !== undefined) updateData.number = number;
+        
+        console.log("Updating with data:", updateData);
+        
+        // Update the admin fields directly
+        const updatedAdmin = await Admin.findByIdAndUpdate(
+            id,
+            updateData,
+            { new: true }
+        );
+        
+        console.log("Updated admin:", updatedAdmin);
+        
+        res.status(200).json(updatedAdmin);
+    } catch (error) {
+        console.error("Error updating admin fields:", error);
+        res.status(500).json({ message: error.message });
+    }
+});
+
 // Delete user
 router.delete('/:id', deleteUser);
 
