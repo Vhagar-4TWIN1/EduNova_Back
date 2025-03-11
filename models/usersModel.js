@@ -63,7 +63,7 @@ const userSchema = new mongoose.Schema({
 	email: { type: String, required: true, unique: true },
 	password: { type: String, required: true }, // Mot de passe obligatoire
 	country: { type: String, required: true },
-	photo: { type: String },
+	photo: { type: String  ,required: false},
 	
 	verified: { type: Boolean, default: false },
   });
