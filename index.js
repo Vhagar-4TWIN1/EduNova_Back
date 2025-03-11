@@ -11,7 +11,15 @@ const authRouter = require('./routers/authRouter');
 const app = express();
 const passport = require('./middlewares/passport');
 const session = require('express-session');
+const questionRouter = require('./routers/questionRoutes');
+
+
 console.log("Session Secret:", process.env.SESSION_SECRET);
+
+
+
+
+
 
 app.use(cors());
 app.use(helmet());
@@ -41,7 +49,7 @@ app.use(passport.session());
 
 // Routes
 app.use('/api/auth', authRouter);
-
+app.use('/api/questions', questionRouter);
 app.get('/auth/facebook/callback', 
   passport.authenticate('facebook', { failureRedirect: '/login' }), 
   (req, res) => {
