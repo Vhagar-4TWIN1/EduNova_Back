@@ -10,7 +10,7 @@ app.post('/upload-image', upload.single('image'), async (req, res) => {
   const imagePath = path.join(__dirname, 'uploads', req.file.filename);
 
   try {
-    // Utilisation de Tesseract.js pour l'extraction du texte
+   
     const { data: { text } } = await Tesseract.recognize(
       imagePath,
       'eng',
