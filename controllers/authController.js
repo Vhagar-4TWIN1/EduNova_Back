@@ -1,6 +1,9 @@
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const passport = require("passport");
+const multer = require('multer');
+const path = require('path');
+
 
 const {
   signupSchema,
@@ -27,23 +30,68 @@ passport.deserializeUser(async (id, done) => {
   }
 });
 
+//upload profile pic 
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'uploads/');
+  },
+  filename: (req, file, cb) => {
+    const uniqueName = Date.now() + '-' + file.originalname;
+    cb(null, uniqueName);
+  },
+});
+
+const upload = multer({ storage: storage }).single('profileImage');
+
+// Fonction pour uploader l'image de profil
+exports.uploadProfileImage = (req, res) => {
+  upload(req, res, async (err) => {
+    if (err) {
+      return res.status(500).json({ success: false, message: 'Erreur lors de l\'upload de l\'image.' });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: 'Aucun fichier reçu !' });
+    }
+
+    const imagePath = req.file.path;
+    res.status(200).json({ success: true, imagePath });
+  });
+};
+
+// Fonction pour l'inscription
 exports.signup = async (req, res) => {
   try {
     const { firstName, lastName, age, email, password, country, photo } = req.body;
-    const { error } = signupSchema.validate({ firstName, lastName, age, email, password, country, photo });
 
+    // Validation des données
+    const { error } = signupSchema.validate({ firstName, lastName, age, email, password, country, photo });
     if (error) {
       return res.status(400).json({ success: false, message: error.details[0].message });
     }
 
+    // Vérifier si l'utilisateur existe déjà
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ success: false, message: 'Email already exists!' });
     }
 
+    // Hacher le mot de passe
     const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = await User.create({ firstName, lastName, age, email, password: hashedPassword, country, photo });
 
+    // Créer un nouvel utilisateur
+    const newUser = await User.create({
+      firstName,
+      lastName,
+      age,
+      email,
+      password: hashedPassword,
+      country,
+      photo, // L'image de profil est obligatoire
+    });
+
+    // Réponse réussie
     res.status(201).json({
       success: true,
       message: 'User created successfully!',

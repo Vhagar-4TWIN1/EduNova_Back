@@ -14,7 +14,7 @@ router.post('/upload-image', ocrController.uploadImage);
 router.get('/users', authController.getAllUsers);
 router.get("/facebook", passport.authenticate('facebook', { scope: ['email', 'public_profile', 'user_birthday', 'user_location'] }));
 router.post('/verify-diploma', diplomaVerificationController.verifyDiploma);
-
+router.post('/upload-profile-image', authController.uploadProfileImage);
 router.get("/facebook/callback", 
   passport.authenticate('facebook', { session: false }),
   (req, res) => {
