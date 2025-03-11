@@ -61,6 +61,10 @@ const userSchema = new mongoose.Schema(
 	  lastName: { type: String, required: true },
 	  age: { type: Number, required: true },
 	  email: { type: String, required: true, unique: true },
+	  verified: {
+		type: Boolean,
+		default: false,
+	},
 	  password: { type: String, required: true },
 	  country: { type: String, required: true },
 	  role: { type: String, required: true, enum: ["Admin", "Teacher", "Student"] },
@@ -97,10 +101,5 @@ const userSchema = new mongoose.Schema(
 	socialCase: { type: Boolean, default: false },
   });
   const Student = User.discriminator("Student", studentSchema);
-<<<<<<< HEAD
   module.exports = { User, Admin, Teacher, Student };
   
-=======
-  
-  module.exports = { User, Admin, Teacher, Student };
->>>>>>> mariem
