@@ -27,6 +27,18 @@ app.use(cors({
     credentials: true,               // Autorise l'envoi de cookies
     allowedHeaders: ['Authorization', 'Content-Type'] // En-têtes autorisés
 }));
+const questionRouter = require('./routers/questionRoutes');
+
+
+console.log("Session Secret:", process.env.SESSION_SECRET);
+
+
+
+
+
+
+app.use(cors());
+app.use(helmet());
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -117,6 +129,7 @@ passport.deserializeUser(async (id, done) => {
 
 
 
+app.use('/api/questions', questionRouter);
 app.get('/auth/facebook/callback', 
   passport.authenticate('facebook', { failureRedirect: '/login' }), 
   (req, res) => {
