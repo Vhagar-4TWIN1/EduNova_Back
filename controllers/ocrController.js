@@ -10,7 +10,7 @@ const unlinkAsync = promisify(fs.unlink);
 // Configuration de multer pour l'upload
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'uploads/'); // Stockage dans 'uploads/'
+    cb(null, 'uploads/');
   },
   filename: (req, file, cb) => {
     const uniqueName = Date.now() + '-' + file.originalname;
@@ -23,18 +23,14 @@ const upload = multer({ storage: storage }).single('image');
 // Fonction pour prétraiter l'image
 const preprocessImage = async (imagePath) => {
   try {
-    const tempPath = `${imagePath}-processed.jpg`; // Nouveau fichier temporaire
-
+    const tempPath = `${imagePath}-processed.jpg`;
     await sharp(imagePath)
-      .resize(800) 
-      .grayscale() 
+      .resize(800)
+      .grayscale()
       .normalize()
       .sharpen()
-      .toFile(tempPath); // Sauvegarde dans un nouveau fichier
-
-    // Remplacer l'ancienne image par la nouvelle
+      .toFile(tempPath);
     await fs.promises.rename(tempPath, imagePath);
-
     console.log('✅ Image prétraitée avec succès');
   } catch (error) {
     console.error('❌ Erreur lors du prétraitement de l\'image:', error.message);
@@ -42,13 +38,11 @@ const preprocessImage = async (imagePath) => {
   }
 };
 
-
-
 // Fonction pour extraire les informations
 const extractInfo = (text) => {
   const nomMatch = text.match(/Nom\s*:\s*([^\n]+)/i);
   const prenomMatch = text.match(/Prénom\s*:\s*([^\n]+)/i);
-  const emailMatch = text.match(/Email\s*:\s*([a-zA-Z0-9._-]+(?:@[a-zA-Z0-9._-]+\.[a-zA-Z]{2,})?)/i); // Regex flexible
+  const emailMatch = text.match(/Email\s*:\s*([a-zA-Z0-9._-]+(?:@[a-zA-Z0-9._-]+\.[a-zA-Z]{2,})?)/i);
 
   return {
     nom: nomMatch ? nomMatch[1].trim() : 'Non trouvé',
@@ -56,7 +50,6 @@ const extractInfo = (text) => {
     email: emailMatch ? emailMatch[1].trim() : 'Non trouvé',
   };
 };
-
 
 // Route pour l'upload et l'extraction OCR
 exports.uploadImage = async (req, res) => {
@@ -76,13 +69,13 @@ exports.uploadImage = async (req, res) => {
 
     if (!req.file) {
       console.error('❌ Aucun fichier reçu !');
-      return res.status(400).json({ success: false, message: 'Aucun fichier reçu!' });
+      return res.status(400).json({ success: false, message: 'Aucun fichier reçu !' });
     }
 
     const imagePath = req.file.path;
     console.log('📂 Fichier reçu:', imagePath);
 
-    // ✅ PREPROCESS IMAGE (Resizing & Optimization)
+    // ✅ PREPROCESS IMAGE
     try {
       await preprocessImage(imagePath);
     } catch (err) {
@@ -93,9 +86,7 @@ exports.uploadImage = async (req, res) => {
     // ✅ OCR PROCESSING
     let text;
     try {
-      const result = await Tesseract.recognize(imagePath, 'fra', { 
-        logger: (m) => console.log(m) 
-      });
+      const result = await Tesseract.recognize(imagePath, 'fra', { logger: (m) => console.log(m) });
       text = result.data.text;
     } catch (err) {
       console.error('❌ Erreur Tesseract:', err.message);
@@ -123,7 +114,6 @@ exports.uploadImage = async (req, res) => {
       email,
       image: `http://localhost:3000/uploads/${req.file.filename}`,
     });
-
   } catch (err) {
     console.error('🔥 Erreur interne:', err.message);
     return res.status(500).json({ success: false, message: 'Erreur interne du serveur.' });
