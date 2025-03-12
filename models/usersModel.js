@@ -56,7 +56,6 @@ module.exports = mongoose.model('User', userSchema);
 
 const userSchema = new mongoose.Schema(
 	{
-	  idUser: { type: String, unique: true, required: true },
 	  firstName: { type: String, required: true },
 	  lastName: { type: String, required: true },
 	  age: { type: Number, required: true },
@@ -67,7 +66,7 @@ const userSchema = new mongoose.Schema(
 	},
 	  password: { type: String, required: true },
 	  country: { type: String, required: true },
-	  role: { type: String, required: true, enum: ["Admin", "Teacher", "Student"] },
+	  role: { type: String, required: true, enum: ["Admin", "Teacher", "Student"] , default: "Teacher"},
 	  photo: { type: String }, // User profile photo path
 	},
 	{ discriminatorKey: "role", timestamps: true }
