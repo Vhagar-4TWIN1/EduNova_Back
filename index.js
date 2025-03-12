@@ -15,6 +15,7 @@ const authRouter = require('./routers/authRouter');
 const passport = require('./middlewares/passport');
 const session = require('express-session');
 const levelRoutes = require('./routers/levelRouter');
+const questionRouter = require('./routers/questionRoutes');
 
 console.log("MongoDB URI:", process.env.MONGODB_URI); // Debugging
 console.log("Port:", process.env.PORT);
@@ -117,6 +118,7 @@ passport.deserializeUser(async (id, done) => {
 
 
 
+app.use('/api/questions', questionRouter);
 app.get('/auth/facebook/callback', 
   passport.authenticate('facebook', { failureRedirect: '/login' }), 
   (req, res) => {
