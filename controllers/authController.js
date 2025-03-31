@@ -51,52 +51,115 @@ exports.uploadProfileImage = (req, res) => {
 // Fonction pour l'inscription
 exports.signup = async (req, res) => {
   try {
-    const { firstName, lastName, age, email, password, country, photo } = req.body;
+    const {
+      firstName,
+      lastName,
+      age,
+      email,
+      password,
+      country,
+      photo,
+      role,
+      // admin fields
+      cin,
+      number,
+      // teacher fields
+      bio,
+      cv,
+      diplomas,
+      experience,
+      // student fields
+      identifier,
+      situation,
+      disease,
+      socialCase
+    } = req.body;
 
-    // Validation des données
-    const { error } = signupSchema.validate({ firstName, lastName, age, email, password, country, photo });
+    const { error } = signupSchema.validate(req.body);
     if (error) {
       return res.status(400).json({ success: false, message: error.details[0].message });
     }
 
-    // Vérifier si l'utilisateur existe déjà
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ success: false, message: 'Email already exists!' });
     }
 
-    // Hacher le mot de passe
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Créer un nouvel utilisateur
-    const newUser = await User.create({
-      firstName,
-      lastName,
-      age,
-      email,
-      password: hashedPassword,
-      country,
-      photo, // L'image de profil est obligatoire
-    });
+    let newUser;
 
-    // Réponse réussie
+    switch (role) {
+      case "Admin":
+        newUser = await User.discriminators.Admin.create({
+          firstName,
+          lastName,
+          age,
+          email,
+          password: hashedPassword,
+          country,
+          photo,
+          role,
+          cin,
+          number,
+        });
+        break;
+      case "Teacher":
+        newUser = await User.discriminators.Teacher.create({
+          firstName,
+          lastName,
+          age,
+          email,
+          password: hashedPassword,
+          country,
+          photo,
+          role,
+          number,
+          bio,
+          cv,
+          diplomas,
+          experience,
+          cin,
+        });
+        break;
+      case "Student":
+        newUser = await User.discriminators.Student.create({
+          firstName,
+          lastName,
+          age,
+          email,
+          password: hashedPassword,
+          country,
+          photo,
+          role,
+          identifier,
+          situation,
+          disease,
+          socialCase,
+        });
+        break;
+      default:
+        return res.status(400).json({ success: false, message: "Invalid role!" });
+    }
+
     res.status(201).json({
       success: true,
-      message: 'User created successfully!',
+      message: `${role} created successfully!`,
       user: {
         id: newUser._id,
         firstName: newUser.firstName,
         lastName: newUser.lastName,
-        age: newUser.age,
         email: newUser.email,
-        country: newUser.country,
+        role: newUser.role,
         photo: newUser.photo,
       },
     });
   } catch (error) {
+    console.error("Signup error:", error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
 
 exports.signin = async (req, res) => {
 	const { email, password } = req.body;
