@@ -6,7 +6,9 @@
 	"scripts": {
 		"start": "node --env-file=.env index.js",
 		"dev": "node --watch --trace-warnings --env-file=.env index.js",
-		"test": "echo \"No test specified\" && exit 0"
+		"test": "echo \"No test specified\" && exit 0",
+		"build-dev": "webpack --config webpack.dev.js"
+
 
 	},
 	"author": "Assil",
