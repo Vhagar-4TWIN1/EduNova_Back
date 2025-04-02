@@ -12,7 +12,7 @@ app.post('/upload-image', upload.single('image'), async (req, res) => {
   try {
    
     const { data: { text } } = await Tesseract.recognize(
-      imagePath,
+      imagePath,  
       'eng',
       {
         logger: (m) => console.log(m),
