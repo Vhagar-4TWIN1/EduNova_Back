@@ -72,7 +72,36 @@ app.use('/api/badges', badgeRouter);
 app.get('/', (req, res) => {
     res.json({ message: 'Hello from the server' });
 });
-
+app.get('/api/auth/google/callback', passport.authenticate('google', { session: false }), (req, res) => {
+    // At this point, req.user will contain the user and token from the Google strategy
+    if (!req.user) {
+      return res.status(400).json({ message: 'Authentication failed' });
+    }
+  
+    const { user, token } = req.user;
+  
+    // Set the token in an HTTP-only cookie
+    return res
+      .cookie('Authorization', 'Bearer ' + token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',  // Ensure this is only true in production
+        maxAge: 8 * 3600000  // 8 hours
+      })
+      .status(200)
+      .json({
+        success: true,
+        message: 'Logged in successfully',
+        token,
+        user: {
+          id: user._id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          role: user.role,
+        },
+      });
+  });
+  
 // LinkedIn OAuth Strategy
 const LinkedInStrategy = require('passport-linkedin-oauth2').Strategy;
 

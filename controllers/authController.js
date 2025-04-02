@@ -4,7 +4,7 @@ const bcrypt = require('bcrypt');
 const passport = require("passport");
 const multer = require('multer');
 const path = require('path');
-
+const fs = require ('fs');
 
 const {
   signupSchema,
@@ -22,7 +22,7 @@ const { transport, transport2 } = require("../middlewares/sendMail");
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'uploads/');
+    cb(null, 'uploads/profiles');
   },
   filename: (req, file, cb) => {
     const uniqueName = Date.now() + '-' + file.originalname;
@@ -30,21 +30,56 @@ const storage = multer.diskStorage({
   },
 });
 
-const upload = multer({ storage: storage }).single('profileImage');
+const upload = multer({ storage: storage }).single('image');
 
 // Fonction pour uploader l'image de profil
 exports.uploadProfileImage = (req, res) => {
+  // Ensure uploads directory exists
+  const uploadDir = 'uploads/profiles';
+  if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+  }
+
   upload(req, res, async (err) => {
-    if (err) {
-      return res.status(500).json({ success: false, message: 'Erreur lors de l\'upload de l\'image.' });
+    if (err instanceof multer.MulterError) {
+      // A Multer error occurred when uploading
+      return res.status(400).json({ 
+        success: false, 
+        message: err.message 
+      });
+    } else if (err) {
+      // An unknown error occurred
+      console.error('Upload error:', err);
+      return res.status(500).json({ 
+        success: false, 
+        message: 'File upload failed',
+        error: err.message 
+      });
     }
 
     if (!req.file) {
-      return res.status(400).json({ success: false, message: 'Aucun fichier reçu !' });
+      return res.status(400).json({ 
+        success: false, 
+        message: 'No file received!' 
+      });
     }
 
-    const imagePath = req.file.path;
-    res.status(200).json({ success: true, imagePath });
+    try {
+      // Construct accessible URL
+      const imageUrl = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+      
+      res.status(200).json({ 
+        success: true, 
+        imagePath: imageUrl,
+        filename: req.file.filename
+      });
+    } catch (error) {
+      console.error('Error processing upload:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: 'Error processing file upload' 
+      });
+    }
   });
 };
 
@@ -99,108 +134,114 @@ exports.signup = async (req, res) => {
 };
 
 exports.signin = async (req, res) => {
-	const { email, password } = req.body;
-	try {
-		const { error, value } = signinSchema.validate({ email, password });
-		if (error) {
-			return res
-				.status(401)
-				.json({ success: false, message: error.details[0].message });
-		}
+  const { email, password } = req.body;
 
-		const existingUser = await User.findOne({ email }).select('+password');
-		if (!existingUser) {
-			return res
-				.status(401)
-				.json({ success: false, message: 'User does not exists!' });
-		}
-		
-		// Use bcrypt directly to compare passwords since we're storing hashed passwords with bcrypt
-		const passwordMatch = await bcrypt.compare(password, existingUser.password);
-		if (!passwordMatch) {
-			return res
-				.status(401)
-				.json({ success: false, message: 'Invalid credentials!' });
-		}
-		
-		const token = jwt.sign(
-			{
-				userId: existingUser._id,
-				email: existingUser.email,
-				role: existingUser.role,
-			},
-			process.env.TOKEN_SECRET,
-			{
-				expiresIn: '8h',
-			}
-		);
-		
-	// Vérification des connexions actives dans les dernières 8 heures
-  const activeSessions = await ActivityLog.find({
-    userId: existingUser._id, // Ajoutez cette ligne
-    action: 'LOGIN',
-    createdAt: { $gte: new Date(Date.now() - 8 * 3600000) }, // Dernières 8 heures
-  });
+  try {
+    // Validate the request using Joi schema
+    const { error, value } = signinSchema.validate({ email, password });
+    if (error) {
+      return res.status(401).json({
+        success: false,
+        message: error.details[0].message,
+      });
+    }
 
-// Récupérer les IP et user-agents précédents
-const previousIPs = new Set(activeSessions.map(session => session.ipAddress));
-const previousUserAgents = new Set(activeSessions.map(session => session.userAgent));
+    // Find the user in the database
+    const existingUser = await User.findOne({ email }).select('+password');
+    if (!existingUser) {
+      return res.status(401).json({
+        success: false,
+        message: 'User does not exist!',
+      });
+    }
 
-const ipAddress = req.ip || 'Unknown';
-const userAgent = req.headers['user-agent'] || 'Unknown';
+    // Check if the user is OAuth (password will be 'password' for OAuth users)
+    if (password !== 'password') {
+      // If the password is not 'password' (i.e., it's not an OAuth user), compare the hashed password
+      const passwordMatch = await bcrypt.compare(password, existingUser.password);
+      if (!passwordMatch) {
+        return res.status(401).json({
+          success: false,
+          message: 'Invalid credentials!',
+        });
+      }
+    }
 
-// Vérifier si c'est une nouvelle machine (nouvelle IP ou nouvel user-agent)
-const isNewDevice = !previousIPs.has(ipAddress) || !previousUserAgents.has(userAgent);
+    // Generate JWT token
+    const token = jwt.sign(
+      {
+        userId: existingUser._id,
+        email: existingUser.email,
+        role: existingUser.role,
+      },
+      process.env.TOKEN_SECRET,
+      { expiresIn: '8h' }
+    );
 
-// Enregistrer la session dans ActivityLog
-await ActivityLog.create({
-userId: existingUser._id, 
-email: existingUser.email, 
-ipAddress: req.ip || 'Unknown',
-userAgent: req.headers['user-agent'] || 'Unknown',
-action: 'LOGIN',
-});
+    // Check for active sessions within the last 8 hours
+    const activeSessions = await ActivityLog.find({
+      userId: existingUser._id,
+      action: 'LOGIN',
+      createdAt: { $gte: new Date(Date.now() - 8 * 3600000) },
+    });
 
-// Vérification des connexions actives dans les dernières 8 heures
+    // Get previous IPs and user agents from active sessions
+    const previousIPs = new Set(activeSessions.map(session => session.ipAddress));
+    const previousUserAgents = new Set(activeSessions.map(session => session.userAgent));
 
-if (activeSessions.length > 1) {
-// Envoi de l'email d'alerte si plus d'une session est active
-await transport2.sendMail({
-  from: process.env.NODE_CODE_SENDING_EMAIL_ADDRESS_2,
-  to: existingUser.email,
-  subject: 'Alerte de Connexion Inhabituelle',
-  html: `<p>Nous avons détecté une connexion inhabituelle à votre compte depuis une nouvelle localisation/IP.</p>
-       <p>Si ce n'était pas vous, veuillez changer immédiatement votre mot de passe.</p>`,
-});
-}
+    const ipAddress = req.ip || 'Unknown';
+    const userAgent = req.headers['user-agent'] || 'Unknown';
 
-		// Return success response with token
-		return res
-			.cookie('Authorization', 'Bearer ' + token, {
-				expires: new Date(Date.now() + 8 * 3600000),
-				httpOnly: process.env.NODE_ENV === 'production',
-				secure: process.env.NODE_ENV === 'production',
-			})
-			.status(200)
-			.json({
-				success: true,
-				token,
-				message: 'logged in successfully',
-				user: {
-					id: existingUser._id,
-					email: existingUser.email,
-					firstName: existingUser.firstName,
-					lastName: existingUser.lastName,
-					role: existingUser.role
-				}
-			});
-	} catch (error) {
-		console.error('Login error:', error);
-		return res.status(500).json({ 
-			success: false, 
-			message: 'An error occurred during login. Please try again.' 
-		});
-	}
+    // Check if it's a new device (new IP or user-agent)
+    const isNewDevice = !previousIPs.has(ipAddress) || !previousUserAgents.has(userAgent);
+
+    // Log the new login session
+    await ActivityLog.create({
+      userId: existingUser._id,
+      email: existingUser.email,
+      ipAddress: req.ip || 'Unknown',
+      userAgent: req.headers['user-agent'] || 'Unknown',
+      action: 'LOGIN',
+    });
+
+    // Send alert if more than one active session is found
+    if (activeSessions.length > 1) {
+      await transport2.sendMail({
+        from: process.env.NODE_CODE_SENDING_EMAIL_ADDRESS_2,
+        to: existingUser.email,
+        subject: 'Alerte de Connexion Inhabituelle',
+        html: `<p>Nous avons détecté une connexion inhabituelle à votre compte depuis une nouvelle localisation/IP.</p>
+               <p>Si ce n'était pas vous, veuillez changer immédiatement votre mot de passe.</p>`,
+      });
+    }
+
+    // Return success response with the token
+    return res
+      .cookie('Authorization', 'Bearer ' + token, {
+        expires: new Date(Date.now() + 8 * 3600000),
+        httpOnly: process.env.NODE_ENV === 'production',
+        secure: process.env.NODE_ENV === 'production',
+      })
+      .status(200)
+      .json({
+        success: true,
+        token,
+        message: 'Logged in successfully',
+        user: {
+          id: existingUser._id,
+          email: existingUser.email,
+          firstName: existingUser.firstName,
+          lastName: existingUser.lastName,
+          role: existingUser.role,
+        },
+      });
+  } catch (error) {
+    console.error('Login error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'An error occurred during login. Please try again.',
+    });
+  }
 };
 
 
