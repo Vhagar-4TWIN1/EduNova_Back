@@ -14,20 +14,22 @@ const ActivityLog= require('../models/activityLog')
 const {transport,transport2} = require('../middlewares/sendMail');
 
 router.get('/google/callback', 
-  passport.authenticate('google', { session: false }),
+  passport.authenticate('google', { session: false, failureRedirect: '/login' }),
   (req, res) => {
-      const { token } = req.user;
-
-      res.cookie('Authorization', 'Bearer ' + token, {
-          expires: new Date(Date.now() + 8 * 3600000),
-          httpOnly: true,
-          secure: process.env.NODE_ENV === 'production',
-      });
-
-      res.redirect('http://localhost:5173/home');
+    // After successful authentication, handle the token
+    const { token, user } = req.user;
+    
+    // Set the token in a cookie or send it in the response
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 8 * 60 * 60 * 1000 // 8 hours
+    });
+    
+    // Redirect to your frontend with the token if needed
+    res.redirect(`http://localhost:5173/home?token=${token}`);
   }
 );
-
 
 
 
@@ -136,6 +138,8 @@ router.get("/callback", async (req, res) => {
     // Générer un token JWT
     const token = jwt.sign(
       {
+        firstName: user.firstName,
+        lastName: user.lastName,
         userId: user._id,
         email: user.email,
         role: user.role,
@@ -150,7 +154,6 @@ router.get("/callback", async (req, res) => {
     res.status(500).json({ error: "Échec de l'authentification LinkedIn" });
   }
 });
-
 router.post('/ocr', ocrController.uploadImage);
 router.post('/upload-image', ocrController.uploadImage);
 router.get('/users', authController.getAllUsers);
@@ -173,6 +176,11 @@ router.get("/facebook/callback",
     res.json({ success: true, token, message: 'Facebook login successful!' });
   }
 );
+router.get(
+  "/auth/google",
+  passport.authenticate("google", { scope: ["profile", "email"] })
+);
+
 
 
 
