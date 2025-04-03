@@ -9,8 +9,9 @@ const annotationSchema = new mongoose.Schema({
 const lessonSchema = new mongoose.Schema({
   title: { type: String, required: true },
   content: { type: String, required: true },
-  typeLesson: { type: String, enum: ['pdf', 'video', 'photo'], required: true },
+  typeLesson: { type: String, enum: ['pdf', 'video', 'photo', 'audio'], required: true },
   fileUrl: { type: String, required: true },
+  public_id: {type :String},
   LMScontent: { type: String },
   annotations: [annotationSchema],
 }, { timestamps: true });
