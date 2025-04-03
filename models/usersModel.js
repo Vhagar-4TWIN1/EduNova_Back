@@ -52,56 +52,64 @@ const userSchema = mongoose.Schema(
 );
 
 module.exports = mongoose.model('User', userSchema);
-*/const mongoose = require("mongoose");
+*/ const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema(
-	{
-	  idUser: { type: String, unique: true, required: true },
-	  firstName: { type: String, required: true },
-	  lastName: { type: String, required: true },
-	  age: { type: Number, required: true },
-	  email: { type: String, required: true, unique: true },
-	  verified: {
-		type: Boolean,
-		default: false,
-	},
-	  password: { type: String, required: true },
-	  country: { type: String, required: true },
-	  role: { type: String, required: true, enum: ["Admin", "Teacher", "Student"] },
-	  photo: { type: String }, // User profile photo path
-	},
-	{ discriminatorKey: "role", timestamps: true }
-  );
-  
-  const User = mongoose.model("User", userSchema);
-  
-  // Admin Schema (Extends User)
-  const adminSchema = new mongoose.Schema({
-	cin: { type: String, unique: true, sparse: true },
-	number: { type: String },
-  });
-  const Admin = User.discriminator("Admin", adminSchema);
-  
-  // Teacher Schema (Extends User)
-  const teacherSchema = new mongoose.Schema({
-	number: { type: String },
-	bio: { type: String },
-	cv: { type: String },
-	diplomas: [{ type: String }],
-	experience: { type: String },
-	cin: { type: String, unique: true, sparse: true },
-  });
-  const Teacher = User.discriminator("Teacher", teacherSchema);
-  
-  // Student Schema (Extends User)
-  const studentSchema = new mongoose.Schema({
-	identifier: { type: String, unique: true, sparse: true },
-	situation: { type: String },
-	disease: { type: String },
-	socialCase: { type: Boolean, default: false },
-  });
-  const Student = User.discriminator("Student", studentSchema);
-  module.exports = { User, Admin, Teacher, Student };
-  
-  
+  {
+    idUser: { type: String, unique: true, required: true },
+    firstName: { type: String, required: true },
+    lastName: { type: String, required: true },
+    age: { type: Number, required: true },
+    email: { type: String, required: true, unique: true },
+    verified: {
+      type: Boolean,
+      default: false,
+    },
+    password: { type: String, required: true },
+    country: { type: String, required: true },
+    role: {
+      type: String,
+      required: true,
+      enum: ["Admin", "Teacher", "Student"],
+    },
+    photo: { type: String }, // User profile photo path
+  },
+  { discriminatorKey: "role", timestamps: true }
+);
 
+const User = mongoose.model("User", userSchema);
+
+// Admin Schema (Extends User)
+const adminSchema = new mongoose.Schema({
+  cin: { type: String, unique: true, sparse: true },
+  number: { type: String },
+});
+const Admin = User.discriminator("Admin", adminSchema);
+
+// Teacher Schema (Extends User)
+const teacherSchema = new mongoose.Schema({
+  number: { type: String },
+  bio: { type: String },
+  cv: { type: String },
+  diplomas: [{ type: String }],
+  experience: { type: String },
+  cin: { type: String, unique: true, sparse: true },
+  workCertificate: { type: String },
+});
+const Teacher = User.discriminator("Teacher", teacherSchema);
+
+// Student Schema (Extends User)
+const studentSchema = new mongoose.Schema({
+  identifier: { type: String, unique: true, sparse: true },
+  situation: { type: String },
+  disease: { type: String },
+  socialCase: { type: Boolean, default: false },
+  learningPreference: {
+    type: String,
+    enum: ["video", "pdf"],
+    default: "video",
+  },
+  interests: [{ type: String }], // Example: ["mathematics", "science"]
+});
+const Student = User.discriminator("Student", studentSchema);
+module.exports = { User, Admin, Teacher, Student };
