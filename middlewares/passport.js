@@ -8,9 +8,28 @@ const { signin } = require("../controllers/authController");
 const fs = require("fs");
 const axios = require("axios");
 const path = require("path");
+const { Strategy: JwtStrategy, ExtractJwt } = require('passport-jwt');
+passport.authenticateJWT = passport.authenticate("jwt", { session: false });
 
-passport.authenticateJWT = passport.authenticate('jwt', { session: false });
+// ✅ JWT STRATEGY
+const JWT_SECRET = process.env.TOKEN_SECRET;
 
+const jwtOptions = {
+  jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+  secretOrKey: JWT_SECRET,
+};
+
+passport.use(
+  new JwtStrategy(jwtOptions, async (jwtPayload, done) => {
+    try {
+      const user = await User.findById(jwtPayload.userId);
+      if (user) return done(null, user);
+      return done(null, false);
+    } catch (err) {
+      return done(err, false);
+    }
+  })
+);
 
 // Google Strategy
 passport.use(
