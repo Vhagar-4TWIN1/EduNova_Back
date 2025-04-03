@@ -5,6 +5,9 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/usersModel');
 const bcrypt = require('bcrypt');
 
+passport.authenticateJWT = passport.authenticate('jwt', { session: false });
+
+
 // Google Strategy
 passport.use(
   new GoogleStrategy(
