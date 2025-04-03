@@ -8,25 +8,26 @@ const { deleteMediaFromCloudinary } = require('../utils/cloudinary');
 
 
 const GOOGLE_ADMIN_EMAIL = 'admin@tondomaine.com';
-const gTTS = require('gtts');
-const path = require('path');
+const gTTS = require("gtts");
+const path = require("path");
 
 exports.getLessonAudio = async (req, res) => {
   try {
     const lesson = await Lesson.findById(req.params.id);
-    if (!lesson) return res.status(404).json({ message: 'Lesson not found' });
+    if (!lesson) return res.status(404).json({ message: "Lesson not found" });
 
-    const gtts = new gTTS(lesson.content, 'en');
-    const filePath = `uploads/tts/${lesson._id}.mp3`;
+    const gtts = new gTTS(lesson.fileUrl, "en");
+    const filePath = path.join(__dirname, `../uploads/tts-${lesson._id}.mp3`);
+    const filename = `${lesson.title.replace(/\s+/g, "_")}_tts.mp3`;
+
     gtts.save(filePath, (err) => {
-      if (err) return res.status(500).json({ error: 'TTS generation failed' });
-      res.download(filePath);
+      if (err) return res.status(500).json({ error: "TTS generation failed" });
+      res.download(filePath, filename);
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
-
 
 exports.createLesson = async (req, res) => {
   const errors = validationResult(req);
