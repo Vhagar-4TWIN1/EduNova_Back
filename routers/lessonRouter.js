@@ -6,10 +6,11 @@ const upload = require('../middlewares/upload');
 const passport = require('../middlewares/passport');
 const authenticate = passport.authenticateJWT;
 
-router.post('/', authenticate, upload.single('file'), lessonValidation, lessonController.createLesson);
+// ✅ Accepts JSON body from frontend (because the file is already uploaded to Cloudinary)
+router.post('/', authenticate, lessonValidation, lessonController.createLesson);
 router.get('/', authenticate, lessonController.getAllLessons);
 router.get('/:id', authenticate, lessonController.getLessonById);
-router.put('/:id', authenticate, upload.single('file'), lessonValidation, lessonController.updateLesson);
+router.patch('/:id', authenticate, upload.single('file'), lessonValidation, lessonController.updateLesson);
 router.delete('/:id', authenticate, lessonController.deleteLesson);
 router.get('/:id/tts', authenticate, lessonController.getLessonWithTTS);
 router.post('/:id/annotation', authenticate, lessonController.addAnnotation);

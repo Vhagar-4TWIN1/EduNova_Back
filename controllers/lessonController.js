@@ -3,6 +3,9 @@ const { validationResult } = require('express-validator');
 const { generateTTS } = require('../utils/textToSpeech');
 const { createCourse: createGoogleCourse } = require('../services/googleClassroomService');
 const { createCourse: createBlackboardCourse } = require('../services/blackboardService');
+const { uploadMediaToCloudinary } = require('../utils/cloudinary');
+const { deleteMediaFromCloudinary } = require('../utils/cloudinary');
+
 
 const GOOGLE_ADMIN_EMAIL = 'admin@tondomaine.com';
 const gTTS = require('gtts');
@@ -30,18 +33,27 @@ exports.createLesson = async (req, res) => {
   if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
 
   try {
+    // Expecting fileUrl and public_id directly from frontend
+    const { title, content, typeLesson, fileUrl, public_id } = req.body;
+
+    if (!fileUrl) return res.status(400).json({ error: "Missing file URL" });
+
     const lesson = await Lesson.create({
-      ...req.body,
-      fileUrl: req.file.path,
+      title,
+      content,
+      typeLesson,
+      fileUrl,
+      public_id,
     });
-    // LMS Integration (placeholder)
-     await syncWithLMS(lesson);
+
+    await syncWithLMS(lesson);
 
     res.status(201).json(lesson);
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
 };
+
 
 exports.getAllLessons = async (_, res) => {
   try {
@@ -80,6 +92,10 @@ exports.deleteLesson = async (req, res) => {
   try {
     const lesson = await Lesson.findByIdAndDelete(req.params.id);
     if (!lesson) return res.status(404).json({ message: 'Lesson not found' });
+
+    if (lesson.public_id) {
+      await deleteMediaFromCloudinary(lesson.public_id);
+    }
 
     res.status(200).json({ message: 'Lesson deleted successfully' });
   } catch (error) {
