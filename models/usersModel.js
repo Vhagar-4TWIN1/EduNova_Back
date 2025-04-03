@@ -52,7 +52,7 @@ const userSchema = mongoose.Schema(
 );
 
 module.exports = mongoose.model('User', userSchema);
-*/const mongoose = require("mongoose");
+*/ const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema(
 	{
@@ -118,6 +118,5 @@ const userSchema = new mongoose.Schema(
   });
   const Student = User.discriminator("Student", studentSchema);
   module.exports = { User, Admin, Teacher, Student };
-  
-  
 
+module.exports = { User, Admin, Teacher, Student };
