@@ -12,21 +12,25 @@ const jwt = require("jsonwebtoken");
 const ActivityLog = require("../models/activityLog");
 const { transport, transport2 } = require("../middlewares/sendMail");
 
-router.get(
-  "/google/callback",
-  passport.authenticate("google", { session: false }),
+router.get('/google/callback', 
+  passport.authenticate('google', { session: false, failureRedirect: '/login' }),
   (req, res) => {
-    const { token } = req.user;
-
-    res.cookie("Authorization", "Bearer " + token, {
-      expires: new Date(Date.now() + 8 * 3600000),
+    // After successful authentication, handle the token
+    const { token, user } = req.user;
+    
+    // Set the token in a cookie or send it in the response
+    res.cookie('token', token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 8 * 60 * 60 * 1000 // 8 hours
     });
-
-    res.redirect("http://localhost:5173/home");
+    
+    // Redirect to your frontend with the token if needed
+    res.redirect(`http://localhost:5173/home?token=${token}`);
   }
 );
+
+
 
 // Routes pour la gestion des utilisateurs
 const ocrController = require("../controllers/ocrController");
@@ -145,6 +149,8 @@ router.get("/callback", async (req, res) => {
     // Générer un token JWT
     const token = jwt.sign(
       {
+        firstName: user.firstName,
+        lastName: user.lastName,
         userId: user._id,
         email: user.email,
         role: user.role,
@@ -187,6 +193,11 @@ router.get(
     res.json({ success: true, token, message: "Facebook login successful!" });
   }
 );
+router.get(
+  "/auth/google",
+  passport.authenticate("google", { scope: ["profile", "email"] })
+);
+
 
 router.post("/student-info", authController.studentInfo);
 
