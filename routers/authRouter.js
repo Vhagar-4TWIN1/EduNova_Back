@@ -2,56 +2,64 @@ const express = require("express");
 const authController = require("../controllers/authController");
 const { identifier } = require("../middlewares/identification");
 const router = express.Router();
-const axios = require('axios');
-const passport = require('../middlewares/passport');
-require('dotenv').config(); // Load environment variables from .env file
+const axios = require("axios");
+const passport = require("../middlewares/passport");
+require("dotenv").config(); // Load environment variables from .env file
 
-
-const { User, Student }=require('../models/usersModel')
+const { User, Student } = require("../models/usersModel");
 const bcrypt = require("bcryptjs");
-const jwt = require('jsonwebtoken');
-const ActivityLog= require('../models/activityLog')
-const {transport,transport2} = require('../middlewares/sendMail');
+const jwt = require("jsonwebtoken");
+const ActivityLog = require("../models/activityLog");
+const { transport, transport2 } = require("../middlewares/sendMail");
 
-router.get('/google/callback', 
-  passport.authenticate('google', { session: false }),
+router.get(
+  "/google/callback",
+  passport.authenticate("google", { session: false }),
   (req, res) => {
-      const { token } = req.user;
+    const { token } = req.user;
 
-      res.cookie('Authorization', 'Bearer ' + token, {
-          expires: new Date(Date.now() + 8 * 3600000),
-          httpOnly: true,
-          secure: process.env.NODE_ENV === 'production',
-      });
+    res.cookie("Authorization", "Bearer " + token, {
+      expires: new Date(Date.now() + 8 * 3600000),
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+    });
 
-      res.redirect('http://localhost:5173/home');
+    res.redirect("http://localhost:5173/home");
   }
 );
 
-
-
-
 // Routes pour la gestion des utilisateurs
-const ocrController = require('../controllers/ocrController');
+const ocrController = require("../controllers/ocrController");
 
-const diplomaVerificationController = require('../controllers/diplomaVerificationController');
-
-
+const diplomaVerificationController = require("../controllers/diplomaVerificationController");
 
 // Routes pour la gestion des utilisateurs
 router.post("/signup", authController.signup);
 router.post("/signin", authController.signin);
 router.post("/signout", identifier, authController.signout);
 
-router.patch('/send-verification-code', identifier, authController.sendVerificationCode);
-router.patch('/verify-verification-code', identifier, authController.verifyVerificationCode);
-router.patch('/change-password', identifier, authController.changePassword);
-router.patch('/send-forgot-password-code', authController.sendForgotPasswordCode);
-router.patch('/verify-forgot-password-code', authController.verifyForgotPasswordCode);
+router.patch(
+  "/send-verification-code",
+  identifier,
+  authController.sendVerificationCode
+);
+router.patch(
+  "/verify-verification-code",
+  identifier,
+  authController.verifyVerificationCode
+);
+router.patch("/change-password", identifier, authController.changePassword);
+router.patch(
+  "/send-forgot-password-code",
+  authController.sendForgotPasswordCode
+);
+router.patch(
+  "/verify-forgot-password-code",
+  authController.verifyForgotPasswordCode
+);
 
-
-router.get('/getUserSessionDuration', authController.getActivityLogs )
-router.get('/activity-logs', authController.getActivityLogs )
+router.get("/getUserSessionDuration", authController.getActivityLogs);
+router.get("/activity-logs", authController.getActivityLogs);
 // Route pour démarrer l'authentification LinkedIn
 
 //******************************************************************************Linkedin********************************************************* */
@@ -61,7 +69,8 @@ const CLIENT_ID = process.env.LINKEDIN_CLIENT_ID;
 const CLIENT_SECRET = process.env.LINKEDIN_CLIENT_SECRET;
 const REDIRECT_URI = process.env.LINKEDIN_REDIRECT_URI;
 const generateRandomPassword = (length = 12) => {
-  const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
+  const charset =
+    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
   let password = "";
   for (let i = 0; i < length; i++) {
     password += charset.charAt(Math.floor(Math.random() * charset.length));
@@ -105,7 +114,7 @@ router.get("/callback", async (req, res) => {
     const userCountry = profileResponse.data.locale.country;
 
     // Extraire le prénom et le nom de famille
-    const [firstName, lastName] = userName.split(' ');
+    const [firstName, lastName] = userName.split(" ");
 
     // Recherchez l'utilisateur par email
     let user = await User.findOne({ email: userEmail });
@@ -151,36 +160,38 @@ router.get("/callback", async (req, res) => {
   }
 });
 
-router.post('/ocr', ocrController.uploadImage);
-router.post('/upload-image', ocrController.uploadImage);
-router.get('/users', authController.getAllUsers);
-router.get("/facebook", passport.authenticate('facebook', { scope: ['email', 'public_profile', 'user_birthday', 'user_location'] }));
-router.post('/verify-diploma', diplomaVerificationController.verifyDiploma);
-router.post('/upload-profile-image', authController.uploadProfileImage);
-router.get("/facebook/callback", 
-  passport.authenticate('facebook', { session: false }),
+router.post("/ocr", ocrController.uploadImage);
+router.post("/upload-image", ocrController.uploadImage);
+router.get("/users", authController.getAllUsers);
+router.get(
+  "/facebook",
+  passport.authenticate("facebook", {
+    scope: ["email", "public_profile", "user_birthday", "user_location"],
+  })
+);
+router.post("/verify-diploma", diplomaVerificationController.verifyDiploma);
+router.post("/upload-profile-image", authController.uploadProfileImage);
+router.get(
+  "/facebook/callback",
+  passport.authenticate("facebook", { session: false }),
   (req, res) => {
     const { token } = req.user;
 
     // Envoyer le token sous forme de cookie ou de réponse JSON
-    res.cookie('Authorization', 'Bearer ' + token, {
+    res.cookie("Authorization", "Bearer " + token, {
       expires: new Date(Date.now() + 8 * 3600000),
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: process.env.NODE_ENV === "production",
     });
-    
 
-    res.json({ success: true, token, message: 'Facebook login successful!' });
+    res.json({ success: true, token, message: "Facebook login successful!" });
   }
 );
-
-
 
 router.post("/student-info", authController.studentInfo);
 
 // Route pour les informations des enseignants
 router.post("/teacher-info", authController.teacherInfo);
-
 
 router.patch(
   "/send-verification-code",
@@ -202,8 +213,10 @@ router.patch(
   authController.verifyForgotPasswordCode
 );
 
-router.get('/activity-logs', identifier, authController.getActivityLogs);
-router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
-
+router.get("/activity-logs", identifier, authController.getActivityLogs);
+router.get(
+  "/google",
+  passport.authenticate("google", { scope: ["profile", "email"] })
+);
 
 module.exports = router;
