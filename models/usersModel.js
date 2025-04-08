@@ -60,6 +60,7 @@ const userSchema = new mongoose.Schema(
     firstName: { type: String, required: false },
     lastName: { type: String, required: false },
     age: { type: Number, required: false },
+	provider: { type: String, required: false },  //facebook 
     email: { type: String, required: true, unique: true },
     verified: {
       type: Boolean,
