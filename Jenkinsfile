@@ -18,13 +18,7 @@ pipeline {
             }
         }
 
-        stage('Build application') {
-            steps {
-                script {
-                    sh 'npm run build-dev'
-                }
-            }
-        }
+        
 
         stage('SonarQube Analysis') {
             steps {
@@ -33,6 +27,14 @@ pipeline {
                     withSonarQubeEnv() {
                         sh "${scannerHome}/bin/sonar-scanner"
                     }
+                }
+            }
+        }
+
+        stage('Build application') {
+            steps {
+                script {
+                    sh 'npm run build-dev'
                 }
             }
         }
