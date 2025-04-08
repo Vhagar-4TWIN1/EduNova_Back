@@ -18,6 +18,7 @@ const session = require('express-session');
 const levelRoutes = require('./routers/levelRouter');
 const questionRouter = require('./routers/questionRoutes');
 
+
 console.log("MongoDB URI:", process.env.MONGODB_URI); // Debugging
 console.log("Port:", process.env.PORT);
 console.log("Session Secret:", process.env.SESSION_SECRET);
