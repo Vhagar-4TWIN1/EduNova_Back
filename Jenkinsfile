@@ -28,7 +28,7 @@ pipeline {
                     }
                 }
             }
-        }
+        
 
         stage('Build application') {
             steps {
