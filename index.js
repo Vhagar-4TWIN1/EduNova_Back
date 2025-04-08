@@ -16,6 +16,7 @@ const passport = require('./middlewares/passport');
 const session = require('express-session');
 const levelRoutes = require('./routers/levelRouter');
 
+
 console.log("MongoDB URI:", process.env.MONGODB_URI); // Debugging
 console.log("Port:", process.env.PORT);
 console.log("Session Secret:", process.env.SESSION_SECRET);
