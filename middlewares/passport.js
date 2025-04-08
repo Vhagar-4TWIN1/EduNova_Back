@@ -3,6 +3,7 @@ const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const FacebookStrategy = require('passport-facebook').Strategy;
 const jwt = require('jsonwebtoken');
 const { User } = require("../models/usersModel");
+
 const bcrypt = require('bcrypt');
 const { signin } = require("../controllers/authController");
 const fs = require("fs");
@@ -130,62 +131,82 @@ passport.use(
 
 
 // Facebook Strategy
-passport.use(
-  new FacebookStrategy(
-    {
-      clientID: process.env.FACEBOOK_APP_ID,
-      clientSecret: process.env.FACEBOOK_APP_SECRET,
-      callbackURL: 'http://localhost:3000/api/auth/facebook/callback',
-      profileFields: ['id', 'emails', 'name', 'birthday', 'location'],
-    },
-    async (accessToken, refreshToken, profile, done) => {
-      try {
-        console.log('Facebook Profile:', profile);
+passport.use(new FacebookStrategy({
+  clientID: process.env.FACEBOOK_APP_ID,
+  clientSecret: process.env.FACEBOOK_APP_SECRET,
+  callbackURL: 'http://localhost:3000/api/auth/facebook/callback',
+  profileFields: ['id', 'emails', 'name', 'birthday', 'location']
+}, async (accessToken, refreshToken, profile, done) => {
+  try {
+    console.log('Facebook Profile:', profile);
 
-        let user = await User.findOne({ email: profile.emails[0]?.value });
-
-        let age = null;
-        if (profile._json.birthday) {
-          const birthDate = new Date(profile._json.birthday);
-          const today = new Date();
-          age = today.getFullYear() - birthDate.getFullYear();
-        }
-
-        let country = profile._json.location ? profile._json.location.name : 'Unknown';
-
-        const now = Math.floor(Date.now() / 1000);
-        const firstName = profile.name.givenName.toLowerCase();
-        const lastName = profile.name.familyName.toUpperCase();
-        const generatedPassword = `${now}${firstName}${lastName}`;
-
-        const hashedPassword = await bcrypt.hash(generatedPassword, 10);
-
-        if (!user) {
-          console.log('Creating new user...');
-          user = new User({
-            firstName: profile.name.givenName,
-            lastName: profile.name.familyName,
-            email: profile.emails[0]?.value,
-            age: age || 18,
-            country: country,
-            password: hashedPassword,
-            verified: true,
-          });
-          await user.save();
-        } else {
-          user.password = hashedPassword;
-          await user.save();
-        }
-
-        console.log('Generated Password (Before Hashing):', generatedPassword); // Debug
-        done(null, user);
-      } catch (error) {
-        console.error('Error in FacebookStrategy:', error);
-        done(error, null);
-      }
+    if (!profile.emails || !profile.emails[0]) {
+      throw new Error('No email found in Facebook profile');
     }
-  )
-);
+
+    const email = profile.emails[0].value;
+    let user = await User.findOne({ email });
+
+    // Calculate age from birthday if available
+    let age = 18; // default
+    if (profile._json.birthday) {
+      const birthDate = new Date(profile._json.birthday);
+      age = new Date().getFullYear() - birthDate.getFullYear();
+    }
+
+    // Get country from location if available
+    const country = profile._json.location?.name || 'Unknown';
+
+    if (!user) {
+      // User does not exist, create a new one
+      user = new Student({
+        firstName: profile.name.givenName,
+        lastName: profile.name.familyName || '',
+        email: email,
+        age: age,
+        country: country,
+        password: await bcrypt.hash(uuidv4(), 10), // Random password
+        verified: true,
+        role: 'Student',
+        identifier: uuidv4(),
+        situation: 'Active',
+        disease: 'None',
+        socialCase: false,
+        provider: 'facebook' // Store the provider (Facebook)
+      });
+
+      await user.save();
+      console.log('New Facebook user created:', user);
+    } else {
+      // User exists, update the user's details (if needed)
+      user.firstName = profile.name.givenName;
+      user.lastName = profile.name.familyName || '';
+      user.age = age;
+      user.country = country;
+      await user.save();
+      console.log('User data updated:', user);
+    }
+
+    // Generate JWT token
+    const token = jwt.sign(
+      {
+        userId: user._id,
+        email: user.email,
+        role: user.role,
+        firstName: user.firstName,
+        lastName: user.lastName
+      },
+      process.env.TOKEN_SECRET,
+      { expiresIn: '8h' }
+    );
+
+    return done(null, { user, token });
+  } catch (error) {
+    console.error('Facebook authentication error:', error);
+    return done(error);
+  }
+}));
+
 
 // Serialize and Deserialize User
 passport.serializeUser((user, done) => {
@@ -200,5 +221,6 @@ passport.deserializeUser(async (id, done) => {
     done(error, null);
   }
 });
+
 
 module.exports = passport;
