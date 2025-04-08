@@ -56,18 +56,35 @@ module.exports = mongoose.model('User', userSchema);
 
 const userSchema = new mongoose.Schema(
 	{
-	  idUser: { type: String, unique: true, required: true },
-	  firstName: { type: String, required: true },
-	  lastName: { type: String, required: true },
-	  age: { type: Number, required: true },
+	//   idUser: { type: String, unique: true, required: true },
+	  firstName: { type: String, required: false },
+	  lastName: { type: String, required: false },
+	  age: { type: Number, required: false },
 	  email: { type: String, required: true, unique: true },
 	  verified: {
 		type: Boolean,
 		default: false,
 	},
-	  password: { type: String, required: true },
-	  country: { type: String, required: true },
-	  role: { type: String, required: true, enum: ["Admin", "Teacher", "Student"] },
+	verificationCode: {
+		type: String,
+		select: false,
+	},
+	verificationCodeValidation: {
+		type: Number,
+		select: false,
+	},
+	forgotPasswordCode: {
+		type: String,
+		select: false,
+	},
+	forgotPasswordCodeValidation: {
+		type: Number,
+		select: false,
+	},
+	  password: { type: String, required: false },
+	  provider: { type: String, required: false },  //facebook 
+	  country: { type: String, required: false },
+	  role: { type: String, required: false, enum: ["Admin", "Teacher", "Student"] },
 	  photo: { type: String }, // User profile photo path
 	},
 	{ discriminatorKey: "role", timestamps: true }
