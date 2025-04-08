@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const lessonController = require("../controllers/lessonController");
+const { getLessonAudio } = require("../controllers/lessonController");
 const { lessonValidation } = require("../middlewares/validator");
 const upload = require("../middlewares/upload");
 const passport = require("../middlewares/passport");
@@ -18,7 +19,7 @@ router.patch(
   lessonController.updateLesson
 );
 router.delete("/:id", authenticate, lessonController.deleteLesson);
-router.get("/:id/tts", authenticate, lessonController.getLessonWithTTS);
+router.get("/:id/tts", authenticate, lessonController.getLessonAudio);
 router.post("/:id/annotation", authenticate, lessonController.addAnnotation);
 router.get("/:id/audio", authenticate, lessonController.getLessonAudio);
 
