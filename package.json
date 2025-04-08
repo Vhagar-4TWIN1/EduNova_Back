@@ -7,7 +7,7 @@
 		"start": "node --env-file=.env index.js",
 		"dev": "node --watch --trace-warnings --env-file=.env index.js",
 		"test": "echo \"No test specified\" && exit 0",
-		"build-dev": "node node_modules/webpack/bin/webpack.js --config webpack.dev.js"
+		"build-dev": "npx webpack --config webpack.config.js"
 	},
 	"author": "Assil",
 	"license": "ISC",
