@@ -108,11 +108,10 @@ const teacherSchema = new mongoose.Schema({
   number: { type: String },
   bio: { type: String },
   cv: { type: String },
-  diplomas: [{ type: String }],
   experience: { type: String },
   cin: { type: String, unique: true, sparse: true },
   workCertificate: { type: String },
-  diplomas: [{ type: String }],
+ 
 });
 const Teacher = User.discriminator("Teacher", teacherSchema);
 
