@@ -57,5 +57,40 @@ pipeline {
                 }
             }
         }
+
+        stage('Run application ') {
+     steps{  
+         script {
+           docker.withRegistry("http://"+registry, registryCredentials ) {
+
+            sh('docker pull $registry/nodemongoapp:6.0 ')
+
+            sh('docker-compose up -d ')
+          }
+        }
+      }
+    }
+
+
+        stage("Run Prometheus"){
+      steps{
+ 
+        script{
+
+        sh('docker start prometheus')
+
+        }
+      }
+    }
+     stage("Run Grafana"){ 
+      steps{
+
+        script{
+        sh('docker start grafana')
+        }
+      }
+    }
+
+        
     }
 }
