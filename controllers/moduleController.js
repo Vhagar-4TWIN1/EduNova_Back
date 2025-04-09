@@ -36,3 +36,14 @@ exports.deleteModule = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
+exports.getModuleWithId = async (req, res) => {
+    try {
+        const module = await Module.findById(req.params.id);
+        if (!module) {
+            return res.status(404).json({ message: 'Module not found' });
+        }
+        res.json(module);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
