@@ -9,10 +9,11 @@ const annotationSchema = new mongoose.Schema({
 const lessonSchema = new mongoose.Schema({
   title: { type: String, required: true },
   content: { type: String, required: true },
-  typeLesson: { type: String, enum: ['pdf', 'video', 'photo', 'image', 'audio', 'text']    , required: true },
+  typeLesson: { type: String, enum: ['pdf', 'video', 'photo', 'image', 'audio', 'text','link', 'form']    , required: true },
   fileUrl: { type: String, required: true },
   public_id: {type :String},
   LMScontent: { type: String },
+  moduleId: { type: mongoose.Schema.Types.ObjectId, ref: 'Module', required: false },
   annotations: [annotationSchema],
 }, { timestamps: true });
 

@@ -8,7 +8,7 @@
 		"start": "node index.js",
 		"dev": "node --watch --trace-warnings --env-file=.env index.js",
 		"test": "echo \"No test specified\" && exit 0",
-		"build-dev": "webpack --config webpack.dev.js"
+		"build-dev": "echo \"No build needed for backend\""
 	},
 	"author": "Assil",
 	"license": "ISC",
@@ -55,5 +55,9 @@
 		"sharp": "^0.33.5",
 		"tesseract.js": "^6.0.1",
 		"uuid": "^11.1.0"
+	},
+	"devDependencies": {
+		"webpack": "^5.99.3",
+		"webpack-cli": "^6.0.1"
 	}
 }

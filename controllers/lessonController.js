@@ -19,7 +19,6 @@ const { generateAnnotations } = require("../utils/generateAnnotations");
 
 
 const client = new speech.SpeechClient();
-const GOOGLE_ADMIN_EMAIL = "admin@tondomaine.com";
 ffmpeg.setFfmpegPath(ffmpegPath);
 
 exports.getLessonAudio = async (req, res) => {
@@ -28,6 +27,17 @@ exports.getLessonAudio = async (req, res) => {
     if (!lesson) return res.status(404).json({ message: "Lesson not found" });
 
     const fileUrl = lesson.fileUrl;
+
+    if (
+      !fileUrl ||
+      (!fileUrl.includes("drive.google.com") &&
+       !fileUrl.includes("cloudinary.com") &&
+       !fileUrl.includes("res.cloudinary.com") &&
+       !fileUrl.includes("uploadthing.com"))
+    ) {
+      return res.status(400).json({ message: "Unsupported or invalid file URL for TTS/STT." });
+    }
+
     const fileExt = path.extname(fileUrl).toLowerCase();
     const tempDir = path.join(__dirname, "../temp");
     if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir);
@@ -97,6 +107,16 @@ exports.getGoogleLessons = async (req, res) => {
   }
 };
 
+exports.getLessonsByModule = async (req, res) => {
+  try {
+    const { moduleId } = req.params;
+    const lessons = await Lesson.find({ moduleId });
+    res.status(200).json(lessons);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 
 
 exports.createLesson = async (req, res) => {
@@ -104,12 +124,11 @@ exports.createLesson = async (req, res) => {
   if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
 
   try {
-    const { title, content, typeLesson, fileUrl, public_id } = req.body;
+    const { title, content, typeLesson, fileUrl, public_id,moduleId } = req.body;
     if (!fileUrl) return res.status(400).json({ error: "Missing file URL" });
 
-    const lesson = await Lesson.create({ title, content, typeLesson, fileUrl, public_id });
+    const lesson = await Lesson.create({ title, content, typeLesson, fileUrl, public_id,moduleId });
 
-    // Generate AI annotations after creation
     const aiAnnotations = await generateAnnotations(lesson);
     lesson.annotations.push({ userId: null,source: 'ai', highlights: aiAnnotations.highlights, notes: aiAnnotations.notes });
     await lesson.save();
