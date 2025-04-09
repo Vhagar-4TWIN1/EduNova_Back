@@ -18,6 +18,7 @@ const session = require("express-session");
 const levelRoutes = require("./routers/levelRouter");
 const questionRouter = require("./routers/questionRoutes");
 const aiRoute = require("./routers/aiRouter");
+const userProgressRoutes = require("./routers/userProgressRoutes");
 
 
 console.log("MongoDB URI:", process.env.MONGODB_URI); // Debugging
@@ -76,6 +77,7 @@ app.use("/api/users", userRouter);
 app.use("/api/lessons", lessonRouter);
 app.use("/api/badges", badgeRouter);
 app.use("/api/ai", aiRoute);
+app.use("/api/progress", userProgressRoutes);
 
 app.get("/", (req, res) => {
   res.json({ message: "Hello from the server" });
