@@ -15,8 +15,12 @@ const authRouter = require('./routers/authRouter');
 const lessonRouter = require('./routers/lessonRouter');
 const passport = require('./middlewares/passport');
 const session = require('express-session');
+const { User } = require('./models/usersModel'); // <-- make sure this is the correct path
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 const levelRoutes = require('./routers/levelRouter');
 const questionRouter = require('./routers/questionRoutes');
+const googleClassroomRouter = require('./routers/googleClassroomRouter');
 
 console.log("MongoDB URI:", process.env.MONGODB_URI); // Debugging
 console.log("Port:", process.env.PORT);
@@ -68,12 +72,75 @@ app.use(passport.session());
 // Routes
 app.use('/api/level', levelRoutes);
 app.use('/api/auth', authRouter);
+app.use('/api/google', googleClassroomRouter);
 app.use('/api/users', userRouter);
 app.use('/api/lessons', lessonRouter);
 app.use('/api/badges', badgeRouter);
 app.get('/', (req, res) => {
     res.json({ message: 'Hello from the server' });
 });
+
+const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
+app.get('/oauth', (req, res) => {
+    const redirect_uri = 'http://localhost:3000/auth';
+    res.redirect(`https://github.com/login/oauth/authorize?client_id=${process.env.CLIENT_ID}&redirect_uri=${redirect_uri}&scope=user:email`);
+  });
+  
+  app.get('/auth', async (req, res) => {
+    const { code } = req.query;
+    try {
+      const tokenRes = await axios.post('https://github.com/login/oauth/access_token', {
+        client_id: process.env.CLIENT_ID,
+        client_secret: process.env.CLIENT_SECRET,
+        code,
+      }, {
+        headers: { accept: 'application/json' },
+      });
+  
+      const token = tokenRes.data.access_token;
+      const userRes = await axios.get('https://api.github.com/user', {
+        headers: { Authorization: `token ${token}` },
+      });
+      const emailsRes = await axios.get('https://api.github.com/user/emails', {
+        headers: { Authorization: `token ${token}` },
+      });
+  
+      const githubUser = userRes.data;
+      const primaryEmail = emailsRes.data.find(email => email.primary && email.verified)?.email 
+                  || emailsRes.data[0]?.email 
+                  || `${githubUser.login}@github.com`;
+  
+      let user = await User.findOne({ email: primaryEmail });
+  
+      if (!user) {
+        const randomPassword = Math.random().toString(36).slice(-8);
+        const hashedPassword = await bcrypt.hash(randomPassword, 10);
+      
+        user = new User({
+          firstName: githubUser.name?.split(' ')[0] || githubUser.login,
+          lastName: githubUser.name?.split(' ')[1] || '',
+          email: primaryEmail,
+          password: hashedPassword,
+          country: 'Unknown',
+          role: 'Student',
+          photo: githubUser.avatar_url,
+        });
+      
+        await user.save();
+      }
+  
+      const jwtToken = jwt.sign({
+        userId: user._id,
+        email: user.email,
+        role: user.role,
+      }, process.env.TOKEN_SECRET, { expiresIn: '8h' });
+  
+      res.redirect(`${FRONTEND_URL}/home?token=${jwtToken}`);
+    } catch (err) {
+      console.error('GitHub OAuth Error:', err.response?.data || err.message || err);
+      res.status(500).json({ error: 'GitHub OAuth failed', details: err.response?.data || err.message });
+    }
+  });
 
 // LinkedIn OAuth Strategy
 const LinkedInStrategy = require('passport-linkedin-oauth2').Strategy;
