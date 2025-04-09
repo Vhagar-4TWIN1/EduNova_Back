@@ -28,7 +28,7 @@ app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 app.use(cors({
     origin: 'http://localhost:5173',  // CORS autorisé pour le frontend React
     credentials: true,               // Autorise l'envoi de cookies
-    allowedHeaders: ['Authorization', 'Content-Type'] // En-têtes autorisés
+    allowedHeaders: ['Authorization', 'Content-Type' , 'recaptcha-token' , 'x-access-token'] // En-têtes autorisés
 }));
 app.use(cookieParser());
 app.use(express.json());
