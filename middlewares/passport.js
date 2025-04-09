@@ -102,7 +102,7 @@ passport.use(
             firstName: profile.name.givenName,
             lastName: profile.name.familyName,
             role: 'Student',
-            photo: savedPath
+            photo: "localhost:3000/"+savedPath
 
           });
           await user.save();
