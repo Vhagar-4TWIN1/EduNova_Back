@@ -13,6 +13,7 @@ const SCOPES = [
   'https://www.googleapis.com/auth/classroom.courses.readonly',
   'https://www.googleapis.com/auth/classroom.coursework.me',
   'https://www.googleapis.com/auth/classroom.student-submissions.me.readonly',
+'https://www.googleapis.com/auth/drive.readonly'
 ];
 
 router.get('/auth', (req, res) => {
@@ -147,7 +148,9 @@ router.post('/import-lessons', async (req, res) => {
 
     const coursesRes = await classroom.courses.list();
     const allCourses = coursesRes.data.courses || [];
+    const drive = google.drive({ version: 'v3', auth: oauth2Client });
 
+    
     for (const course of allCourses) {
       const courseWorksRes = await classroom.courses.courseWork.list({
         courseId: course.id,
@@ -155,18 +158,52 @@ router.post('/import-lessons', async (req, res) => {
 
       for (const work of courseWorksRes.data.courseWork || []) {
         if (lessonIds.includes(work.id)) {
+          let fileUrl = work.alternateLink;
+          let typeLesson = "text"; // fallback
+      
+          if (work.materials && work.materials.length > 0) {
+            for (const material of work.materials) {
+              if (material.driveFile) {
+                const driveFile = material.driveFile.driveFile;
+                const mimeType = driveFile?.mimeType || "";
+                const driveMeta = await drive.files.get({
+                  fileId: driveFile.id,
+                  fields: 'webViewLink, mimeType'
+                });
+
+                fileUrl = driveMeta.data.webViewLink;
+                typeLesson = mimeType.startsWith("video/") ? "video" :
+                             mimeType.startsWith("audio/") ? "audio" :
+                             mimeType.startsWith("image/") ? "photo" :
+                             mimeType === "application/pdf" ? "pdf" : "file";
+                break;
+              } else if (material.link) {
+                typeLesson = "link";
+                fileUrl = material.link.url;
+                break;
+              } else if (material.youtubeVideo) {
+                typeLesson = "video";
+                fileUrl = material.youtubeVideo.alternateLink;
+                break;
+              } else if (material.form) {
+                typeLesson = "form";
+                fileUrl = material.form.formUrl;
+                break;
+              }
+            }
+          }
           const newLesson = new Lesson({
             title: work.title || 'Untitled',
             content: work.description?.trim() || 'No content provided by Google',
-            typeLesson: 'text',
-            fileUrl: work.alternateLink,
+            fileUrl,
+            typeLesson,
             LMScontent: 'google-classroom',
           });
-
+      
           await newLesson.save();
           importedLessons.push(newLesson);
         }
-      }
+      }      
     }
 
     res.status(201).json({
