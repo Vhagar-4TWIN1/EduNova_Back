@@ -9,6 +9,8 @@ const { execSync } = require("child_process");
 // Use CommonJS import style for OpenAI
 const OpenAI = require("openai");
 
+
+
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 });
@@ -172,9 +174,6 @@ ${rawText.slice(0, 3000)}
 /**
  * Configure OpenAI API client
  */
-const configuration = new Configuration({
-  apiKey: process.env.OPENAI_API_KEY,
-});
 
 /**
  * Generate annotations based on the lesson file content.
