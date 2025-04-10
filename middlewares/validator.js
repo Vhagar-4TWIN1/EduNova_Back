@@ -19,19 +19,27 @@ exports.signupSchema = Joi.object({
 
 	role: Joi.string().valid('Admin', 'Teacher', 'Student').required(),
 
+	
+
+
+	workCertificate: Joi.string().allow('').optional(), 
 	// Optional fields per role
-	cin: Joi.string().optional(),
-	number: Joi.string().optional(),
+	cin: Joi.string().allow('').optional(),
+	number: Joi.string().allow('').optional(),
 
-	bio: Joi.string().optional(),
-	cv: Joi.string().optional(),
-	diplomas: Joi.array().items(Joi.string()).optional(),
-	experience: Joi.string().optional(),
+	bio: Joi.string().allow('').optional(),
+	cv: Joi.string().allow('').optional(),
+	experience: Joi.string().allow('').optional(),
 
-	identifier: Joi.string().optional(),
-	situation: Joi.string().optional(),
-	disease: Joi.string().optional(),
+	identifier: Joi.string().allow('').optional(),
+	situation: Joi.string().allow('').optional(),
+	disease: Joi.string().allow('').optional(),
 	socialCase: Joi.boolean().optional()
+}).custom((value, helpers) => {
+	if (value.role === 'Teacher' && !value.workCertificate) {
+	  return helpers.message('"workCertificate" is required for Teachers');
+	}
+	return value;
 });
 
 exports.signinSchema = Joi.object({
