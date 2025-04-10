@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 const axios = require('axios');
 const path = require('path');
 const express = require('express');
@@ -21,6 +22,31 @@ const jwt = require('jsonwebtoken');
 const levelRoutes = require('./routers/levelRouter');
 const questionRouter = require('./routers/questionRoutes');
 const googleClassroomRouter = require('./routers/googleClassroomRouter');
+=======
+const axios = require("axios");
+const path = require("path");
+const express = require("express");
+const helmet = require("helmet");
+const cors = require("cors");
+const cookieParser = require("cookie-parser");
+const mongoose = require("mongoose");
+require("dotenv").config();
+const bodyParser = require("body-parser");
+const app = express();
+const badgeRouter = require("./routers/badgeRouter");
+const moduleRouter = require("./routers/moduleRouter");
+const userRouter = require("./routers/userRouter");
+const authRouter = require("./routers/authRouter");
+const lessonRouter = require("./routers/lessonRouter");
+const passport = require("./middlewares/passport");
+const session = require("express-session");
+const levelRoutes = require("./routers/levelRouter");
+const questionRouter = require("./routers/questionRoutes");
+const aiRoute = require("./routers/aiRouter");
+const userProgressRoutes = require("./routers/userProgressRoutes");
+const performanceRoutes = require('./routers/performanceRouter');
+>>>>>>> origin/main
+
 
 console.log("MongoDB URI:", process.env.MONGODB_URI); // Debugging
 console.log("Port:", process.env.PORT);
@@ -31,13 +57,18 @@ app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 app.use(cors({
     origin: 'http://localhost:5173',  // CORS autorisé pour le frontend React
     credentials: true,               // Autorise l'envoi de cookies
+<<<<<<< HEAD
     allowedHeaders: ['Authorization', 'Content-Type'] // En-têtes autorisés
+=======
+    allowedHeaders: ['Authorization', 'Content-Type' , 'recaptcha-token' , 'x-access-token'] // En-têtes autorisés
+>>>>>>> origin/main
 }));
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Serve static files from uploads directory
+<<<<<<< HEAD
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Database connection
@@ -49,10 +80,24 @@ mongoose
     .catch((error) => {
         console.error('MongoDB connection error:', error);
     });
+=======
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+
+// Database connection
+mongoose
+  .connect(process.env.MONGODB_URI)
+  .then(() => {
+    console.log("Connected to MongoDB");
+  })
+  .catch((error) => {
+    console.error("MongoDB connection error:", error);
+  });
+>>>>>>> origin/main
 
 // Session setup
 
 app.use(
+<<<<<<< HEAD
     session({
         secret: process.env.SESSION_SECRET,
         resave: false,
@@ -164,10 +209,70 @@ passport.use(new LinkedInStrategy({
             });
             await newUser.save();
             return done(null, newUser);
+=======
+  session({
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: true,
+    cookie: {
+      secure: process.env.NODE_ENV === "production", // En mode développement, mettez secure: false
+      httpOnly: true, // Cela empêche l'accès aux cookies via JavaScript
+      sameSite: "strict", // Vous pouvez aussi essayer 'lax' si cela pose problème
+      maxAge: 3600000, // Durée de validité du cookie (1 heure ici)
+    },
+  })
+);
+
+app.use("/module", moduleRouter);
+app.use(passport.initialize());
+app.use(passport.session());
+// Routes
+app.use('/api/performance', performanceRoutes);
+app.use("/api/level", levelRoutes);
+app.use("/api/auth", authRouter);
+app.use("/api/users", userRouter);
+app.use("/api/lessons", lessonRouter);
+app.use("/api/badges", badgeRouter);
+app.use("/api/ai", aiRoute);
+app.use("/api/progress", userProgressRoutes);
+
+app.get("/", (req, res) => {
+  res.json({ message: "Hello from the server" });
+});
+
+// LinkedIn OAuth Strategy
+const LinkedInStrategy = require("passport-linkedin-oauth2").Strategy;
+
+passport.use(
+  new LinkedInStrategy(
+    {
+      clientID: process.env.LINKEDIN_CLIENT_ID, // Clé API LinkedIn
+      clientSecret: process.env.LINKEDIN_CLIENT_SECRET, // Secret LinkedIn
+      callbackURL: "http://localhost:5173/auth/linkedin/callback", // URL de redirection après l'authentification
+      scope: ["r_emailaddress", "r_liteprofile"], // Permissions demandées
+    },
+    async (token, tokenSecret, profile, done) => {
+      try {
+        // Enregistrez ou mettez à jour l'utilisateur dans votre base de données
+        const existingUser = await User.findOne({
+          email: profile.emails[0].value,
+        });
+
+        if (!existingUser) {
+          const newUser = new User({
+            email: profile.emails[0].value,
+            linkedInId: profile.id,
+            name: profile.displayName,
+            token,
+          });
+          await newUser.save();
+          return done(null, newUser);
+>>>>>>> origin/main
         }
 
         // Retourner l'utilisateur existant
         return done(null, existingUser);
+<<<<<<< HEAD
     } catch (error) {
         console.error(error);
         return done(error, null);
@@ -177,10 +282,24 @@ passport.use(new LinkedInStrategy({
 // Sérialisation de l'utilisateur
 passport.serializeUser((user, done) => {
     done(null, user.id);
+=======
+      } catch (error) {
+        console.error(error);
+        return done(error, null);
+      }
+    }
+  )
+);
+
+// Sérialisation de l'utilisateur
+passport.serializeUser((user, done) => {
+  done(null, user.id);
+>>>>>>> origin/main
 });
 
 // Désérialisation de l'utilisateur
 passport.deserializeUser(async (id, done) => {
+<<<<<<< HEAD
     const user = await User.findById(id);
     done(null, user);
 });
@@ -193,6 +312,19 @@ app.get('/auth/facebook/callback',
   (req, res) => {
     res.json({
       message: 'Login successful!',
+=======
+  const user = await User.findById(id);
+  done(null, user);
+});
+
+app.use("/api/questions", questionRouter);
+app.get(
+  "/auth/facebook/callback",
+  passport.authenticate("facebook", { failureRedirect: "/login" }),
+  (req, res) => {
+    res.json({
+      message: "Login successful!",
+>>>>>>> origin/main
       user: req.user.user,
       token: req.user.token,
     });
@@ -200,5 +332,9 @@ app.get('/auth/facebook/callback',
 );
 
 app.listen(process.env.PORT || 3000, () => {
+<<<<<<< HEAD
 	console.log(`Listening on port ${process.env.PORT || 3000}...`);
+=======
+  console.log(`Listening on port ${process.env.PORT || 3000}...`);
+>>>>>>> origin/main
 });
