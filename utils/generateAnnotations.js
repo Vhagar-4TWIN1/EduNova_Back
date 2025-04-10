@@ -9,9 +9,6 @@ const { execSync } = require("child_process");
 // Use CommonJS import style for OpenAI
 const OpenAI = require("openai");
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
-});
 
 
 const openai = new OpenAI({

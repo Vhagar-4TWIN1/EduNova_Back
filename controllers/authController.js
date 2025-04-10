@@ -189,73 +189,6 @@ exports.signup = async (req, res) => {
 
     let newUser;
 
-<<<<<<< HEAD
-    switch (role) {
-      case "Admin":
-        newUser = await User.discriminators.Admin.create({
-          firstName,
-          lastName,
-          age,
-          email,
-          password: hashedPassword,
-          country,
-          photo,
-          role,
-          cin,
-          number,
-        });
-        break;
-      case "Teacher":
-        newUser = await User.discriminators.Teacher.create({
-          firstName,
-          lastName,
-          age,
-          email,
-          password: hashedPassword,
-          country,
-          photo,
-          role,
-          number,
-          bio,
-          cv,
-          diplomas,
-          experience,
-          cin,
-        });
-        break;
-      case "Student":
-        newUser = await User.discriminators.Student.create({
-          firstName,
-          lastName,
-          age,
-          email,
-          password: hashedPassword,
-          country,
-          photo,
-          role,
-          identifier,
-          situation,
-          disease,
-          socialCase,
-        });
-        break;
-      default:
-        return res.status(400).json({ success: false, message: "Invalid role!" });
-    }
-
-    res.status(201).json({
-      success: true,
-      message: `${role} created successfully!`,
-      user: {
-        id: newUser._id,
-        firstName: newUser.firstName,
-        lastName: newUser.lastName,
-        email: newUser.email,
-        role: newUser.role,
-        photo: newUser.photo,
-      },
-    });
-=======
     if (role === "Teacher") {
       // For teachers, we expect diploma verification to be done client-side first
       // The frontend should have already verified the diploma before submitting
@@ -352,7 +285,6 @@ exports.signup = async (req, res) => {
           photo: newUser.photo,
         },
       });
->>>>>>> origin/main
   } catch (error) {
     console.error("Signup error:", error);
     res.status(500).json({ success: false, message: error.message });
@@ -421,8 +353,6 @@ async function verifyDiploma(diplomaImage) {
   }
 }
 
-<<<<<<< HEAD
-=======
 // Add this helper function to authController.js
 async function verifyDiploma(diplomaImage) {
   try {
@@ -454,7 +384,6 @@ async function verifyDiploma(diplomaImage) {
   }
 }
 
->>>>>>> origin/main
 
 exports.signin = async (req, res) => {
   const { email, password } = req.body;
