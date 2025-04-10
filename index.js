@@ -26,15 +26,13 @@ console.log("MongoDB URI:", process.env.MONGODB_URI); // Debugging
 console.log("Port:", process.env.PORT);
 console.log("Session Secret:", process.env.SESSION_SECRET);
 
-app.use(bodyParser.json({ limit: "50mb" })); // Adjust size as needed
-app.use(bodyParser.urlencoded({ limit: "50mb", extended: true }));
-app.use(
-  cors({
-    origin: "http://localhost:5173", // CORS autorisé pour le frontend React
-    credentials: true, // Autorise l'envoi de cookies
-    allowedHeaders: ["Authorization", "Content-Type"], // En-têtes autorisés
-  })
-);
+app.use(bodyParser.json({ limit: '50mb' }));  // Adjust size as needed
+app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
+app.use(cors({
+    origin: 'http://localhost:5173',  // CORS autorisé pour le frontend React
+    credentials: true,               // Autorise l'envoi de cookies
+    allowedHeaders: ['Authorization', 'Content-Type' , 'recaptcha-token' , 'x-access-token'] // En-têtes autorisés
+}));
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
