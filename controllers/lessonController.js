@@ -9,7 +9,7 @@ const speech = require("@google-cloud/speech");
 const gTTS = require("gtts");
 const Tesseract = require("tesseract.js");
 const pdfParse = require("pdf-parse");
-
+const Modules = require("../models/module"); 
 const Lesson = require("../models/lesson");
 const { generateTTS } = require("../utils/textToSpeech");
 const { createCourse: createGoogleCourse } = require("../services/googleClassroomService");
@@ -110,13 +110,14 @@ exports.getGoogleLessons = async (req, res) => {
 exports.getLessonsByModule = async (req, res) => {
   try {
     const { moduleId } = req.params;
-    const lessons = await Lesson.find({ moduleId });
-    res.status(200).json(lessons);
+
+    const module = await Modules.findById(moduleId).populate('lessons');
+    res.status(200).json(module.lessons);
+    
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
-
 
 
 exports.createLesson = async (req, res) => {
@@ -143,22 +144,32 @@ exports.createLesson = async (req, res) => {
 exports.generateAIAnnotations = async (req, res) => {
   try {
     const lesson = await Lesson.findById(req.params.id);
-    if (!lesson) return res.status(404).json({ message: "Lesson not found" });
+    if (!lesson) {
+      return res.status(404).json({ message: "Lesson not found" });
+    }
 
     const aiAnnotations = await generateAnnotations(lesson);
+    // Add AI annotation to the lesson
     lesson.annotations.push({
-      userId: "ai-model", // or null if you prefer
       highlights: aiAnnotations.highlights,
       notes: aiAnnotations.notes,
     });
 
     await lesson.save();
-    res.status(200).json({ message: "AI annotations added", annotations: lesson.annotations });
+
+    res.status(200).json({
+      message: "AI annotations added successfully",
+      annotations: lesson.annotations,
+    });
   } catch (error) {
-    console.error("Annotation generation error:", error);
-    res.status(500).json({ error: error.message });
+    console.error("❌ Annotation generation error:", error);
+    res.status(500).json({
+      error: "Failed to generate and save AI annotations",
+      details: error.message,
+    });
   }
 };
+
 
 
 exports.getAllLessons = async (_, res) => {

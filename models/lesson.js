@@ -1,7 +1,6 @@
 const mongoose = require('mongoose');
 
 const annotationSchema = new mongoose.Schema({
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: false },
   highlights: [{ text: String, color: String }],
   notes: [{ content: String, createdAt: { type: Date, default: Date.now } }],
 });
