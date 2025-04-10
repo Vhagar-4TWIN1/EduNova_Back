@@ -102,7 +102,7 @@ passport.use(
             firstName: profile.name.givenName,
             lastName: profile.name.familyName,
             role: 'Student',
-            photo: "localhost:3000/"+savedPath
+            photo: savedPath
 
           });
           await user.save();
@@ -113,7 +113,7 @@ passport.use(
 
         // Generate JWT token
         const token = jwt.sign(
-          { userId: user._id, email: user.email, verified: user.verified,role: user.role,firstName:user.firstName,lastName:user.lastName,photo:user.photo },
+          { userId: user._id, email: user.email, verified: user.verified,firstName:user.firstName,lastName:user.lastName,photo:user.photo },
           process.env.TOKEN_SECRET,
           { expiresIn: '8h' }
         );

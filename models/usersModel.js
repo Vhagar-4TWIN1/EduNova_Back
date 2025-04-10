@@ -128,8 +128,6 @@ const studentSchema = new mongoose.Schema({
     default: "video",
   },
   interests: [{ type: String }],
-  achievedBadges: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Badge' }],
-
 });
 const Student = User.discriminator("Student", studentSchema);
 module.exports = { User, Admin, Teacher, Student };
