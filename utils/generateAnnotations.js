@@ -14,6 +14,11 @@ const openai = new OpenAI({
 });
 
 
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY
+});
+
+
 // Ensure temporary directory exists
 const tempDir = path.join(__dirname, "../temp");
 if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir);

@@ -23,17 +23,27 @@ const jwtOptions = {
 passport.use(
   new JwtStrategy(jwtOptions, async (jwtPayload, done) => {
     try {
+<<<<<<< HEAD
       console.log("📥 Decoded JWT payload:", jwtPayload); // 👈 Add this line
+=======
+>>>>>>> origin/main
       const user = await User.findById(jwtPayload.userId);
       if (user) return done(null, user);
       return done(null, false);
     } catch (err) {
+<<<<<<< HEAD
       console.error("❌ JWT Strategy error:", err);
+=======
+>>>>>>> origin/main
       return done(err, false);
     }
   })
 );
 
+<<<<<<< HEAD
+
+=======
+>>>>>>> origin/main
 // Google Strategy
 passport.use(
   new GoogleStrategy(

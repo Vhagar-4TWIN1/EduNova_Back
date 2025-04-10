@@ -5,8 +5,11 @@ const passport = require("passport");
 const multer = require('multer');
 const path = require('path');
 const fs = require ('fs');
+<<<<<<< HEAD
+=======
 const axios = require('axios');
 const { diplomaVerificationController } = require('./diplomaVerificationController');
+>>>>>>> origin/main
 
 
 const {
@@ -87,6 +90,33 @@ exports.uploadProfileImage = (req, res) => {
 };
 
 // Fonction pour l'inscription
+<<<<<<< HEAD
+exports.signup = async (req, res) => {
+  try {
+    // Get reCAPTCHA token from headers
+    const recaptchaToken = req.headers['recaptcha-token'];
+    
+    if (!recaptchaToken) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'reCAPTCHA token is required' 
+      });
+    }
+
+    // Verify reCAPTCHA with Google
+    const recaptchaResponse = await axios.post(
+      `https://www.google.com/recaptcha/api/siteverify?secret=${process.env.RECAPTCHA_SECRET_KEY}&response=${recaptchaToken}`
+    );
+
+    if (!recaptchaResponse.data.success) {
+      console.log('reCAPTCHA verification details:', recaptchaResponse.data);
+      return res.status(400).json({ 
+        success: false, 
+        message: 'reCAPTCHA verification failed' 
+      });
+    }
+
+=======
 // In authController.js - modify the signup function
 // Modified signup function
 exports.signup = async (req, res) => {
@@ -114,6 +144,7 @@ exports.signup = async (req, res) => {
       });
     }
 
+>>>>>>> origin/main
     const {
       firstName,
       lastName,
@@ -123,11 +154,21 @@ exports.signup = async (req, res) => {
       country,
       photo,
       role,
+<<<<<<< HEAD
+      // admin fields
       cin,
       number,
       bio,
       cv,
       experience,
+      // student fields
+=======
+      cin,
+      number,
+      bio,
+      cv,
+      experience,
+>>>>>>> origin/main
       identifier,
       situation,
       disease,
@@ -148,6 +189,73 @@ exports.signup = async (req, res) => {
 
     let newUser;
 
+<<<<<<< HEAD
+    switch (role) {
+      case "Admin":
+        newUser = await User.discriminators.Admin.create({
+          firstName,
+          lastName,
+          age,
+          email,
+          password: hashedPassword,
+          country,
+          photo,
+          role,
+          cin,
+          number,
+        });
+        break;
+      case "Teacher":
+        newUser = await User.discriminators.Teacher.create({
+          firstName,
+          lastName,
+          age,
+          email,
+          password: hashedPassword,
+          country,
+          photo,
+          role,
+          number,
+          bio,
+          cv,
+          diplomas,
+          experience,
+          cin,
+        });
+        break;
+      case "Student":
+        newUser = await User.discriminators.Student.create({
+          firstName,
+          lastName,
+          age,
+          email,
+          password: hashedPassword,
+          country,
+          photo,
+          role,
+          identifier,
+          situation,
+          disease,
+          socialCase,
+        });
+        break;
+      default:
+        return res.status(400).json({ success: false, message: "Invalid role!" });
+    }
+
+    res.status(201).json({
+      success: true,
+      message: `${role} created successfully!`,
+      user: {
+        id: newUser._id,
+        firstName: newUser.firstName,
+        lastName: newUser.lastName,
+        email: newUser.email,
+        role: newUser.role,
+        photo: newUser.photo,
+      },
+    });
+=======
     if (role === "Teacher") {
       // For teachers, we expect diploma verification to be done client-side first
       // The frontend should have already verified the diploma before submitting
@@ -244,6 +352,7 @@ exports.signup = async (req, res) => {
           photo: newUser.photo,
         },
       });
+>>>>>>> origin/main
   } catch (error) {
     console.error("Signup error:", error);
     res.status(500).json({ success: false, message: error.message });
@@ -281,6 +390,71 @@ async function verifyDiploma(diplomaImage) {
   }
 }
 
+// Add this helper function to authController.js
+async function verifyDiploma(diplomaImage) {
+  try {
+    // Create a mock request object for the verification controller
+    const mockReq = {
+      file: {
+        path: diplomaImage, // This should be the path to the uploaded image
+        originalname: 'diploma.jpg'
+      },
+      user: {} // Mock user object
+    };
+    
+    const mockRes = {
+      status: (code) => ({
+        json: (data) => data
+      })
+    };
+
+    // Call the verification controller
+    const result = await diplomaVerificationController.verifyDiploma(mockReq, mockRes);
+    return result;
+  } catch (error) {
+    console.error('Diploma verification error:', error);
+    return {
+      success: false,
+      message: 'Diploma verification failed',
+      errors: { system: 'Verification process error' }
+    };
+  }
+}
+
+<<<<<<< HEAD
+=======
+// Add this helper function to authController.js
+async function verifyDiploma(diplomaImage) {
+  try {
+    // Create a mock request object for the verification controller
+    const mockReq = {
+      file: {
+        path: diplomaImage, // This should be the path to the uploaded image
+        originalname: 'diploma.jpg'
+      },
+      user: {} // Mock user object
+    };
+    
+    const mockRes = {
+      status: (code) => ({
+        json: (data) => data
+      })
+    };
+
+    // Call the verification controller
+    const result = await diplomaVerificationController.verifyDiploma(mockReq, mockRes);
+    return result;
+  } catch (error) {
+    console.error('Diploma verification error:', error);
+    return {
+      success: false,
+      message: 'Diploma verification failed',
+      errors: { system: 'Verification process error' }
+    };
+  }
+}
+
+>>>>>>> origin/main
 
 exports.signin = async (req, res) => {
   const { email, password } = req.body;
