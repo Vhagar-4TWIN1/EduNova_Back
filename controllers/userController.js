@@ -2,7 +2,11 @@ const { User } = require("../models/usersModel");
 const fs = require("fs");
 const path = require("path");
 const mongoose = require("mongoose");
+<<<<<<< HEAD
+
+=======
 const badge = require("../models/badge");
+>>>>>>> origin/main
 // Get all users
 exports.getAllUsers = async (req, res) => {
   try {
@@ -122,6 +126,10 @@ exports.deleteUser = async (req, res) => {
   }
 };
 
+<<<<<<< HEAD
+// Promote user to Admin
+=======
+>>>>>>> origin/main
 exports.promoteToAdmin = async (req, res) => {
   const { id } = req.params;
   console.log("➡️ promoteToAdmin called with ID:", id);
@@ -150,6 +158,8 @@ exports.promoteToAdmin = async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
+<<<<<<< HEAD
+=======
 exports.affectBadge = async (req, res) => {
   const { studentId, badgeId } = req.body;
   try {
@@ -168,6 +178,7 @@ exports.affectBadge = async (req, res) => {
       return res.status(500).json({ success: false, message: 'Internal server error' });
   }
 }
+>>>>>>> origin/main
 
 module.exports = {
   getAllUsers: exports.getAllUsers,
@@ -175,5 +186,8 @@ module.exports = {
   updateUser: exports.updateUser,
   deleteUser: exports.deleteUser,
   promoteToAdmin: exports.promoteToAdmin,
+<<<<<<< HEAD
+=======
   affectBadge: exports.affectBadge,
+>>>>>>> origin/main
 };

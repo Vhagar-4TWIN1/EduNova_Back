@@ -23,15 +23,27 @@ const jwtOptions = {
 passport.use(
   new JwtStrategy(jwtOptions, async (jwtPayload, done) => {
     try {
+<<<<<<< HEAD
+      console.log("📥 Decoded JWT payload:", jwtPayload); // 👈 Add this line
+=======
+>>>>>>> origin/main
       const user = await User.findById(jwtPayload.userId);
       if (user) return done(null, user);
       return done(null, false);
     } catch (err) {
+<<<<<<< HEAD
+      console.error("❌ JWT Strategy error:", err);
+=======
+>>>>>>> origin/main
       return done(err, false);
     }
   })
 );
 
+<<<<<<< HEAD
+
+=======
+>>>>>>> origin/main
 // Google Strategy
 passport.use(
   new GoogleStrategy(
@@ -102,7 +114,11 @@ passport.use(
             firstName: profile.name.givenName,
             lastName: profile.name.familyName,
             role: 'Student',
+<<<<<<< HEAD
+            photo: savedPath
+=======
             photo: "localhost:3000/"+savedPath
+>>>>>>> origin/main
 
           });
           await user.save();
@@ -113,7 +129,11 @@ passport.use(
 
         // Generate JWT token
         const token = jwt.sign(
+<<<<<<< HEAD
+          { userId: user._id, email: user.email, verified: user.verified,firstName:user.firstName,lastName:user.lastName,photo:user.photo },
+=======
           { userId: user._id, email: user.email, verified: user.verified,role: user.role,firstName:user.firstName,lastName:user.lastName,photo:user.photo },
+>>>>>>> origin/main
           process.env.TOKEN_SECRET,
           { expiresIn: '8h' }
         );

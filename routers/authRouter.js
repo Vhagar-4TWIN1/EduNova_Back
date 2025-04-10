@@ -11,10 +11,14 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const ActivityLog = require("../models/activityLog");
 const { transport, transport2 } = require("../middlewares/sendMail");
+<<<<<<< HEAD
+
+=======
 const multer = require("multer");
 
 const storage = multer.memoryStorage(); // Ou tu peux utiliser diskStorage si tu veux sauvegarder sur disque
 const upload = multer({ storage: storage });
+>>>>>>> origin/main
 router.get('/google/callback', 
   passport.authenticate('google', { session: false, failureRedirect: '/login' }),
   (req, res) => {
@@ -181,7 +185,11 @@ router.post("/upload-profile-image", authController.uploadProfileImage);
 router.post('/ocr', ocrController.uploadImage);
 router.post('/upload-image', ocrController.uploadImage);
 router.get('/users', authController.getAllUsers);
+<<<<<<< HEAD
+router.post('/verify-diploma', diplomaVerificationController.verifyDiploma);
+=======
 
+>>>>>>> origin/main
 router.post('/upload-profile-image', authController.uploadProfileImage);
 
 
