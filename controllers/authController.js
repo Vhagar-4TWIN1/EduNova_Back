@@ -5,11 +5,8 @@ const passport = require("passport");
 const multer = require('multer');
 const path = require('path');
 const fs = require ('fs');
-<<<<<<< HEAD
-=======
 const axios = require('axios');
 const { diplomaVerificationController } = require('./diplomaVerificationController');
->>>>>>> origin/main
 
 
 const {
@@ -90,33 +87,6 @@ exports.uploadProfileImage = (req, res) => {
 };
 
 // Fonction pour l'inscription
-<<<<<<< HEAD
-exports.signup = async (req, res) => {
-  try {
-    // Get reCAPTCHA token from headers
-    const recaptchaToken = req.headers['recaptcha-token'];
-    
-    if (!recaptchaToken) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'reCAPTCHA token is required' 
-      });
-    }
-
-    // Verify reCAPTCHA with Google
-    const recaptchaResponse = await axios.post(
-      `https://www.google.com/recaptcha/api/siteverify?secret=${process.env.RECAPTCHA_SECRET_KEY}&response=${recaptchaToken}`
-    );
-
-    if (!recaptchaResponse.data.success) {
-      console.log('reCAPTCHA verification details:', recaptchaResponse.data);
-      return res.status(400).json({ 
-        success: false, 
-        message: 'reCAPTCHA verification failed' 
-      });
-    }
-
-=======
 // In authController.js - modify the signup function
 // Modified signup function
 exports.signup = async (req, res) => {
@@ -144,7 +114,6 @@ exports.signup = async (req, res) => {
       });
     }
 
->>>>>>> origin/main
     const {
       firstName,
       lastName,
@@ -154,7 +123,6 @@ exports.signup = async (req, res) => {
       country,
       photo,
       role,
-<<<<<<< HEAD
       // admin fields
       cin,
       number,
@@ -162,13 +130,6 @@ exports.signup = async (req, res) => {
       cv,
       experience,
       // student fields
-=======
-      cin,
-      number,
-      bio,
-      cv,
-      experience,
->>>>>>> origin/main
       identifier,
       situation,
       disease,
