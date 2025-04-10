@@ -172,9 +172,6 @@ ${rawText.slice(0, 3000)}
 /**
  * Configure OpenAI API client
  */
-const configuration = new Configuration({
-  apiKey: process.env.OPENAI_API_KEY,
-});
 
 /**
  * Generate annotations based on the lesson file content.

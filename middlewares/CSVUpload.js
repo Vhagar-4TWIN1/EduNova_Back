@@ -51,9 +51,5 @@ const CSVUpload = () => {
   );
 };
 
-<<<<<<< HEAD
-export default CSVUpload;
-=======
 export default CSVUpload;
 
->>>>>>> origin/main
