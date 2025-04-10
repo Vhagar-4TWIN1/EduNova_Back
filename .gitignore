@@ -6,4 +6,5 @@ node_modules/*
 .pnp.js
 uploads/
 
+.env
 
