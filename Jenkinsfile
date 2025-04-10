@@ -2,7 +2,11 @@ pipeline {
     agent any
     environment {
         registryCredentials = "nexus"
+<<<<<<< HEAD
         registry = "192.168.174.134:8081"
+=======
+        registry = "192.168.174.134:8083"
+>>>>>>> origin/main
     }
     stages {
         stage('Install dependencies') {
@@ -57,5 +61,43 @@ pipeline {
                 }
             }
         }
+<<<<<<< HEAD
+=======
+
+        stage('Run application ') {
+     steps{  
+         script {
+           docker.withRegistry("http://"+registry, registryCredentials ) {
+
+            sh('docker pull $registry/nodemongoapp:6.0 ')
+
+            sh('docker-compose up -d ')
+          }
+        }
+      }
+    }
+
+
+        stage("Run Prometheus"){
+      steps{
+ 
+        script{
+
+        sh('docker start prometheus')
+
+        }
+      }
+    }
+     stage("Run Grafana"){ 
+      steps{
+
+        script{
+        sh('docker start grafana')
+        }
+      }
+    }
+
+        
+>>>>>>> origin/main
     }
 }
