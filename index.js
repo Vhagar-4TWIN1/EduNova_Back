@@ -19,6 +19,7 @@ const levelRoutes = require("./routers/levelRouter");
 const questionRouter = require("./routers/questionRoutes");
 const aiRoute = require("./routers/aiRouter");
 const userProgressRoutes = require("./routers/userProgressRoutes");
+const performanceRoutes = require('./routers/performanceRouter');
 
 
 console.log("MongoDB URI:", process.env.MONGODB_URI); // Debugging
@@ -71,6 +72,7 @@ app.use("/module", moduleRouter);
 app.use(passport.initialize());
 app.use(passport.session());
 // Routes
+app.use('/api/performance', performanceRoutes);
 app.use("/api/level", levelRoutes);
 app.use("/api/auth", authRouter);
 app.use("/api/users", userRouter);
