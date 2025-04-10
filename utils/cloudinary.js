@@ -1,6 +1,10 @@
 const cloudinary = require("cloudinary").v2;
+<<<<<<< HEAD
 const path = require("path");
 const mime = require("mime-types");
+=======
+
+>>>>>>> origin/main
 //configure with env data
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -8,6 +12,7 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
+<<<<<<< HEAD
 
 const uploadMediaToCloudinary = async (filePath) => {
   try {
@@ -26,14 +31,28 @@ const uploadMediaToCloudinary = async (filePath) => {
       resource_type: resourceType,
       type: "upload",
       access_mode: "public",
+=======
+const uploadMediaToCloudinary = async (filePath) => {
+  try {
+    const result = await cloudinary.uploader.upload(filePath, {
+      resource_type: "auto",
+>>>>>>> origin/main
     });
 
     return result;
   } catch (error) {
+<<<<<<< HEAD
     console.log("Cloudinary Upload Error:", error);
     throw new Error("Error uploading to cloudinary");
   }
 };
+=======
+    console.log(error);
+    throw new Error("Error uploading to cloudinary");
+  }
+};
+
+>>>>>>> origin/main
 const deleteMediaFromCloudinary = async (publicId) => {
   try {
     await cloudinary.uploader.destroy(publicId);
@@ -43,4 +62,8 @@ const deleteMediaFromCloudinary = async (publicId) => {
   }
 };
 
+<<<<<<< HEAD
 module.exports = { uploadMediaToCloudinary, deleteMediaFromCloudinary };
+=======
+module.exports = { uploadMediaToCloudinary, deleteMediaFromCloudinary };
+>>>>>>> origin/main
