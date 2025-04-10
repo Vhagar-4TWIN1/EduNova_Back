@@ -206,18 +206,44 @@ exports.signup = async (req, res) => {
       });
     }
 
-    res.status(201).json({
-      success: true,
-      message: `${role} created successfully!`,
-      user: {
-        id: newUser._id,
-        firstName: newUser.firstName,
-        lastName: newUser.lastName,
+    const token = jwt.sign(
+      {
+        userId: newUser._id,
         email: newUser.email,
         role: newUser.role,
-        photo: newUser.photo,
       },
+      process.env.TOKEN_SECRET,
+      { expiresIn: '8h' }
+    );
+
+    // Log the signup activity
+    await ActivityLog.create({
+      userId: newUser._id,
+      email: newUser.email,
+      ipAddress: req.ip || 'Unknown',
+      userAgent: req.headers['user-agent'] || 'Unknown',
+      action: 'SIGNUP',
     });
+
+    res.status(201)
+      .cookie('Authorization', 'Bearer ' + token, {
+        expires: new Date(Date.now() + 8 * 3600000),
+        httpOnly: process.env.NODE_ENV === 'production',
+        secure: process.env.NODE_ENV === 'production',
+      })
+      .json({
+        success: true,
+        token, // Include the token in the response
+        message: `${role} created successfully!`,
+        user: {
+          id: newUser._id,
+          firstName: newUser.firstName,
+          lastName: newUser.lastName,
+          email: newUser.email,
+          role: newUser.role,
+          photo: newUser.photo,
+        },
+      });
   } catch (error) {
     console.error("Signup error:", error);
     res.status(500).json({ success: false, message: error.message });
