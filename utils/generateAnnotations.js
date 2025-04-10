@@ -8,8 +8,11 @@ const { execSync } = require("child_process");
 
 // Use CommonJS import style for OpenAI
 const OpenAI = require("openai");
-const Configuration = OpenAI.Configuration;
-const OpenAIApi = OpenAI.OpenAIApi;
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY
+});
+
 
 // Ensure temporary directory exists
 const tempDir = path.join(__dirname, "../temp");
@@ -172,7 +175,6 @@ ${rawText.slice(0, 3000)}
 const configuration = new Configuration({
   apiKey: process.env.OPENAI_API_KEY,
 });
-const openai = new OpenAIApi(configuration);
 
 /**
  * Generate annotations based on the lesson file content.
@@ -193,7 +195,7 @@ exports.generateAnnotations = async (lesson) => {
     const prompt = formatPrompt(cleaned);
 
     // 3. Call ChatGPT (using gpt-3.5-turbo) to generate annotations
-    const response = await openai.createChatCompletion({
+    const response = await openai.chat.completions.create({
       model: "gpt-3.5-turbo",
       messages: [
         {

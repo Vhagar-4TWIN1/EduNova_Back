@@ -2,12 +2,7 @@ const multer = require('multer');
 const path = require('path');
 const Badge = require('../models/badge');
 const { validationResult } = require('express-validator');
-<<<<<<< HEAD
-
-// Configure storage
-=======
 const Student = require('../models/usersModel'); 
->>>>>>> origin/main
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
         cb(null, 'uploads/badges/'); 
@@ -59,10 +54,6 @@ module.exports.getBadges = async (req, res) => {
         return res.status(500).json({ success: false, message: 'Internal server error' });
     }
 };
-<<<<<<< HEAD
-=======
-
->>>>>>> origin/main
 module.exports.getBadge = async (req, res) => {
     const { id } = req.params;
     try {
