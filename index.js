@@ -1,4 +1,3 @@
-const axios = require('axios');
 const path = require('path');
 const express = require('express');
 const helmet = require('helmet');
@@ -14,7 +13,6 @@ const userRouter = require('./routers/userRouter');
 const authRouter = require('./routers/authRouter');
 const lessonRouter = require('./routers/lessonRouter');
 const passport = require('./middlewares/passport');
-const session = require('express-session');
 const { User } = require('./models/usersModel'); // <-- make sure this is the correct path
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
@@ -22,23 +20,8 @@ const levelRoutes = require('./routers/levelRouter');
 const questionRouter = require('./routers/questionRoutes');
 const googleClassroomRouter = require('./routers/googleClassroomRouter');
 const axios = require("axios");
-const path = require("path");
-const express = require("express");
-const helmet = require("helmet");
-const cors = require("cors");
-const cookieParser = require("cookie-parser");
-const mongoose = require("mongoose");
-require("dotenv").config();
-const bodyParser = require("body-parser");
-const badgeRouter = require("./routers/badgeRouter");
-const moduleRouter = require("./routers/moduleRouter");
-const userRouter = require("./routers/userRouter");
-const authRouter = require("./routers/authRouter");
-const lessonRouter = require("./routers/lessonRouter");
-const passport = require("./middlewares/passport");
+
 const session = require("express-session");
-const levelRoutes = require("./routers/levelRouter");
-const questionRouter = require("./routers/questionRoutes");
 const aiRoute = require("./routers/aiRouter");
 const userProgressRoutes = require("./routers/userProgressRoutes");
 const performanceRoutes = require('./routers/performanceRouter');

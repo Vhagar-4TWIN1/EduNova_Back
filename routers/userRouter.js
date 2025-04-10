@@ -4,10 +4,7 @@ const router = express.Router();
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
-<<<<<<< HEAD
-=======
 const jwt = require('jsonwebtoken');
->>>>>>> origin/main
 
 const {
   getAllUsers,
@@ -337,9 +334,6 @@ router.post("/delete-diploma", (req, res) => {
       .json({ success: false, message: "Server error deleting diploma" });
   }
 });
-<<<<<<< HEAD
-
-=======
 router.patch("/affectbadges/:idUser/:idBadge", async (req, res) => {
   const { idUser, idBadge } = req.params;
   const {Student} = require("../models/usersModel"); 
@@ -425,5 +419,4 @@ router.get('/unachieved-badges/:userId', async (req, res) => {
     res.status(500).json({ success: false, message: "An error occurred while fetching the badges." });
   }
 });
->>>>>>> origin/main
 module.exports = router;

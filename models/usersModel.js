@@ -1,6 +1,3 @@
-<<<<<<< HEAD
- const mongoose = require("mongoose");
-=======
 /*const mongoose = require('mongoose');
 
 const userSchema = mongoose.Schema(
@@ -56,7 +53,6 @@ const userSchema = mongoose.Schema(
 
 module.exports = mongoose.model('User', userSchema);
 */ const mongoose = require("mongoose");
->>>>>>> origin/main
 
 const userSchema = new mongoose.Schema(
   {
@@ -112,18 +108,10 @@ const teacherSchema = new mongoose.Schema({
   number: { type: String },
   bio: { type: String },
   cv: { type: String },
-<<<<<<< HEAD
-  diplomas: [{ type: String }],
-  experience: { type: String },
-  cin: { type: String, unique: true, sparse: true },
-  workCertificate: { type: String },
-  diplomas: [{ type: String }],
-=======
   experience: { type: String },
   cin: { type: String, unique: true, sparse: true },
   workCertificate: { type: String },
  
->>>>>>> origin/main
 });
 const Teacher = User.discriminator("Teacher", teacherSchema);
 
@@ -139,11 +127,8 @@ const studentSchema = new mongoose.Schema({
     default: "video",
   },
   interests: [{ type: String }],
-<<<<<<< HEAD
-=======
   achievedBadges: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Badge' }],
 
->>>>>>> origin/main
 });
 const Student = User.discriminator("Student", studentSchema);
 module.exports = { User, Admin, Teacher, Student };
