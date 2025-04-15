@@ -3,7 +3,6 @@ const fs = require("fs");
 const path = require("path");
 const mongoose = require("mongoose");
 const badge = require("../models/badge");
-const badge = require("../models/badge");
 // Get all users
 exports.getAllUsers = async (req, res) => {
   try {
