@@ -87,9 +87,7 @@ exports.uploadProfileImage = (req, res) => {
   });
 };
 
-// Fonction pour l'inscription
-// In authController.js - modify the signup function
-// Modified signup function
+
 exports.signup = async (req, res) => {
   try {
     // Get reCAPTCHA token from headers
@@ -150,9 +148,8 @@ exports.signup = async (req, res) => {
     let newUser;
 
     if (role === "Teacher") {
-      // For teachers, we expect diploma verification to be done client-side first
-      // The frontend should have already verified the diploma before submitting
-      // So we just need to check if the workCertificate field is present
+      // For teachers, we expect diploma verification 
+
       if (!req.body.workCertificate) {
         return res.status(400).json({ 
           success: false, 
