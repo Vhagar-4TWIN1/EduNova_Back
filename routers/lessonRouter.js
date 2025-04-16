@@ -15,7 +15,6 @@ const isTeacher = (req, res, next) => {
 };
 
 // ✅ Accepts JSON body from frontend (because the file is already uploaded to Cloudinary)
-router.post("/", authenticate, lessonValidation,  upload.single("file"),lessonController.createLesson);
 router.get("/", authenticate, lessonController.getAllLessons);
 router.get("/:id", authenticate, lessonController.getLessonById);
 router.patch(
@@ -25,9 +24,20 @@ router.patch(
   lessonValidation,
   lessonController.updateLesson
 );
-router.delete("/:id", authenticate, lessonController.deleteLesson);
-router.get("/:id/tts", authenticate, lessonController.getLessonAudio);
-router.post("/:id/annotation", authenticate, lessonController.addAnnotation);
-router.get("/:id/audio", authenticate, lessonController.getLessonAudio);
+router.get('/source/google', authenticate, lessonController.getGoogleLessons);
+
+router.post('/', authenticate, lessonValidation, lessonController.createLesson);
+router.get('/', authenticate, lessonController.getAllLessons);
+router.get('/source/google', authenticate, lessonController.getGoogleLessons);
+router.get('/:id', authenticate, lessonController.getLessonById);
+router.patch('/:id', authenticate, upload.single('file'), lessonValidation, lessonController.updateLesson);
+router.delete('/:id', authenticate, lessonController.deleteLesson);
+router.get('/:id/tts', authenticate, lessonController.getLessonAudio);
+router.post('/:id/annotation', authenticate, lessonController.addAnnotation);
+router.post('/:id/generate-annotations', authenticate, lessonController.generateAIAnnotations);
+router.get('/:id/audio', authenticate, lessonController.getLessonAudio);
+router.get('/module/:moduleId', authenticate, lessonController.getLessonsByModule);
+
+
 
 module.exports = router;
