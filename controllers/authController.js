@@ -9,6 +9,7 @@ const axios = require('axios');
 const { diplomaVerificationController } = require('./diplomaVerificationController');
 
 
+
 const {
   signupSchema,
   signinSchema,
@@ -326,6 +327,8 @@ exports.signin = async (req, res) => {
       process.env.TOKEN_SECRET,
       { expiresIn: '8h' }
     );
+    console.log(existingUser._id)
+    console.log("logged in")
 
     // Check for active sessions within the last 8 hours
     const activeSessions = await ActivityLog.find({
