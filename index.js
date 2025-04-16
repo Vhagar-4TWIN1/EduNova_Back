@@ -38,7 +38,7 @@ app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 app.use(cors({
     origin: 'http://localhost:5173',  // Adjust based on your frontend URL
     credentials: true,
-    allowedHeaders: ['Authorization', 'Content-Type']
+    allowedHeaders: ['Authorization', 'Content-Type','recaptcha-token']
 }));
 
 // Additional middleware
