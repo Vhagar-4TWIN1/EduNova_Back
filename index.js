@@ -24,6 +24,8 @@ const levelRoutes = require('./routers/levelRouter');
 const questionRouter = require('./routers/questionRoutes');
 const googleClassroomRouter = require('./routers/googleClassroomRouter');
 const { User } = require('./models/usersModel'); // <-- ensure this path is correct
+const GeminiRoutes = require('./routers/GeminiRoutes');
+
 
 // Debug log the environment variables
 console.log("MongoDB URI:", process.env.MONGODB_URI);
@@ -51,6 +53,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // Serve static files from the uploads directory
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/resumes', express.static(path.join(__dirname, 'resumes')));
 
 // Connect to MongoDB
 mongoose
@@ -90,8 +93,9 @@ app.use('/api/users', userRouter);
 app.use('/api/lessons', lessonRouter);
 app.use('/api/badges', badgeRouter);
 app.use('/api/questions', questionRouter);
-
+app.use('/api/ai', GeminiRoutes);
 // Home route
+
 app.get('/', (req, res) => {
     res.json({ message: 'Hello from the server' });
 });

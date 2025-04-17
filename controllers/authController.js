@@ -22,6 +22,29 @@ const { doHash, doHashValidation, hmacProcess } = require("../utils/hashing");
 const { transport, transport2 } = require("../middlewares/sendMail");
 
 
+
+  //gemini
+  exports.authenticate = (req, res, next) => {
+    try {
+      const token = req.cookies.Authorization?.split(' ')[1] || 
+                   req.headers.authorization?.split(' ')[1];
+      
+      if (!token) {
+        return res.status(401).json({ success: false, message: 'Authentication required' });
+      }
+  
+      const decoded = jwt.verify(token, process.env.TOKEN_SECRET);
+      req.user = decoded;
+      next();
+    } catch (error) {
+      console.error('Authentication error:', error);
+      return res.status(401).json({ success: false, message: 'Invalid or expired token' });
+    }
+  };
+
+//
+
+
 //upload profile pic 
 
 const storage = multer.diskStorage({
@@ -43,6 +66,8 @@ exports.uploadProfileImage = (req, res) => {
   if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
   }
+
+
 
   upload(req, res, async (err) => {
     if (err instanceof multer.MulterError) {
