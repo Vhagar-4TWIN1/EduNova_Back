@@ -87,6 +87,8 @@ exports.uploadProfileImage = (req, res) => {
 };
 
 // Fonction pour l'inscription
+// In authController.js - modify the signup function
+// Modified signup function
 exports.signup = async (req, res) => {
   try {
     // Get reCAPTCHA token from headers
