@@ -1,42 +1,51 @@
-const path = require('path');
-const express = require('express');
-const helmet = require('helmet');
-const cors = require('cors');
-const cookieParser = require('cookie-parser');
-const mongoose = require('mongoose');
-require('dotenv').config();
-const bodyParser = require('body-parser');
+const path = require("path");
+const express = require("express");
+const helmet = require("helmet");
+const cors = require("cors");
+const cookieParser = require("cookie-parser");
+const mongoose = require("mongoose");
+require("dotenv").config();
+const bodyParser = require("body-parser");
 const app = express();
-const badgeRouter = require('./routers/badgeRouter');
-const moduleRouter = require('./routers/moduleRouter');
-const userRouter = require('./routers/userRouter');
-const authRouter = require('./routers/authRouter');
-const lessonRouter = require('./routers/lessonRouter');
-const passport = require('./middlewares/passport');
-const { User } = require('./models/usersModel'); // <-- make sure this is the correct path
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
-const levelRoutes = require('./routers/levelRouter');
-const questionRouter = require('./routers/questionRoutes');
-const googleClassroomRouter = require('./routers/googleClassroomRouter');
+const badgeRouter = require("./routers/badgeRouter");
+const moduleRouter = require("./routers/moduleRouter");
+const userRouter = require("./routers/userRouter");
+const authRouter = require("./routers/authRouter");
+const lessonRouter = require("./routers/lessonRouter");
+const passport = require("./middlewares/passport");
+const { User } = require("./models/usersModel"); // <-- make sure this is the correct path
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+const levelRoutes = require("./routers/levelRouter");
+const questionRouter = require("./routers/questionRoutes");
+const googleClassroomRouter = require("./routers/googleClassroomRouter");
 const axios = require("axios");
+const ipRoutes = require("./routers/ipRoutes");
 
 const session = require("express-session");
 const aiRoute = require("./routers/aiRouter");
 const userProgressRoutes = require("./routers/userProgressRoutes");
-const performanceRoutes = require('./routers/performanceRouter');
+const performanceRoutes = require("./routers/performanceRouter");
+const translateRouter = require("./routers/translateRouter");
 
 console.log("MongoDB URI:", process.env.MONGODB_URI); // Debugging
 console.log("Port:", process.env.PORT);
 console.log("Session Secret:", process.env.SESSION_SECRET);
 
-app.use(bodyParser.json({ limit: '50mb' }));  // Adjust size as needed
-app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
-app.use(cors({
-    origin: 'http://localhost:5173',  // CORS autorisé pour le frontend React
-    credentials: true,               // Autorise l'envoi de cookies
-    allowedHeaders: ['Authorization', 'Content-Type' , 'recaptcha-token' , 'x-access-token'] // En-têtes autorisés
-}));
+app.use(bodyParser.json({ limit: "50mb" })); // Adjust size as needed
+app.use(bodyParser.urlencoded({ limit: "50mb", extended: true }));
+app.use(
+  cors({
+    origin: "http://localhost:5173", // CORS autorisé pour le frontend React
+    credentials: true, // Autorise l'envoi de cookies
+    allowedHeaders: [
+      "Authorization",
+      "Content-Type",
+      "recaptcha-token",
+      "x-access-token",
+    ], // En-têtes autorisés
+  })
+);
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -74,7 +83,7 @@ app.use("/module", moduleRouter);
 app.use(passport.initialize());
 app.use(passport.session());
 // Routes
-app.use('/api/performance', performanceRoutes);
+app.use("/api/performance", performanceRoutes);
 app.use("/api/level", levelRoutes);
 app.use("/api/auth", authRouter);
 app.use("/api/users", userRouter);
@@ -82,6 +91,8 @@ app.use("/api/lessons", lessonRouter);
 app.use("/api/badges", badgeRouter);
 app.use("/api/ai", aiRoute);
 app.use("/api/progress", userProgressRoutes);
+app.use("/api/translate", translateRouter);
+app.use("/api/ip", ipRoutes);
 
 app.get("/", (req, res) => {
   res.json({ message: "Hello from the server" });
