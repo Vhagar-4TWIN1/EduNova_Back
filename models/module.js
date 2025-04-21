@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 
 const moduleSchema = new mongoose.Schema({
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User"},
   title: { type: String, required: true },
   description: String,
   image: String,
@@ -8,3 +9,8 @@ const moduleSchema = new mongoose.Schema({
 });
 
 module.exports = mongoose.model("Module", moduleSchema);
+
+
+
+
+
