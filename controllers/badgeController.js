@@ -2,8 +2,7 @@ const multer = require('multer');
 const path = require('path');
 const Badge = require('../models/badge');
 const { validationResult } = require('express-validator');
-
-// Configure storage
+const Student = require('../models/usersModel'); 
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
         cb(null, 'uploads/badges/'); 

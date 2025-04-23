@@ -23,10 +23,12 @@ const jwtOptions = {
 passport.use(
   new JwtStrategy(jwtOptions, async (jwtPayload, done) => {
     try {
+      console.log("📥 Decoded JWT payload:", jwtPayload); // 👈 Add this line
       const user = await User.findById(jwtPayload.userId);
       if (user) return done(null, user);
       return done(null, false);
     } catch (err) {
+      console.error("❌ JWT Strategy error:", err);
       return done(err, false);
     }
   })
@@ -102,7 +104,7 @@ passport.use(
             firstName: profile.name.givenName,
             lastName: profile.name.familyName,
             role: 'Student',
-            photo: savedPath
+            photo: "localhost:3000/"+savedPath
 
           });
           await user.save();
@@ -113,7 +115,7 @@ passport.use(
 
         // Generate JWT token
         const token = jwt.sign(
-          { userId: user._id, email: user.email, verified: user.verified,firstName:user.firstName,lastName:user.lastName,photo:user.photo },
+          { userId: user._id, email: user.email, verified: user.verified,role: user.role,firstName:user.firstName,lastName:user.lastName,photo:user.photo },
           process.env.TOKEN_SECRET,
           { expiresIn: '8h' }
         );

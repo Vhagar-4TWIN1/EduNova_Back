@@ -1,0 +1,82 @@
+Hey guys, my name is Vishwas and welcome to a brand new series on Angular.
+Now if you are a returning subscriber, you may already know that there is an extensive
+tutorial series in the channel on Angular 2.
+The reason I wanted to create another series on Angular is that there are a couple of things
+that I have not covered in the Angular 2 series which I feel you should know as an Angular
+developer.
+Also, as you may know, as of November 2017, Angular is now Angular 5 and there have
+been some changes as well.
+So in this video, we are going to have a brief introduction to what Angular is and why
+you would want to learn Angular.
+We will take a look at the history of Angular and whether you should learn Angular with
+all the version changes that you see right now.
+I also want to discuss whether this series on my channel will be useful to you in the
+long run.
+So let's get started.
+Angular is a framework that is used to build client-side applications and it is especially
+great for building single-page applications where parts of the view get refreshed asynchronously
+without having to reload the entire page.
+So any application that relies heavily on JavaScript, Angular is a great choice.
+Now why learn Angular as opposed to some other JavaScript framework or library?
+Now there are a couple of points.
+The first one is that by design, Angular promotes modular approach and hence the application
+you build will have a clear structure.
+And by making use of components which is a feature of Angular, we can have a lot of reusable
+code.
+Angular has a lot of inbuilt capabilities such as validation, routing and so on which
+makes development quicker and easier.
+Angular even makes it possible to write unit testable and easily maintainable code.
+And finally, Angular is also a product from the Google team and makes use of TypeScript
+language from Microsoft.
+So it is safe to say, Angular is here to stay.
+With that, let's take a brief look at Angular's history.
+The first version of Angular which is popularly known as AngularJS was released in 2010.
+This was a huge hit and a lot of organizations started using AngularJS to build their enterprise
+applications.
+But then in 2016, Angular version 2 which was called as JustAngler was released.
+It was announced that AngularJS will refer to the 1.x versions and Angular without the
+JS will refer to versions 2 and up.
+In December 2016, Angular 4 was announced.
+Version 3 was skipped to avoid a confusion due to the misalignment of the routers package
+version which was already distributed as version 3.3.0.
+But you don't have to worry much about that.
+And then there is Angular 5 which was released on November 1, 2017.
+And as of this recording, the latest version is Angular 5 which is what we will be learning
+in the series.
+Now let's discuss about whether you should learn Angular with all the version changes
+happening and if this series will still hold good as the versions change.
+I've seen comments like I didn't even get to Angular 4 yet and there's already Angular
+5 and I'm pretty sure that this is a concern with a lot of us.
+So let me clear things out.
+In any framework, there is always room for improvement and same is the case with Angular.
+So the Google team has decided they will upgrade Angular twice a year and stick to semantic
+versioning.
+Now if you're unaware, in semantic versioning we have a major version number, a minor
+version number and a patch number.
+The patch number which you see at the right most is increase any time there is a bug fix
+or some sort of a patch.
+The minor version number increases when there are added features that don't break any functionality.
+The major version number which you see on the left hand side changes when there is a break
+in any of the functionalities.
+And since Angular will be upgraded twice a year, you can see that the major version number
+changing twice a year as well.
+In fact, Angular 6 is planned for April 2018 and Angular 7 for October 2018.
+But you don't have to worry because the Google team has told that these versions will be
+backward compatible and the changes you see from version to version will not be so great
+that it breaks your entire application.
+So you can without any hesitation start learning Angular.
+And Angular is going to be one of the more popular and powerful frameworks in the future.
+So definitely a good framework to have in your pocket.
+Finally, a few words on whether the series will hold good in the long run.
+Now as I mentioned already, the concepts in Angular aren't going to change with every
+version change.
+So when Angular upgrades, all I need to do is change the title from Angular 5 to Angular
+6 or Angular 7 and so on.
+This is to only ensure that people searching for the tutorial can find it easily on YouTube.
+And at the end of the series, I will add additional videos for any feature that changes with
+the version.
+So you can watch the series with the piece of mind that what you learned will not be wasted.
+And you can come back to the same series even a year from now.
+So make sure to subscribe to the channel and enable notifications so that you are alerted
+of the new content.
+Alright then, with this introduction, let's get started with Angular.

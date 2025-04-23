@@ -1,17 +1,77 @@
-const express = require("express");
+const express = require('express');
 const router = express.Router();
-const multer = require("multer");
-const questionController = require("../controllers/questionController");
+const questionController = require('../controllers/questionController');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
 
-router.post("/questions", questionController.createQuestion);
-router.get("/questions", questionController.getAllQuestions);
-router.get("/questions/:id", questionController.getQuestionById);
-router.put("/questions/:id", questionController.updateQuestion);
-router.delete("/questions/:id", questionController.deleteQuestion);
-// Configuration de Multer pour l'upload de fichiers
-const upload = multer({ dest: "uploads/" });
 
-// Route pour uploader un fichier CSV
-router.post("/upload-csv", upload.single("csvFile"), questionController.importQuestionsFromCSV);
+
+// Configuration de Multer
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const dir = 'uploads/';
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    cb(null, dir);
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + path.extname(file.originalname));
+  }
+});
+
+const fileFilter = (req, file, cb) => {
+  if (file.mimetype.startsWith('audio/')) {
+    cb(null, true);
+  } else {
+    cb(new Error('Seuls les fichiers audio sont autorisés!'), false);
+  }
+};
+
+const upload = multer({
+  storage,
+  fileFilter,
+  limits: { fileSize: 10 * 1024 * 1024 } // 10MB
+});
+
+// Routes CRUD
+router.post('/', 
+  upload.fields([
+    { name: 'questionAudio', maxCount: 1 },
+    { name: 'answerAudios', maxCount: 4 }
+  ]),
+  questionController.createQuestion
+);
+
+router.get('/', questionController.getQuestions);
+router.get('/:id', questionController.getQuestion);
+
+router.put('/:id', 
+  upload.fields([
+    { name: 'questionAudio', maxCount: 1 },
+    { name: 'answerAudios', maxCount: 4 }
+  ]),
+  questionController.updateQuestion
+);
+
+router.delete('/:id', questionController.deleteQuestion);
+
+// Configure multer for file uploads
+const upload1 = multer({
+  dest: 'uploads/',
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype === 'text/csv' || 
+        file.mimetype === 'application/json' || 
+        file.originalname.match(/\.(csv|json)$/)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only CSV or JSON files are allowed'), false);
+    }
+  },
+  limits: {
+    fileSize: 5 * 1024 * 1024 // 5MB limit
+  }
+});
+//import csv
+router.post('/import', upload1.single('file'), questionController.importQuestionsFromCSV);
 
 module.exports = router;

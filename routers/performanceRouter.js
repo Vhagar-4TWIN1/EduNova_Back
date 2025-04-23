@@ -13,7 +13,7 @@ const sendToGoogleAnalytics = async (eventData) => {
       }, {
         params: {
           api_secret: 'VOTRE_API_SECRET',
-          measurement_id: 'G-VOTREIDANALYTICS'
+          measurement_id: 'G-2ZXG67XCYF'
         }
       });
     } catch (err) {
@@ -99,6 +99,7 @@ router.get('/performance', async (req, res) => {
       res.status(500).json({ message: 'Server error' });
     }
   });
+  
   
 
 module.exports = router;
