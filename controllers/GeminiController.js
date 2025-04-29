@@ -4,6 +4,7 @@ const { User } = require('../models/usersModel');
 const PDFDocument = require('pdfkit');
 const fs = require('fs');
 const path = require('path');
+const { generateEnhancedResume, createResumePDF } = require('../utils/resumeUtils');
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY_lou);
 
@@ -55,39 +56,51 @@ exports.askAI = async (req, res) => {
 
 exports.generateResume = async (req, res) => {
   try {
-    const { userId } = req.body;
+    const userId = req.body.userId || req.user.userId;
     const user = await User.findById(userId);
+    const uploadedFile = req.file;
 
-    if (!user) return res.status(404).json({ error: 'User not found' });
+    // Validation checks
+    if (!user) {
+      if (uploadedFile) fs.unlinkSync(uploadedFile.path);
+      return res.status(404).json({ error: 'User not found' });
+    }
+    if (!uploadedFile) return res.status(400).json({ error: 'No PDF file uploaded' });
+    if (uploadedFile.mimetype !== 'application/pdf') {
+      fs.unlinkSync(uploadedFile.path);
+      return res.status(400).json({ error: 'Only PDF files are allowed' });
+    }
 
-    const userInfo = `
-      Name: ${user.firstName} ${user.lastName}
-      Email: ${user.email}
-      Role: ${user.role}
-      Country: ${user.country}
-      Skills: ${user.skills?.join(', ') || 'N/A'}
-      Experience: ${user.experience || 'No experience listed'}
-      Education: ${user.education || 'Not specified'}
-    `;
+    // Generate enhanced resume
+    const resumeText = await generateEnhancedResume(user, uploadedFile.path);
+    
+    // Create PDF
+    const fileUrl = await createResumePDF(resumeText, user._id);
 
-    const prompt = `Create a professional resume using the following details:\n${userInfo}`;
-    const resumeText = await generateResumeFromGemini(prompt);
+    // Clean up
+    try {
+      fs.unlinkSync(uploadedFile.path);
+    } catch (err) {
+      console.error('Error cleaning upload:', err);
+    }
 
-    const doc = new PDFDocument();
-    const fileName = `resume_${user._id}.pdf`;
-    const filePath = path.join(__dirname, `../resumes/${fileName}`);
+    res.json({ 
+      success: true,
+      file: fileUrl
+    });
 
-    doc.pipe(fs.createWriteStream(filePath));
-    doc.font('Times-Roman').fontSize(12).text(resumeText);
-    doc.end();
-
-    res.json({ message: 'Resume generated', file: `/resumes/${fileName}` });
   } catch (error) {
+    // Clean up on error
+    if (req.file?.path) fs.unlinkSync(req.file.path);
+    
     console.error('Resume Generation Error:', error);
-    res.status(500).json({ error: 'Failed to generate resume' });
+    const errorMessage = process.env.NODE_ENV === 'development' 
+      ? error.message 
+      : 'Failed to generate resume';
+      
+    res.status(500).json({ error: errorMessage });
   }
 };
-
 
 // Keep these functions unchanged:
 exports.getChatHistory = async (req, res) => { /* ... */ };

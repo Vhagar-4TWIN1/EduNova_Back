@@ -25,7 +25,7 @@ const questionRouter = require('./routers/questionRoutes');
 const googleClassroomRouter = require('./routers/googleClassroomRouter');
 const { User } = require('./models/usersModel'); // <-- ensure this path is correct
 const GeminiRoutes = require('./routers/GeminiRoutes');
-
+const musicRouter = require('./routers/musicRouter');
 
 // Debug log the environment variables
 console.log("MongoDB URI:", process.env.MONGODB_URI);
@@ -53,8 +53,11 @@ app.use(express.urlencoded({ extended: true }));
 
 // Serve static files from the uploads directory
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-app.use('/resumes', express.static(path.join(__dirname, 'resumes')));
-
+app.use('/resumes', express.static(path.join(__dirname, 'resumes'), {
+    setHeaders: (res) => {
+      res.set('Content-Type', 'application/pdf');
+    }
+  }));
 // Connect to MongoDB
 mongoose
     .connect(process.env.MONGODB_URI)
@@ -94,6 +97,12 @@ app.use('/api/lessons', lessonRouter);
 app.use('/api/badges', badgeRouter);
 app.use('/api/questions', questionRouter);
 app.use('/api/ai', GeminiRoutes);
+
+//music baby 
+app.use('/api/music', musicRouter);
+app.use('/music', musicRouter);
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/music', express.static(path.join(__dirname, 'music')));
 // Home route
 
 app.get('/', (req, res) => {
