@@ -8,6 +8,8 @@ const mongoose = require("mongoose");
 require("dotenv").config();
 const bodyParser = require("body-parser");
 const app = express();
+const forumRouter = require("./routers/forumRouter");
+
 const badgeRouter = require("./routers/badgeRouter");
 const moduleRouter = require("./routers/moduleRouter");
 const userRouter = require("./routers/userRouter");
@@ -72,6 +74,8 @@ app.use(passport.initialize());
 app.use(passport.session());
 // Routes
 app.use("/api/level", levelRoutes);
+app.use("/api/forum", forumRouter);
+
 app.use("/api/auth", authRouter);
 app.use("/api/users", userRouter);
 app.use("/api/lessons", lessonRouter);
