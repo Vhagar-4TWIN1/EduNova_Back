@@ -1,7 +1,277 @@
-const Question = require("../models/questionModel");
+const Question = require('../models/questionModel');
+const Level = require('../models/level'); 
+const fs = require('fs');
+const path = require('path');
 const csv = require("csv-parser");
-const fs = require("fs");
 
+
+// Helper pour supprimer les fichiers
+const deleteFile = (filePath) => {
+  if (filePath) {
+    const fullPath = path.join(__dirname, '..', filePath);
+    if (fs.existsSync(fullPath)) fs.unlinkSync(fullPath);
+  }
+};
+
+// Créer une question
+exports.createQuestion = async (req, res) => {
+  try {
+    const { questionText, questionType, level, answers } = req.body;
+    const files = req.files || {};
+
+    // Vérifier que le level existe
+    const levelExists = await Level.findById(level);
+    if (!levelExists) {
+      return res.status(400).json({ 
+        success: false,
+        message: 'Niveau invalide' 
+      });
+    }
+
+    // Validation
+    if (questionType === 'written' && !questionText) {
+      return res.status(400).json({ 
+        success: false,
+        message: 'Le texte est requis pour les questions écrites' 
+      });
+    }
+
+    if (questionType === 'oral' && !files.questionAudio) {
+      return res.status(400).json({ 
+        success: false,
+        message: 'Un enregistrement audio est requis pour les questions orales' 
+      });
+    }
+
+    const parsedAnswers = JSON.parse(answers);
+    const correctAnswers = parsedAnswers.filter(a => a.isCorrect).length;
+    if (correctAnswers !== 1) {
+      return res.status(400).json({
+        success: false,
+        message: 'Il doit y avoir exactement une réponse correcte'
+      });
+    }
+
+    const question = await Question.create({
+      questionText: questionType === 'written' ? questionText : null,
+      questionType,
+      audioUrl: questionType === 'oral' ? files.questionAudio[0].path : null,
+      level,
+      answers: parsedAnswers.map((answer, i) => ({
+        text: questionType === 'written' ? answer.text : null,
+        audioUrl: questionType === 'oral' && files.answerAudios && files.answerAudios[i] 
+                 ? files.answerAudios[i].path 
+                 : null,
+        isCorrect: answer.isCorrect
+      }))
+    });
+
+    res.status(201).json({
+      success: true,
+      data: await Question.findById(question._id).populate('level', 'name')
+    });
+
+  } catch (error) {
+    // Supprimer les fichiers uploadés en cas d'erreur
+    if (req.files) {
+      if (req.files.questionAudio) deleteFile(req.files.questionAudio[0].path);
+      if (req.files.answerAudios) {
+        req.files.answerAudios.forEach(file => deleteFile(file.path));
+      }
+    }
+
+    res.status(400).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+// Récupérer toutes les questions
+exports.getQuestions = async (req, res) => {
+  try {
+    const questions = await Question.find().populate('level', 'name');
+    
+    const baseUrl = `${req.protocol}://${req.get('host')}`;
+    
+    const questionsWithFullUrls = questions.map(question => {
+      // Convertir en objet simple si nécessaire
+      const questionObj = question.toObject ? question.toObject() : question;
+      
+      return {
+        ...questionObj,
+        audioUrl: questionObj.audioUrl ? `${baseUrl}/${questionObj.audioUrl}` : null,
+        answers: questionObj.answers.map(answer => ({
+          ...answer,
+          audioUrl: answer.audioUrl ? `${baseUrl}/${answer.audioUrl}` : null
+        }))
+      };
+    });
+
+    res.json({
+      success: true,
+      count: questions.length,
+      data: questionsWithFullUrls
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: 'Erreur serveur'
+    });
+  }
+};
+
+// Récupérer une question
+exports.getQuestion = async (req, res) => {
+  try {
+    const question = await Question.findById(req.params.id).populate('level', 'name');
+    if (!question) {
+      return res.status(404).json({
+        success: false,
+        message: 'Question non trouvée'
+      });
+    }
+    res.json({
+      success: true,
+      data: question
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Erreur serveur'
+    });
+  }
+};
+
+// Mettre à jour une question
+exports.updateQuestion = async (req, res) => {
+  try {
+    const { questionText, questionType, level, answers } = req.body;
+    const files = req.files || {};
+    const question = await Question.findById(req.params.id);
+
+    if (!question) {
+      return res.status(404).json({
+        success: false,
+        message: 'Question non trouvée'
+      });
+    }
+
+    // Vérifier que le nouveau level existe si fourni
+    if (level) {
+      const levelExists = await Level.findById(level);
+      if (!levelExists) {
+        return res.status(400).json({ 
+          success: false,
+          message: 'Niveau invalide' 
+        });
+      }
+    }
+
+    // Préparer les updates
+    const updates = {
+      questionText: questionType === 'written' ? questionText : null,
+      questionType,
+      level: level || question.level,
+      answers: JSON.parse(answers)
+    };
+
+    // Validation des réponses
+    const correctAnswers = updates.answers.filter(a => a.isCorrect).length;
+    if (correctAnswers !== 1) {
+      return res.status(400).json({
+        success: false,
+        message: 'Il doit y avoir exactement une réponse correcte'
+      });
+    }
+
+    // Gestion des fichiers audio
+    if (questionType === 'oral') {
+      if (files.questionAudio) {
+        // Supprimer l'ancien fichier
+        if (question.audioUrl) deleteFile(question.audioUrl);
+        updates.audioUrl = files.questionAudio[0].path;
+      }
+      
+      // Mettre à jour les réponses audio
+      updates.answers = updates.answers.map((answer, i) => {
+        const newAnswer = { ...answer };
+        const oldAnswer = question.answers.find(a => a._id.toString() === answer._id); 
+      
+        if (files.answerAudios && files.answerAudios[i]) {
+          if (oldAnswer?.audioUrl) {
+            deleteFile(oldAnswer.audioUrl);  
+          }
+          newAnswer.audioUrl = files.answerAudios[i].path;
+        }
+      
+        return newAnswer;
+      });
+    }
+
+    const updatedQuestion = await Question.findByIdAndUpdate(
+      req.params.id,
+      updates,
+      { new: true, runValidators: true }
+    ).populate('level', 'name');
+
+    res.json({
+      success: true,
+      data: updatedQuestion
+    });
+
+  } catch (error) {
+    // Supprimer les fichiers uploadés en cas d'erreur
+    if (req.files) {
+      if (req.files.questionAudio) deleteFile(req.files.questionAudio[0].path);
+      if (req.files.answerAudios) {
+        req.files.answerAudios.forEach(file => deleteFile(file.path));
+      }
+    }
+
+    res.status(400).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+exports.deleteQuestion = async (req, res) => {
+  try {
+    const question = await Question.findById(req.params.id);
+    if (!question) {
+      console.log('Question non trouvée pour l\'ID :', req.params.id);
+      return res.status(404).json({
+        success: false,
+        message: 'Question non trouvée'
+      });
+    }
+
+    // Supprimer les fichiers audio associés
+    if (question.audioUrl) deleteFile(question.audioUrl);
+    question.answers.forEach(answer => {
+      if (answer.audioUrl) deleteFile(answer.audioUrl);
+    });
+
+    await Question.findByIdAndDelete(req.params.id); // ← plus sûr avec Mongoose >= 6
+
+    res.json({
+      success: true,
+      data: {}
+    });
+
+  } catch (error) {
+    console.error('Erreur lors de la suppression de la question:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erreur serveur'
+    });
+  }
+};
+
+// Import questions from CSV
+// Import questions from CSV
 // Helper function to generate random wrong answers
 function generateRandomWrongAnswers(count) {
   const fakeAnswers = [
@@ -19,43 +289,6 @@ function generateRandomWrongAnswers(count) {
 
   return selected;
 }
-
-// Create question with exactly one correct answer
-exports.createQuestion = async (req, res) => {
-  try {
-    const { questionText, answers } = req.body;
-
-    if (!questionText || !Array.isArray(answers) || answers.length < 2) {
-      return res.status(400).json({ message: "Question and at least 2 answers are required!" });
-    }
-
-    const correctAnswers = answers.filter(answer => answer.isCorrect).length;
-    if (correctAnswers !== 1) {
-      return res.status(400).json({ message: "There must be exactly one correct answer!" });
-    }
-
-    let finalAnswers = [...answers];
-
-    // If less than 2 answers, fill with fake answers
-    if (finalAnswers.length < 2) {
-      const needed = 2 - finalAnswers.length;
-      const fakeAnswers = generateRandomWrongAnswers(needed);
-      finalAnswers.push(...fakeAnswers);
-    }
-
-    const newQuestion = new Question({ questionText, answers: finalAnswers });
-    await newQuestion.save();
-
-    res.status(201).json({ message: "Question added successfully!", question: newQuestion });
-
-  } catch (error) {
-    console.error("Error adding question:", error);
-    res.status(500).json({ message: "Server error", error: error.message });
-  }
-};
-
-// Import questions from CSV
-// Import questions from CSV
 exports.importQuestionsFromCSV = async (req, res) => {
   if (!req.file) {
     return res.status(400).json({ message: "No file uploaded" });
@@ -66,6 +299,18 @@ exports.importQuestionsFromCSV = async (req, res) => {
   const errors = [];
 
   try {
+    // Récupérer le niveau "Beginner" par défaut
+    const defaultLevel = await Level.findOne({ name: 'beginner' });
+    if (!defaultLevel) {
+      return res.status(400).json({
+        message: 'Import failed',
+        error: "Le niveau 'Beginner' est introuvable"
+      });
+    }
+
+    const defaultType = 'written';
+    
+
     // CSV parsing
     await new Promise((resolve, reject) => {
       fs.createReadStream(filePath)
@@ -131,7 +376,9 @@ exports.importQuestionsFromCSV = async (req, res) => {
 
             results.push({
               questionText: questionText,
-              answers
+              answers,
+              level: defaultLevel._id ,
+              questionType:defaultType
             });
           } catch (error) {
             errors.push(error.message);
@@ -149,6 +396,7 @@ exports.importQuestionsFromCSV = async (req, res) => {
       throw new Error("No valid questions found in file");
     }
 
+    // Enregistrer les questions dans la base de données
     await Question.insertMany(results);
     fs.unlinkSync(filePath);
 
@@ -168,67 +416,118 @@ exports.importQuestionsFromCSV = async (req, res) => {
   }
 };
 
-// Other controller methods
-exports.getAllQuestions = async (req, res) => {
+// Générer un quiz aléatoire avec mélange de types et niveaux
+exports.generateMixedQuiz = async (req, res) => {
   try {
-    const questions = await Question.find();
-    res.status(200).json(questions);
-  } catch (error) {
-    res.status(500).json({ message: "Server error", error });
-  }
-};
-
-exports.getQuestionById = async (req, res) => {
-  try {
-    const question = await Question.findById(req.params.id);
-    if (!question) {
-      return res.status(404).json({ message: "Question not found" });
-    }
-    res.status(200).json(question);
-  } catch (error) {
-    res.status(500).json({ message: "Server error", error });
-  }
-};
-
-exports.updateQuestion = async (req, res) => {
-  try {
-    const { questionText, answers } = req.body;
+    const { count = 10, levels = ['beginner', 'intermediate', 'advanced'] } = req.query;
     
-    // Validate exactly one correct answer
-    const correctAnswers = answers.filter(a => a.isCorrect).length;
-    if (correctAnswers !== 1) {
-      return res.status(400).json({ message: "Must have exactly one correct answer" });
-    }
+    // Convertir levels en array si c'est une string
+    const levelArray = typeof levels === 'string' ? levels.split(',') : levels;
 
-    const updatedQuestion = await Question.findByIdAndUpdate(
-      req.params.id,
-      { questionText, answers },
-      { new: true }
-    );
-    
-    if (!updatedQuestion) {
-      return res.status(404).json({ message: "Question not found" });
-    }
-    
-    res.status(200).json({ 
-      message: "Question updated successfully!", 
-      question: updatedQuestion 
+    // Récupérer les IDs des niveaux demandés
+    const levelDocs = await Level.find({ name: { $in: levelArray } });
+    const levelIds = levelDocs.map(level => level._id);
+
+    // Récupérer questions aléatoires
+    const questions = await Question.aggregate([
+      { 
+        $match: { 
+          level: { $in: levelIds },
+          questionType: { $in: ['oral', 'written'] }
+        } 
+      },
+      { $sample: { size: parseInt(count) } },
+      { 
+        $project: {
+          questionText: 1,
+          questionType: 1,
+          audioUrl: 1,
+          level: 1,
+          answers: {
+            $map: {
+              input: "$answers",
+              as: "answer",
+              in: {
+                text: "$$answer.text",
+                audioUrl: "$$answer.audioUrl",
+                // Ne pas envoyer isCorrect au client
+                _id: "$$answer._id"
+              }
+            }
+          }
+        }
+      }
+    ]);
+
+    // Mélanger les questions pour variété
+    const shuffledQuestions = questions.sort(() => 0.5 - Math.random());
+
+    res.json({
+      success: true,
+      data: shuffledQuestions
     });
+
   } catch (error) {
-    res.status(500).json({ message: "Server error", error });
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
   }
 };
 
-exports.deleteQuestion = async (req, res) => {
+// Générer un quiz spécifique (oral ou écrit)
+exports.generateTypedQuiz = async (req, res) => {
   try {
-    const deletedQuestion = await Question.findByIdAndDelete(req.params.id);
-    if (!deletedQuestion) {
-      return res.status(404).json({ message: "Question not found" });
+    const { type, count = 5, levels } = req.query;
+    
+    if (!['oral', 'written'].includes(type)) {
+      return res.status(400).json({
+        success: false,
+        message: "Type must be 'oral' or 'written'"
+      });
     }
-    res.status(200).json({ message: "Question deleted successfully!" });
+
+    const filter = { questionType: type };
+    
+    if (levels) {
+      const levelArray = typeof levels === 'string' ? levels.split(',') : levels;
+      const levelDocs = await Level.find({ name: { $in: levelArray } });
+      filter.level = { $in: levelDocs.map(l => l._id) };
+    }
+
+    const questions = await Question.aggregate([
+      { $match: filter },
+      { $sample: { size: parseInt(count) } },
+      {
+        $project: {
+          questionText: 1,
+          questionType: 1,
+          audioUrl: 1,
+          level: 1,
+          answers: {
+            $map: {
+              input: "$answers",
+              as: "answer",
+              in: {
+                text: "$$answer.text",
+                audioUrl: "$$answer.audioUrl",
+                _id: "$$answer._id"
+              }
+            }
+          }
+        }
+      }
+    ]);
+
+    res.json({
+      success: true,
+      data: questions
+    });
+
   } catch (error) {
-    res.status(500).json({ message: "Server error", error });
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
   }
 };
-
-

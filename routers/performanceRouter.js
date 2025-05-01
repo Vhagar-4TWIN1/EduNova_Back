@@ -2,6 +2,8 @@
 const express = require('express');
 const router = express.Router();
 const Performance = require('../models/performance');
+const PerformanceController = require('../controllers/performanceController');
+
 const sendToGoogleAnalytics = async (eventData) => {
     try {
       await axios.post('https://www.google-analytics.com/mp/collect', {
@@ -13,7 +15,7 @@ const sendToGoogleAnalytics = async (eventData) => {
       }, {
         params: {
           api_secret: 'VOTRE_API_SECRET',
-          measurement_id: 'G-VOTREIDANALYTICS'
+          measurement_id: 'G-2ZXG67XCYF'
         }
       });
     } catch (err) {
@@ -100,5 +102,7 @@ router.get('/performance', async (req, res) => {
     }
   });
   
+  router.get('/stats/usage', PerformanceController.getUsageStats);
+
 
 module.exports = router;

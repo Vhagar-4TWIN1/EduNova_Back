@@ -20,7 +20,7 @@ const levelRoutes = require('./routers/levelRouter');
 const questionRouter = require('./routers/questionRoutes');
 const googleClassroomRouter = require('./routers/googleClassroomRouter');
 const axios = require("axios");
-
+const { google } = require('googleapis');
 const session = require("express-session");
 const aiRoute = require("./routers/aiRouter");
 const userProgressRoutes = require("./routers/userProgressRoutes");
@@ -74,6 +74,7 @@ app.use("/module", moduleRouter);
 app.use(passport.initialize());
 app.use(passport.session());
 // Routes
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/api/performance', performanceRoutes);
 app.use("/api/level", levelRoutes);
 app.use("/api/auth", authRouter);
@@ -149,6 +150,63 @@ app.get(
     });
   }
 );
+
+
+///////Dashboard google analythic
+const analytics = google.analyticsdata('v1beta');
+
+app.get('/api/analytics', async (req, res) => {
+  try {
+    const auth = new google.auth.GoogleAuth({
+      keyFile: 'credentials.json',
+      scopes: ['https://www.googleapis.com/auth/analytics.readonly'],
+    });
+
+    const authClient = await auth.getClient();
+    
+    const response = await analytics.properties.runReport({
+      auth: authClient,
+      property: `properties/485035007`,
+      requestBody: {
+        dateRanges: [{ startDate: '30daysAgo', endDate: 'today' }],
+        dimensions: [{ name: 'date' }, { name: 'pageTitle' }],
+        metrics: [
+          { name: 'activeUsers' },
+          { name: 'screenPageViews' },
+          { name: 'userEngagementDuration' }
+        ],
+        limit: 10
+      }
+    });
+
+    res.json(formatData(response.data));
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+function formatData(data) {
+  // Transformez les données GA4 dans un format adapté à vos graphiques
+  const sessions = [];
+  const pages = [];
+
+  data.rows.forEach(row => {
+    sessions.push({
+      date: row.dimensionValues[0].value,
+      sessions: row.metricValues[0].value,
+      users: row.metricValues[1].value
+    });
+
+    pages.push({
+      pageTitle: row.dimensionValues[1].value || '(not set)',
+      pageViews: row.metricValues[1].value
+    });
+  });
+
+  return { sessions, pages };
+}
+
 
 app.listen(process.env.PORT || 3000, () => {
   console.log(`Listening on port ${process.env.PORT || 3000}...`);
