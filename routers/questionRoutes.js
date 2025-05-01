@@ -74,4 +74,10 @@ const upload1 = multer({
 //import csv
 router.post('/import', upload1.single('file'), questionController.importQuestionsFromCSV);
 
+// Route pour quiz mélangé
+router.get('/quiz/mixed', questionController.generateMixedQuiz);
+
+// Routes pour quiz typés
+router.get('/quiz/oral', questionController.generateTypedQuiz);
+router.get('/quiz/written', questionController.generateTypedQuiz);
 module.exports = router;

@@ -416,3 +416,119 @@ exports.importQuestionsFromCSV = async (req, res) => {
     });
   }
 };
+
+// Générer un quiz aléatoire avec mélange de types et niveaux
+exports.generateMixedQuiz = async (req, res) => {
+  try {
+    const { count = 10, levels = ['beginner', 'intermediate', 'advanced'] } = req.query;
+    
+    // Convertir levels en array si c'est une string
+    const levelArray = typeof levels === 'string' ? levels.split(',') : levels;
+
+    // Récupérer les IDs des niveaux demandés
+    const levelDocs = await Level.find({ name: { $in: levelArray } });
+    const levelIds = levelDocs.map(level => level._id);
+
+    // Récupérer questions aléatoires
+    const questions = await Question.aggregate([
+      { 
+        $match: { 
+          level: { $in: levelIds },
+          questionType: { $in: ['oral', 'written'] }
+        } 
+      },
+      { $sample: { size: parseInt(count) } },
+      { 
+        $project: {
+          questionText: 1,
+          questionType: 1,
+          audioUrl: 1,
+          level: 1,
+          answers: {
+            $map: {
+              input: "$answers",
+              as: "answer",
+              in: {
+                text: "$$answer.text",
+                audioUrl: "$$answer.audioUrl",
+                // Ne pas envoyer isCorrect au client
+                _id: "$$answer._id"
+              }
+            }
+          }
+        }
+      }
+    ]);
+
+    // Mélanger les questions pour variété
+    const shuffledQuestions = questions.sort(() => 0.5 - Math.random());
+
+    res.json({
+      success: true,
+      data: shuffledQuestions
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+// Générer un quiz spécifique (oral ou écrit)
+exports.generateTypedQuiz = async (req, res) => {
+  try {
+    const { type, count = 5, levels } = req.query;
+    
+    if (!['oral', 'written'].includes(type)) {
+      return res.status(400).json({
+        success: false,
+        message: "Type must be 'oral' or 'written'"
+      });
+    }
+
+    const filter = { questionType: type };
+    
+    if (levels) {
+      const levelArray = typeof levels === 'string' ? levels.split(',') : levels;
+      const levelDocs = await Level.find({ name: { $in: levelArray } });
+      filter.level = { $in: levelDocs.map(l => l._id) };
+    }
+
+    const questions = await Question.aggregate([
+      { $match: filter },
+      { $sample: { size: parseInt(count) } },
+      {
+        $project: {
+          questionText: 1,
+          questionType: 1,
+          audioUrl: 1,
+          level: 1,
+          answers: {
+            $map: {
+              input: "$answers",
+              as: "answer",
+              in: {
+                text: "$$answer.text",
+                audioUrl: "$$answer.audioUrl",
+                _id: "$$answer._id"
+              }
+            }
+          }
+        }
+      }
+    ]);
+
+    res.json({
+      success: true,
+      data: questions
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
