@@ -5,6 +5,8 @@ const replySchema = new mongoose.Schema({
   post: { type: mongoose.Schema.Types.ObjectId, ref: 'Post' },
   author: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   createdAt: { type: Date, default: Date.now },
+  upvotedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }]
+
 });
 
 module.exports = mongoose.model('Reply', replySchema);
