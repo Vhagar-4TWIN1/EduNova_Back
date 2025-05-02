@@ -12,8 +12,10 @@ const moduleRouter = require('./routers/moduleRouter');
 const userRouter = require('./routers/userRouter');
 const authRouter = require('./routers/authRouter');
 const lessonRouter = require('./routers/lessonRouter');
+const http = require('http');
+const { Server } = require('socket.io');
 const passport = require('./middlewares/passport');
-const { User } = require('./models/usersModel'); // <-- make sure this is the correct path
+const { User } = require('./models/usersModel');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const levelRoutes = require('./routers/levelRouter');
@@ -21,10 +23,24 @@ const questionRouter = require('./routers/questionRoutes');
 const googleClassroomRouter = require('./routers/googleClassroomRouter');
 const axios = require("axios");
 const { google } = require('googleapis');
+const server = http.createServer(app);
+
+// Setup Socket.IO
+const io = new Server(server, {
+  cors: {
+
+    origin: 'http://localhost:5173', // allow your frontend 
+    credentials: true
+  }
+});
+
+
 const session = require("express-session");
 const aiRoute = require("./routers/aiRouter");
 const userProgressRoutes = require("./routers/userProgressRoutes");
 const performanceRoutes = require('./routers/performanceRouter');
+const chatSocketHandler = require('./routers/chatRouter');
+chatSocketHandler(io); 
 
 console.log("MongoDB URI:", process.env.MONGODB_URI); // Debugging
 console.log("Port:", process.env.PORT);
