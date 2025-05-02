@@ -8,13 +8,16 @@ const {
   updateModule,
   deleteModule,
   getModuleWithId,
+  getModuleWithUserId,
 } = require("../controllers/moduleController");
-router.get("/:id", getModuleWithId); // ⬅️ ajoute cette route avant les routes plus générales
+const { auth } = require("../middlewares/auth");
+router.get("/modules/",auth, getModuleWithUserId)
 
-router.post("/add", createModule);
-router.get("/", getModules);
-router.put("/:id", updateModule);
-router.delete("/:id", deleteModule);
+router.get("/:id", getModuleWithId); 
+
+router.post("/add",auth, createModule);
+router.get("/",auth, getModules);
+router.put("/:id", auth ,updateModule);
+router.delete("/:id",auth, deleteModule);
 router.get("/modules/:moduleId/lessons", lessonController.getLessonsByModule);
-
 module.exports = router;

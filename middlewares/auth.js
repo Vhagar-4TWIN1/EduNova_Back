@@ -1,15 +1,13 @@
 const jwt = require('jsonwebtoken');
 
 // Middleware for token-based user authentication
-exports.identifier = (req, res, next) => {
+exports.auth = (req, res, next) => {
   let token;
 
   // Check if the request comes from a browser or another client
-  if (req.headers.client === 'not-browser') {
+  
     token = req.headers.authorization; // Authorization from header
-  } else {
-    token = req.cookies['Authorization']; // Authorization from cookies
-  }
+ 
 
   // If no token is provided, return Unauthorized response
   if (!token) {
