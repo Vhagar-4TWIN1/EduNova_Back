@@ -4,6 +4,18 @@ const annotationSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
   highlights: [{ text: String, color: String }],
   notes: [{ content: String, createdAt: { type: Date, default: Date.now } }],
+  stickyNotes: [
+    {
+      content: { type: String, required: true },
+      position: {
+        x: { type: Number, required: true },
+        y: { type: Number, required: true },
+      },
+      color: { type: String, default: "#FFEB3B" },
+      createdAt: { type: Date, default: Date.now },
+      updatedAt: { type: Date, default: Date.now },
+    },
+  ],
 });
 
 const lessonSchema = new mongoose.Schema(

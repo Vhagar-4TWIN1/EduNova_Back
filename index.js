@@ -13,7 +13,7 @@ const userRouter = require("./routers/userRouter");
 const authRouter = require("./routers/authRouter");
 const lessonRouter = require("./routers/lessonRouter");
 const passport = require("./middlewares/passport");
-const { User } = require("./models/usersModel"); // <-- make sure this is the correct path
+const { User } = require("./models/usersModel");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const levelRoutes = require("./routers/levelRouter");
@@ -27,6 +27,9 @@ const aiRoute = require("./routers/aiRouter");
 const userProgressRoutes = require("./routers/userProgressRoutes");
 const performanceRoutes = require("./routers/performanceRouter");
 const translateRouter = require("./routers/translateRouter");
+const languageToolRouter = require("./routers/langToolRouter");
+const realTimeSubRouter = require("./routers/realTimeSubRouter");
+const stickyNoteRoutes = require("./routers/stickyNoteRoutes");
 
 console.log("MongoDB URI:", process.env.MONGODB_URI); // Debugging
 console.log("Port:", process.env.PORT);
@@ -93,7 +96,9 @@ app.use("/api/ai", aiRoute);
 app.use("/api/progress", userProgressRoutes);
 app.use("/api/translate", translateRouter);
 app.use("/api/ip", ipRoutes);
-
+app.use("/api/languageTool", languageToolRouter);
+app.use("/api/subtitles", realTimeSubRouter);
+app.use("/api/stickynotes", stickyNoteRoutes);
 app.get("/", (req, res) => {
   res.json({ message: "Hello from the server" });
 });
