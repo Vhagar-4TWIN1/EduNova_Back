@@ -9,14 +9,20 @@ const speech = require("@google-cloud/speech");
 const gTTS = require("gtts");
 const Tesseract = require("tesseract.js");
 const pdfParse = require("pdf-parse");
-const Modules = require("../models/module"); 
+const Modules = require("../models/module");
 const Lesson = require("../models/lesson");
 const { generateTTS } = require("../utils/textToSpeech");
-const { createCourse: createGoogleCourse } = require("../services/googleClassroomService");
-const { createCourse: createBlackboardCourse } = require("../services/blackboardService");
-const { uploadMediaToCloudinary, deleteMediaFromCloudinary } = require("../utils/cloudinary");
+const {
+  createCourse: createGoogleCourse,
+} = require("../services/googleClassroomService");
+const {
+  createCourse: createBlackboardCourse,
+} = require("../services/blackboardService");
+const {
+  uploadMediaToCloudinary,
+  deleteMediaFromCloudinary,
+} = require("../utils/cloudinary");
 const { generateAnnotations } = require("../utils/generateAnnotations");
-
 
 const client = new speech.SpeechClient();
 ffmpeg.setFfmpegPath(ffmpegPath);
@@ -31,11 +37,13 @@ exports.getLessonAudio = async (req, res) => {
     if (
       !fileUrl ||
       (!fileUrl.includes("drive.google.com") &&
-       !fileUrl.includes("cloudinary.com") &&
-       !fileUrl.includes("res.cloudinary.com") &&
-       !fileUrl.includes("uploadthing.com"))
+        !fileUrl.includes("cloudinary.com") &&
+        !fileUrl.includes("res.cloudinary.com") &&
+        !fileUrl.includes("uploadthing.com"))
     ) {
-      return res.status(400).json({ message: "Unsupported or invalid file URL for TTS/STT." });
+      return res
+        .status(400)
+        .json({ message: "Unsupported or invalid file URL for TTS/STT." });
     }
 
     const fileExt = path.extname(fileUrl).toLowerCase();
@@ -58,7 +66,9 @@ exports.getLessonAudio = async (req, res) => {
           .on("error", reject)
           .save(wavPath);
       });
-      execSync(`whisper \"${wavPath}\" --language en --model base --output_dir \"${tempDir}\" --output_format txt`);
+      execSync(
+        `whisper \"${wavPath}\" --language en --model base --output_dir \"${tempDir}\" --output_format txt`
+      );
       const outputPath = wavPath.replace(".wav", ".txt");
       const transcript = fs.readFileSync(outputPath, "utf8");
       res.setHeader("Content-Type", "text/plain");
@@ -66,13 +76,18 @@ exports.getLessonAudio = async (req, res) => {
     }
 
     if ([".png", ".jpg", ".jpeg", ".webp"].includes(fileExt)) {
-      const { data: { text } } = await Tesseract.recognize(localPath, "eng");
+      const {
+        data: { text },
+      } = await Tesseract.recognize(localPath, "eng");
       const mp3Path = path.join(tempDir, `tts.mp3`);
       const gtts = new gTTS(text);
-      await new Promise(resolve => gtts.save(mp3Path, resolve));
+      await new Promise((resolve) => gtts.save(mp3Path, resolve));
       const mp3Data = fs.readFileSync(mp3Path);
       res.setHeader("Content-Type", "audio/mpeg");
-      res.setHeader("Content-Disposition", `attachment; filename=\"${lesson._id}_tts.mp3\"`);
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename=\"${lesson._id}_tts.mp3\"`
+      );
       return res.send(mp3Data);
     }
 
@@ -81,14 +96,19 @@ exports.getLessonAudio = async (req, res) => {
       const { text } = await pdfParse(dataBuffer);
       const gtts = new gTTS(text);
       const mp3Path = path.join(tempDir, `tts.mp3`);
-      await new Promise(resolve => gtts.save(mp3Path, resolve));
+      await new Promise((resolve) => gtts.save(mp3Path, resolve));
       const mp3Data = fs.readFileSync(mp3Path);
       res.setHeader("Content-Type", "audio/mpeg");
-      res.setHeader("Content-Disposition", `attachment; filename=\"${lesson._id}_tts.mp3\"`);
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename=\"${lesson._id}_tts.mp3\"`
+      );
       return res.send(mp3Data);
     }
 
-    return res.status(400).json({ message: "Unsupported file type for TTS/STT." });
+    return res
+      .status(400)
+      .json({ message: "Unsupported file type for TTS/STT." });
   } catch (err) {
     console.error("TTS/STT Error:", err);
     res.status(500).json({ error: err.message });
@@ -98,7 +118,7 @@ exports.getLessonAudio = async (req, res) => {
 exports.getGoogleLessons = async (req, res) => {
   try {
     console.log("🔥 Reached getGoogleLessons controller");
-    const lessons = await Lesson.find({ LMScontent: 'google-classroom' });
+    const lessons = await Lesson.find({ LMScontent: "google-classroom" });
     console.log("📚 Lessons found:", lessons.length);
     res.status(200).json(lessons);
   } catch (error) {
@@ -111,33 +131,64 @@ exports.getLessonsByModule = async (req, res) => {
   try {
     const { moduleId } = req.params;
 
-    const module = await Modules.findById(moduleId).populate('lessons');
+    const module = await Modules.findById(moduleId).populate("lessons");
     res.status(200).json(module.lessons);
-    
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
 
-
 exports.createLesson = async (req, res) => {
   const errors = validationResult(req);
-  if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
-
+  if (!errors.isEmpty())
+    return res.status(400).json({ errors: errors.array() });
   try {
-    const { title, content, typeLesson, fileUrl, public_id,moduleId } = req.body;
-    if (!fileUrl) return res.status(400).json({ error: "Missing file URL" });
+    const { title, content, typeLesson, LMScontent, module, public_id } =
+      req.body;
 
-    const lesson = await Lesson.create({ title, content, typeLesson, fileUrl, public_id,moduleId });
+    console.log("📥 Creating lesson with module:", module);
 
-    const aiAnnotations = await generateAnnotations(lesson);
-    lesson.annotations.push({ userId: null,source: 'ai', highlights: aiAnnotations.highlights, notes: aiAnnotations.notes });
-    await lesson.save();
+    if (!title || !content || !typeLesson || !module) {
+      return res.status(400).json({ message: "Missing required fields" });
+    }
 
-    await syncWithLMS(lesson);
-    res.status(201).json(lesson);
-  } catch (error) {
-    res.status(400).json({ error: error.message });
+    // Ensure the module exists before proceeding
+    const foundModule = await Modules.findById(module);
+    if (!foundModule) {
+      return res.status(404).json({ message: "Module not found" });
+    }
+
+    // 📦 Handle file upload using multer (check req.file)
+    let fileUrl = null;
+    if (req.file) {
+      // Upload to Cloudinary if needed
+      const uploadResult = await uploadMediaToCloudinary(req.file.path);
+      fileUrl = uploadResult.secure_url;
+    } else if (req.body.fileUrl) {
+      fileUrl = req.body.fileUrl;
+    }
+
+    const newLesson = new Lesson({
+      title,
+      content,
+      typeLesson,
+      fileUrl,
+      public_id: public_id || "",
+      LMScontent,
+      module,
+    });
+
+    const savedLesson = await newLesson.save();
+    foundModule.lessons.push(savedLesson._id);
+    await foundModule.save();
+
+    console.log("✅ Lesson created:", savedLesson._id);
+    res.status(201).json(savedLesson);
+  } catch (err) {
+    console.error("❌ Error in createLesson:", err);
+    res
+      .status(500)
+      .json({ message: "Failed to create lesson", error: err.message });
   }
 };
 
@@ -170,8 +221,6 @@ exports.generateAIAnnotations = async (req, res) => {
   }
 };
 
-
-
 exports.getAllLessons = async (_, res) => {
   try {
     const lessons = await Lesson.find();
@@ -196,7 +245,9 @@ exports.updateLesson = async (req, res) => {
     const updates = { ...req.body };
     if (req.file) updates.fileUrl = req.file.path;
 
-    const lesson = await Lesson.findByIdAndUpdate(req.params.id, updates, { new: true });
+    const lesson = await Lesson.findByIdAndUpdate(req.params.id, updates, {
+      new: true,
+    });
     if (!lesson) return res.status(404).json({ message: "Lesson not found" });
     res.status(200).json(lesson);
   } catch (error) {
@@ -241,8 +292,15 @@ exports.addAnnotation = async (req, res) => {
 
 const syncWithLMS = async (lesson) => {
   try {
-    const googleCourse = await createGoogleCourse(lesson.title, lesson.content, GOOGLE_ADMIN_EMAIL);
-    const blackboardCourse = await createBlackboardCourse(lesson.title, lesson.content);
+    const googleCourse = await createGoogleCourse(
+      lesson.title,
+      lesson.content,
+      GOOGLE_ADMIN_EMAIL
+    );
+    const blackboardCourse = await createBlackboardCourse(
+      lesson.title,
+      lesson.content
+    );
     console.log("Synced with Google Classroom:", googleCourse.id);
     console.log("Synced with Blackboard:", blackboardCourse.id);
   } catch (error) {

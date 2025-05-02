@@ -4,7 +4,7 @@ const router = express.Router();
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
-const jwt = require('jsonwebtoken');
+const jwt = require("jsonwebtoken");
 
 const {
   getAllUsers,
@@ -336,8 +336,8 @@ router.post("/delete-diploma", (req, res) => {
 });
 router.patch("/affectbadges/:idUser/:idBadge", async (req, res) => {
   const { idUser, idBadge } = req.params;
-  const {Student} = require("../models/usersModel"); 
-  const Badge = require("../models/badge"); // Import the Badge model 
+  const { Student } = require("../models/usersModel");
+  const Badge = require("../models/badge"); // Import the Badge model
 
   try {
     const user = await Student.findById(idUser); // Use the Student model
@@ -345,7 +345,7 @@ router.patch("/affectbadges/:idUser/:idBadge", async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
     if (!user.achievedBadges) {
-      user.achievedBadges = []; 
+      user.achievedBadges = [];
     }
     const badgeExists = user.achievedBadges.some(
       (badgeId) => badgeId.toString() === idBadge
@@ -370,10 +370,10 @@ router.patch("/affectbadges/:idUser/:idBadge", async (req, res) => {
 });
 
 const authenticate = async (req, res, next) => {
-  const token = req.headers.authorization?.split(' ')[1];
+  const token = req.headers.authorization?.split(" ")[1];
 
   if (!token) {
-    return res.status(401).json({ message: 'No token provided' });
+    return res.status(401).json({ message: "No token provided" });
   }
 
   try {
@@ -382,41 +382,56 @@ const authenticate = async (req, res, next) => {
     next();
   } catch (error) {
     console.error(error);
-    return res.status(401).json({ message: 'Invalid or expired token' });
+    return res.status(401).json({ message: "Invalid or expired token" });
   }
 };
 // Get User's Badges
-router.get('/badges/:userId', async (req, res) => {
+router.get("/badges/:userId", async (req, res) => {
   const { userId } = req.params;
   const { User } = require("../models/usersModel"); // Import the User model
-  
+
   try {
-    
     const user = await User.findById(userId).populate("achievedBadges");
     if (!user) {
-      return res.status(404).json({ success: false, message: "User not found!" });
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found!" });
     }
     res.status(200).json(user.achievedBadges);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ success: false, message: "An error occurred while fetching the badges." });
+    res
+      .status(500)
+      .json({
+        success: false,
+        message: "An error occurred while fetching the badges.",
+      });
   }
 });
-router.get('/unachieved-badges/:userId', async (req, res) => {
+router.get("/unachieved-badges/:userId", async (req, res) => {
   const { userId } = req.params;
   const { User } = require("../models/usersModel");
   const Badge = require("../models/badge"); // Import the Badge model
-  
+
   try {
     const user = await User.findById(userId).populate("achievedBadges");
     if (!user) {
-      return res.status(404).json({ success: false, message: "User not found!" });
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found!" });
     }
-    const unachievedBadges = await Badge.find({ _id: { $nin: user.achievedBadges } });
+    const unachievedBadges = await Badge.find({
+      _id: { $nin: user.achievedBadges },
+    });
     res.status(200).json(unachievedBadges);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ success: false, message: "An error occurred while fetching the badges." });
+    res
+      .status(500)
+      .json({
+        success: false,
+        message: "An error occurred while fetching the badges.",
+      });
   }
 });
 module.exports = router;
