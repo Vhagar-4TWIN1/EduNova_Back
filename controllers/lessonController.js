@@ -23,7 +23,7 @@ const {
   deleteMediaFromCloudinary,
 } = require("../utils/cloudinary");
 const { generateAnnotations } = require("../utils/generateAnnotations");
-
+const FileType = require("file-type");
 const client = new speech.SpeechClient();
 ffmpeg.setFfmpegPath(ffmpegPath);
 
@@ -34,27 +34,32 @@ exports.getLessonAudio = async (req, res) => {
 
     const fileUrl = lesson.fileUrl;
 
-    if (
-      !fileUrl ||
-      (!fileUrl.includes("drive.google.com") &&
-        !fileUrl.includes("cloudinary.com") &&
-        !fileUrl.includes("res.cloudinary.com") &&
-        !fileUrl.includes("uploadthing.com"))
-    ) {
-      return res
-        .status(400)
-        .json({ message: "Unsupported or invalid file URL for TTS/STT." });
+    if (!fileUrl) {
+      return res.status(400).json({ message: "Missing file URL" });
     }
 
-    const fileExt = path.extname(fileUrl).toLowerCase();
     const tempDir = path.join(__dirname, "../temp");
     if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir);
 
+    // Download file as buffer
     const response = await axios.get(fileUrl, { responseType: "arraybuffer" });
-    const localPath = path.join(tempDir, `file${fileExt}`);
-    fs.writeFileSync(localPath, Buffer.from(response.data));
+    const buffer = Buffer.from(response.data);
 
-    if ([".mp3", ".mp4", ".m4a", ".wav", ".webm"].includes(fileExt)) {
+    // Detect file type
+    const fileTypeResult = await FileType.fromBuffer(buffer);
+    if (!fileTypeResult) {
+      return res.status(400).json({ message: "Could not detect file type" });
+    }
+
+    const fileExt = `.${fileTypeResult.ext}`;
+    const mime = fileTypeResult.mime;
+    const localPath = path.join(tempDir, `file${fileExt}`);
+    fs.writeFileSync(localPath, buffer);
+
+    console.log("🧠 Detected:", mime);
+
+    // AUDIO or VIDEO => Whisper STT
+    if (mime.startsWith("audio/") || mime.startsWith("video/")) {
       const wavPath = path.join(tempDir, "input.wav");
       await new Promise((resolve, reject) => {
         ffmpeg()
@@ -66,54 +71,76 @@ exports.getLessonAudio = async (req, res) => {
           .on("error", reject)
           .save(wavPath);
       });
+
       execSync(
-        `whisper \"${wavPath}\" --language en --model base --output_dir \"${tempDir}\" --output_format txt`
+        `whisper "${wavPath}" --language en --model base --output_dir "${tempDir}" --output_format txt`
       );
-      const outputPath = wavPath.replace(".wav", ".txt");
-      const transcript = fs.readFileSync(outputPath, "utf8");
+
+      const transcriptPath = wavPath.replace(".wav", ".txt");
+      const transcript = fs.readFileSync(transcriptPath, "utf8");
       res.setHeader("Content-Type", "text/plain");
       return res.send(transcript);
     }
 
-    if ([".png", ".jpg", ".jpeg", ".webp"].includes(fileExt)) {
+    // IMAGE => OCR then TTS
+    if (mime.startsWith("image/")) {
       const {
         data: { text },
       } = await Tesseract.recognize(localPath, "eng");
-      const mp3Path = path.join(tempDir, `tts.mp3`);
+
+      const mp3Path = path.join(tempDir, "tts.mp3");
       const gtts = new gTTS(text);
       await new Promise((resolve) => gtts.save(mp3Path, resolve));
+
       const mp3Data = fs.readFileSync(mp3Path);
       res.setHeader("Content-Type", "audio/mpeg");
       res.setHeader(
         "Content-Disposition",
-        `attachment; filename=\"${lesson._id}_tts.mp3\"`
+        `attachment; filename="${lesson._id}_tts.mp3"`
       );
       return res.send(mp3Data);
     }
 
-    if (fileExt === ".pdf") {
+    // PDF => Text + TTS
+    if (mime === "application/pdf") {
       const dataBuffer = fs.readFileSync(localPath);
       const { text } = await pdfParse(dataBuffer);
+
+      const mp3Path = path.join(tempDir, "tts.mp3");
       const gtts = new gTTS(text);
-      const mp3Path = path.join(tempDir, `tts.mp3`);
       await new Promise((resolve) => gtts.save(mp3Path, resolve));
+
       const mp3Data = fs.readFileSync(mp3Path);
       res.setHeader("Content-Type", "audio/mpeg");
       res.setHeader(
         "Content-Disposition",
-        `attachment; filename=\"${lesson._id}_tts.mp3\"`
+        `attachment; filename="${lesson._id}_tts.mp3"`
       );
       return res.send(mp3Data);
     }
 
-    return res
-      .status(400)
-      .json({ message: "Unsupported file type for TTS/STT." });
+    return res.status(400).json({
+      message: `Unsupported MIME type (${mime}) for TTS/STT.`,
+    });
   } catch (err) {
-    console.error("TTS/STT Error:", err);
+    console.error("❌ TTS/STT Error:", err);
     res.status(500).json({ error: err.message });
   }
 };
+
+exports.getLessonsByModule = async (req, res) => {
+  try {
+    const { moduleId } = req.params;
+    const module = await Modules.findById(moduleId).populate('lessons');
+    if (!module) {
+      return res.status(404).json({ error: "Module not found" });
+    }
+    return res.status(200).json(module.lessons);
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+};
+
 
 exports.getGoogleLessons = async (req, res) => {
   try {
@@ -276,6 +303,7 @@ exports.getLessonWithTTS = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
 exports.addAnnotation = async (req, res) => {
   try {
     const { id } = req.params;
