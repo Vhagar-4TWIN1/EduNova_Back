@@ -21,7 +21,6 @@
 		"@mui/material": "^7.0.2",
 		"@mui/system": "^7.0.2",
 		"@mui/x-date-pickers": "^8.0.0",
-		"@huggingface/inference": "^3.11.0",
 		"axios": "^1.8.4",
 		"bcrypt": "^5.1.1",
 		"bcryptjs": "^2.4.3",
