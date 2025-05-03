@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "edunova-452804",
+  "private_key_id": "a651207dd6a8aeecd88c49ec3181174804a12c1c",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQC7Tptpes8K00ZM\nFDGPIGG6+Yn/4jGj9bkny+WlSNH1QCPoHR68iX6usnxNln2lc41yR1YHUg5pm13Z\n4Kdovuu2bBvq7MWRpDMqqRkaT3DazE/zrN+XvUBiXV7KwI7umB7fXI9s0sTg39Jd\nPDx4cCRWVI1VS8eG71MH727PctB6yWc0OLSVFB7aeWg+pD0gBdPx4xF/wfpFZmkM\nb3DJOIPeAH1LPAgVZc+pvhg7EEB+CdG3YRA7VKwoOoAREhW9QpUolyOm4Y9iJINA\nkXT0MKl803auoaF3e6ejJMM69l7qsvu4JGKqjLXfymKuZfEd/2sLfZF5CjpvXeZl\najYDQAEpAgMBAAECggEAEU1zoczMb22Q4tpCsbwGCyWeD9svRrwePITjU99kNcmV\nB44ZFsWExFKMlQY/2RbRjCr20XpNBohppQTRsiVg1NsrwQnaPlfyuhAg14NbI3sY\nL6Rai0PaPLvvU79x9KxsvalpPl5B/ZvvbNlxpJaHZMouvCBh8B8Phn4huFwc0hq8\nTBnwVyGBRIQ7WCr5ClWvnbGYeX99K9L68eZXCZFMFENyLGm1M4v/hmmogfCNJjX3\nzEmvYykKVhfPiOdr+wdR7QfDZdasZ4y5ykh0nVCu+qzPzKcdeBWPrI52ivywo2B4\nz98W0iqGhr/vMkJ4ig6BztkQF/ap3C9M6YWRcLPBYQKBgQDgNE5fwsqIihzbjklY\nr1aPcpUYLRptT3a+KnxEIbxKrlcHrrQpRz5b5NvDCXJrEUO23lxrOmnsRxnzFgQY\nEYcjXMkfyfmmh9a14KP4ATVC33iGtlzj7zrk4YU+CkOqV6yK3kzK1m058sWJnXme\nTQk6lYjPf+p6NbxYAQEkQHgHDQKBgQDV3sDJp6trmqMWsZw3Lllty3PwkNEMGgrI\nXHDPHw5hCcsvbCkUyzpZ32PGHVvn6fpev5VyI9PEZfvcs7hIKO25f55MW600ygSs\n2zk6D+92tePW9YYGYfuXSAClsG87jHdWMjlp7/mRA9V9YbQiP+BKc6LEd4cFXopA\norhF2IzbjQKBgEJFs9UCkzOA/762dF/OlFualw+qZWFiV8sma80H28yHdBpFPePl\ntz0ajQs9w6B6XfW0DMV1YtIAwl7kZxlmNPfy+VB4N19OT907JbytPr0hqVLInPST\nRmlZcDVCe3XirJHv2+spLuguJs3iyoxMYSn8AZC0Uu8E60NoKJo6pEARAoGACwRe\nigTJH9HndNPRaEZK9Qz1+/55xlXRGGEqroC7DOSkQt0fgKK3bsnDKgF5KokzDI5x\n9F9EGWnnf4cChzUUiem5DdXrJj0B4KWqXQNVIphcFEaxkMKbYz+iSOa91CN4Qkh0\nDLD/+ihoZv0RenIv66XpTJWbrvsfxBSdyXtORkECgYAujGIQVYYC0dXJLNJvTz8g\nBF1DppZcmGs60n7NfMAZWo/PgIA7CRz03SUgzPeZxz2FwRicegnNcNTxZTQc8bAp\nneq98nGSsrusdXjQ1VXPAN3BPoQTy3+yF39r+PF/enqogtev1MsnEWqJ9MY9fARY\nHgQhX4Wp3TZFFxgfQb5DYA==\n-----END PRIVATE KEY-----\n",
+  "client_email": "edunova-classroom-sync@edunova-452804.iam.gserviceaccount.com",
+  "client_id": "117561671003770419152",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/edunova-classroom-sync%40edunova-452804.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}

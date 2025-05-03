@@ -20,11 +20,19 @@ const levelRoutes = require('./routers/levelRouter');
 const questionRouter = require('./routers/questionRoutes');
 const googleClassroomRouter = require('./routers/googleClassroomRouter');
 const axios = require("axios");
-
+const cron = require('node-cron');
+const schedulerRouter = require('./routers/schedulerRouter');
 const session = require("express-session");
 const aiRoute = require("./routers/aiRouter");
 const userProgressRoutes = require("./routers/userProgressRoutes");
 const performanceRoutes = require('./routers/performanceRouter');
+const http = require('http');
+const { WebSocketServer } = require('ws');
+const CalendarEvent = require('./models/calendarEvent');
+const annotationRoutes = require("./routers/annotationRoutes");
+
+const setupEventRoutes        = require('./routers/calendarEventRouter');
+const setupSkillTreeRoutes = require('./routers/skillTreeRouter');
 
 console.log("MongoDB URI:", process.env.MONGODB_URI); // Debugging
 console.log("Port:", process.env.PORT);
@@ -77,16 +85,85 @@ app.use(passport.session());
 app.use('/api/performance', performanceRoutes);
 app.use("/api/level", levelRoutes);
 app.use("/api/auth", authRouter);
+app.use('/api/google', googleClassroomRouter);
 app.use("/api/users", userRouter);
 app.use("/api/lessons", lessonRouter);
 app.use("/api/badges", badgeRouter);
 app.use("/api/ai", aiRoute);
 app.use("/api/progress", userProgressRoutes);
+app.use('/api/scheduler', schedulerRouter);
 
 app.get("/", (req, res) => {
   res.json({ message: "Hello from the server" });
 });
+const httpServer = http.createServer(app);
+const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
+app.use('/api/events', setupEventRoutes(wss));
+app.use('/api/skill-tree', setupSkillTreeRoutes(wss));
 
+const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
+
+app.get('/oauth', (req, res) => {
+    const redirect_uri = 'http://localhost:3000/auth';
+    res.redirect(`https://github.com/login/oauth/authorize?client_id=${process.env.CLIENT_ID}&redirect_uri=${redirect_uri}&scope=user:email`);
+});
+app.use("/api/lessons", annotationRoutes);
+
+app.get('/auth', async (req, res) => {
+    const { code } = req.query;
+    try {
+        const tokenRes = await axios.post('https://github.com/login/oauth/access_token', {
+            client_id: process.env.CLIENT_ID,
+            client_secret: process.env.CLIENT_SECRET,
+            code,
+        }, {
+            headers: { accept: 'application/json' },
+        });
+  
+        const token = tokenRes.data.access_token;
+        const userRes = await axios.get('https://api.github.com/user', {
+            headers: { Authorization: `token ${token}` },
+        });
+        const emailsRes = await axios.get('https://api.github.com/user/emails', {
+            headers: { Authorization: `token ${token}` },
+        });
+  
+        const githubUser = userRes.data;
+        const primaryEmail = emailsRes.data.find(email => email.primary && email.verified)?.email ||
+                             emailsRes.data[0]?.email ||
+                             `${githubUser.login}@github.com`;
+  
+        let user = await User.findOne({ email: primaryEmail });
+  
+        if (!user) {
+            const randomPassword = Math.random().toString(36).slice(-8);
+            const hashedPassword = await bcrypt.hash(randomPassword, 10);
+          
+            user = new User({
+                firstName: githubUser.name?.split(' ')[0] || githubUser.login,
+                lastName: githubUser.name?.split(' ')[1] || '',
+                email: primaryEmail,
+                password: hashedPassword,
+                country: 'Unknown',
+                role: 'Student',
+                photo: githubUser.avatar_url,
+            });
+          
+            await user.save();
+        }
+  
+        const jwtToken = jwt.sign({
+            userId: user._id,
+            email: user.email,
+            role: user.role,
+        }, process.env.TOKEN_SECRET, { expiresIn: '8h' });
+  
+        res.redirect(`${FRONTEND_URL}/home?token=${jwtToken}`);
+    } catch (err) {
+        console.error('GitHub OAuth Error:', err.response?.data || err.message || err);
+        res.status(500).json({ error: 'GitHub OAuth failed', details: err.response?.data || err.message });
+    }
+});
 // LinkedIn OAuth Strategy
 const LinkedInStrategy = require("passport-linkedin-oauth2").Strategy;
 
@@ -149,7 +226,49 @@ app.get(
     });
   }
 );
+wss.on('connection', (ws) => {
+  ws.on('message', (message) => {
+    try {
+      const { type } = JSON.parse(message.toString());
+      if (type === 'ping') {
+        ws.send(JSON.stringify({ type: 'pong' }));
+      }
+    } catch (err) {
+      console.error('Error parsing WS message:', err);
+    }
+  });
+});
+const PORT = process.env.PORT || 3000;
+httpServer.listen(PORT, () => {
+  console.log(`Listening (HTTP + WS) on port ${PORT}…`);
+});
+cron.schedule('*/1 * * * *', async () => {
+  try {
+    const now     = new Date();
+    const in30min = new Date(now.getTime() + 30*60*1000);
+    const upcoming = await CalendarEvent.find({
+      start:       { $gte: now, $lte: in30min },
+      readyEmitted:{ $ne: true }
+    });
 
-app.listen(process.env.PORT || 3000, () => {
-  console.log(`Listening on port ${process.env.PORT || 3000}...`);
+    for (const ev of upcoming) {
+      wss.clients.forEach(ws => {
+        if (ws.readyState === ws.OPEN) {
+          ws.send(JSON.stringify({
+            type:    'events:ready',
+            payload: {
+              id:        ev._id,
+              title:     ev.title,
+              start:     ev.start,
+              lessonId:  ev.lessonId,
+              duration:  ev.durationMin
+            }
+          }));
+        }
+      });
+
+    }
+  } catch (err) {
+    console.error('Cron reminder error:', err);
+  }
 });
