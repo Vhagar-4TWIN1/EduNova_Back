@@ -14,11 +14,14 @@ const moduleRouter = require("./routers/moduleRouter");
 const userRouter = require("./routers/userRouter");
 const authRouter = require("./routers/authRouter");
 const lessonRouter = require("./routers/lessonRouter");
-const http = require("http");
 const { Server } = require("socket.io");
 const passport = require("./middlewares/passport");
 const { User } = require("./models/usersModel");
 const bcrypt = require("bcrypt");
+const { WebSocketServer } = require('ws');
+const http = require("http");
+const httpServer = http.createServer(app);
+
 const jwt = require("jsonwebtoken");
 const levelRoutes = require("./routers/levelRouter");
 const questionRouter = require("./routers/questionRoutes");
@@ -47,8 +50,6 @@ const translateRouter = require("./routers/translateRouter");
 const languageToolRouter = require("./routers/langToolRouter");
 const realTimeSubRouter = require("./routers/realTimeSubRouter");
 const stickyNoteRoutes = require("./routers/stickyNoteRoutes");
-const http = require('http');
-const { WebSocketServer } = require('ws');
 const CalendarEvent = require('./models/calendarEvent');
 const annotationRoutes = require("./routers/annotationRoutes");
 
@@ -131,7 +132,6 @@ app.use("/api/stickynotes", stickyNoteRoutes);
 app.get("/", (req, res) => {
   res.json({ message: "Hello from the server" });
 });
-const httpServer = http.createServer(app);
 const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
 app.use('/api/events', setupEventRoutes(wss));
 app.use('/api/skill-tree', setupSkillTreeRoutes(wss));
