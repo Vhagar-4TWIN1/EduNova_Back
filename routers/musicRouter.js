@@ -4,6 +4,10 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 const axios = require("axios");
+const ffmpegPath = require('ffmpeg-static');
+const youtubedl = require('youtube-dl-exec');
+
+
 
 // Configuration multer
 const storage = multer.diskStorage({
@@ -20,6 +24,148 @@ const storage = multer.diskStorage({
     cb(null, uniqueSuffix + ext);
   }
 });
+
+
+router.get("/youtube/download/:videoId", async (req, res) => {
+  const { videoId } = req.params;
+  const videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
+
+  try {
+    res.setHeader("Content-Disposition", `inline; filename="${videoId}.mp3"`);
+    res.setHeader("Content-Type", "audio/mpeg");
+
+    const ytdlpProcess = youtubedl.exec(videoUrl, {
+      extractAudio: true,
+      audioFormat: "mp3",
+      output: "-",
+      quiet: true,
+      ffmpegLocation: ffmpegPath
+    });
+
+    ytdlpProcess.stdout.pipe(res);
+
+    ytdlpProcess.stderr.on("data", (data) => {
+      console.error("yt-dlp stderr:", data.toString());
+    });
+
+    ytdlpProcess.on("error", (err) => {
+      console.error("yt-dlp failed:", err);
+      if (!res.headersSent) {
+        res.status(500).json({ error: "Error streaming audio", details: err.message });
+      }
+    });
+
+  } catch (err) {
+    console.error("Failed to stream video:", err);
+    res.status(500).json({ error: "Failed to stream audio", details: err.message });
+  }
+});
+
+router.post("/youtube/save/:videoId", async (req, res) => {
+  try {
+    const { videoId } = req.params;
+    const videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
+    
+    const outputDir = path.join(__dirname, "../uploads/music/preloaded");
+    if (!fs.existsSync(outputDir)) {
+      fs.mkdirSync(outputDir, { recursive: true });
+    }
+
+    // Download with yt-dlp
+    const result = await youtubedl(videoUrl, {
+      extractAudio: true,
+      audioFormat: "mp3",
+      output: `${outputDir}/%(title)s.%(ext)s`,
+      ffmpegLocation: ffmpegPath,
+      verbose: true
+    });
+
+    // Get the saved filename
+    const files = fs.readdirSync(outputDir);
+    const savedFile = files.find(f => f.includes(videoId) || f.endsWith('.mp3'));
+    
+    if (!savedFile) {
+      return res.status(500).json({ 
+        error: "MP3 file not found after download",
+        details: "The file was downloaded but couldn't be located"
+      });
+    }
+
+    const savedPath = path.join(outputDir, savedFile);
+    const fileStats = fs.statSync(savedPath);
+    
+    // Verify the file exists and has content
+    if (fileStats.size === 0) {
+      fs.unlinkSync(savedPath);
+      return res.status(500).json({ 
+        error: "Downloaded file is empty",
+        details: "The audio file was created but contains no data"
+      });
+    }
+
+    // Get video title from filename
+    const title = path.parse(savedFile).name
+      .replace(/[^\w\s-]/g, '') // Remove special chars
+      .replace(/\s+/g, ' ')     // Collapse multiple spaces
+      .trim();
+
+    const newTrack = {
+      id: videoId,
+      name: title,
+      url: `/uploads/music/preloaded/${savedFile}`,
+      thumbnail: `https://img.youtube.com/vi/${videoId}/0.jpg`,
+      isPreloaded: true,
+      isYouTube: true,
+      size: fileStats.size,
+      duration: 0 // Can be extracted later
+    };
+
+    // Add to preloaded tracks if not already present
+    if (!preloadedTracks.some(t => t.id === videoId)) {
+      preloadedTracks.push(newTrack);
+    }
+
+    res.status(200).json({
+      message: "YouTube track saved successfully",
+      track: newTrack,
+      fileInfo: {
+        path: savedPath,
+        size: formatBytes(fileStats.size),
+        modified: fileStats.mtime
+      }
+    });
+
+  } catch (err) {
+    console.error("yt-dlp error:", err);
+    
+    // Clean up any partial downloads
+    const outputDir = path.join(__dirname, "../uploads/music/preloaded");
+    if (fs.existsSync(outputDir)) {
+      const files = fs.readdirSync(outputDir);
+      files.forEach(file => {
+        if (file.includes(req.params.videoId)) {
+          fs.unlinkSync(path.join(outputDir, file));
+        }
+      });
+    }
+
+    res.status(500).json({
+      error: "Failed to save YouTube video",
+      details: err.stderr || err.message,
+      suggestion: "Try again later or check the video URL"
+    });
+  }
+});
+
+// Helper function to format file size
+function formatBytes(bytes, decimals = 2) {
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const dm = decimals < 0 ? 0 : decimals;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+}
 
 // Add this near the top of your musicRouter.js
 const preloadedTracks = [
@@ -252,6 +398,134 @@ router.get("/metadata/:filename", async (req, res) => {
   
 
 
+
+// Ajoutez ces routes supplémentaires
+
+// Sauvegarder les playlists personnalisées
+router.post("/playlists", async (req, res) => {
+  try {
+    // Dans une vraie application, vous sauvegarderiez en base de données
+    // Ici on simule juste avec une réponse réussie
+    res.status(200).json({ message: "Playlist saved successfully" });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to save playlist" });
+  }
+});
+
+// Récupérer les playlists personnalisées
+router.get("/playlists", async (req, res) => {
+  try {
+    // Dans une vraie application, vous récupéreriez depuis la base de données
+    // Ici on retourne un exemple
+    res.status(200).json([]);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to load playlists" });
+  }
+});
+
+// Précharger une piste
+router.get("/preload/:trackId", async (req, res) => {
+  try {
+    const { trackId } = req.params;
+    
+    // Trouver la piste
+    const track = preloadedTracks.find(t => t.id === trackId) || 
+                  tracks.find(t => t.id === trackId);
+    
+    if (!track) {
+      return res.status(404).json({ error: "Track not found" });
+    }
+
+    // Si c'est une piste YouTube, on ne peut pas vraiment la précharger
+    if (track.isYouTube) {
+      return res.status(200).json({ 
+        ...track,
+        message: "YouTube tracks can't be fully preloaded"
+      });
+    }
+
+    // Pour les pistes locales, on peut envoyer le fichier
+    const filePath = path.join(__dirname, "../uploads/music", track.filename);
+    if (fs.existsSync(filePath)) {
+      return res.sendFile(filePath);
+    }
+
+    res.status(404).json({ error: "Track file not found" });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to preload track" });
+  }
+});
+
+// In your musicRouter.js
+// In your musicRouter.js
+router.get("/download/:trackId", async (req, res) => {
+  try {
+    const { trackId } = req.params;
+    
+    // Find the track in all available sources
+    let filePath;
+    
+    // Check preloaded tracks first
+    const preloadedTrack = preloadedTracks.find(t => 
+      t.id === trackId || 
+      `/music/preloaded/${trackId}`.includes(t.url)
+    );
+    
+    if (preloadedTrack) {
+      filePath = path.join(__dirname, '../music/preloaded', path.basename(preloadedTrack.url));
+      if (fs.existsSync(filePath)) {
+        return res.download(filePath);
+      }
+    }
+    
+    // Check uploaded tracks
+    const uploadDir = path.join(__dirname, '../uploads/music');
+    if (fs.existsSync(uploadDir)) {
+      const files = fs.readdirSync(uploadDir);
+      const uploadedFile = files.find(f => 
+        f === trackId || 
+        f === `${trackId}.mp3` || 
+        f === `${trackId}.MP3`
+      );
+      
+      if (uploadedFile) {
+        filePath = path.join(uploadDir, uploadedFile);
+        return res.download(filePath);
+      }
+    }
+    
+    res.status(404).json({ error: "Track file not found" });
+    
+  } catch (error) {
+    console.error("Download error:", error);
+    res.status(500).json({ error: "Failed to download track" });
+  }
+});
+
+
+// Fonctions utilitaires
+async function getLocalTracks() {
+  const musicDir = path.join(__dirname, "../uploads/music");
+  if (!fs.existsSync(musicDir)) return [];
+  
+  const files = fs.readdirSync(musicDir);
+  return files.map(file => ({
+    id: `local_${file}`,
+    name: path.parse(file).name,
+    url: `/uploads/music/${file}`,
+    isPreloaded: false,
+    isYouTube: false
+  }));
+}
+
+async function getYouTubeTracks() {
+  if (youtubePlaylists.study?.tracks?.length === 0) {
+    youtubePlaylists.study.tracks = await fetchYouTubePlaylist(youtubePlaylists.study.playlistId);
+  }
+  return youtubePlaylists.study?.tracks || [];
+}
+
+
 // Delete music track (user-uploaded only)
 router.delete("/:filename", (req, res) => {
   try {
@@ -275,6 +549,8 @@ router.delete("/:filename", (req, res) => {
     res.status(500).json({ message: "Error deleting track" });
   }
 });
+
+
 
 module.exports = router;
 
