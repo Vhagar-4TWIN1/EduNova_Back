@@ -400,12 +400,10 @@ router.get("/badges/:userId", async (req, res) => {
     res.status(200).json(user.achievedBadges);
   } catch (error) {
     console.error(error);
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: "An error occurred while fetching the badges.",
-      });
+    res.status(500).json({
+      success: false,
+      message: "An error occurred while fetching the badges.",
+    });
   }
 });
 router.get("/unachieved-badges/:userId", async (req, res) => {
@@ -426,12 +424,28 @@ router.get("/unachieved-badges/:userId", async (req, res) => {
     res.status(200).json(unachievedBadges);
   } catch (error) {
     console.error(error);
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: "An error occurred while fetching the badges.",
-      });
+    res.status(500).json({
+      success: false,
+      message: "An error occurred while fetching the badges.",
+    });
   }
 });
+
+// PATCH /api/users/fix-discriminator/teachers
+router.patch("/fix-discriminator/teachers", async (req, res) => {
+  try {
+    const { User } = require("../models/usersModel");
+    const result = await User.updateMany(
+      { role: "Teacher", __t: { $exists: false } },
+      { $set: { __t: "Teacher" } }
+    );
+    res.status(200).json({
+      success: true,
+      message: `✅ Updated ${result.modifiedCount} teacher(s) with missing __t`,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 module.exports = router;
