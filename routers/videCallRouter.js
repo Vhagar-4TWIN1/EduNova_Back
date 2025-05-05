@@ -2,7 +2,7 @@ const VideCallController = require('../controllers/videCallController');
 const express = require('express');
 const router = express.Router();
 const VideoCall = require('../models/videoCall');
-const User = require('../models/user');
+const User = require('../models/usersModel');
 const mongoose = require('mongoose');
 router.post('/', VideCallController.createVideoCall); // Create a new video call
 router.get('/:id', VideCallController.getVideoCall); // Get a specific video call by ID

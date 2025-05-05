@@ -140,7 +140,7 @@ app.get("/", (req, res) => {
 const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
 app.use('/api/events', setupEventRoutes(wss));
 app.use('/api/skill-tree', setupSkillTreeRoutes(wss));
-app.use("/api/videCall",VideoCallRouter);
+//app.use("/api/videCall",VideoCallRouter);
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
 
 app.get('/oauth', (req, res) => {

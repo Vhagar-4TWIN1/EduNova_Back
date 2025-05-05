@@ -1,5 +1,5 @@
 const VideoCall = require('../models/videoCall');
-const User = require('../models/user');
+const User = require('../models/usersModel');
 const mongoose = require('mongoose');
 exports.createVideoCall = async (req, res) => {
     const { participants } = req.body;
