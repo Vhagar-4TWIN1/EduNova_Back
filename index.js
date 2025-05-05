@@ -43,7 +43,6 @@ const io = new Server(server, {
 const session = require("express-session");
 const aiRoute = require("./routers/aiRouter");
 const userProgressRoutes = require("./routers/userProgressRoutes");
-const performanceRoutes = require("./routers/performanceRouter");
 const chatSocketHandler = require("./routers/chatRouter");
 chatSocketHandler(io);
 const translateRouter = require("./routers/translateRouter");
@@ -56,6 +55,8 @@ const annotationRoutes = require("./routers/annotationRoutes");
 const setupEventRoutes        = require('./routers/calendarEventRouter');
 const setupSkillTreeRoutes = require('./routers/skillTreeRouter');
 
+const performanceRoutes = require('./routers/performanceRouter');
+const quizRoutes = require("./routers/quiz");
 console.log("MongoDB URI:", process.env.MONGODB_URI); // Debugging
 console.log("Port:", process.env.PORT);
 console.log("Session Secret:", process.env.SESSION_SECRET);
@@ -113,6 +114,9 @@ app.use(passport.session());
 // Routes
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use("/api/performance", performanceRoutes);
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/api/performance', performanceRoutes);
+app.use('/api/quiz', quizRoutes);
 app.use("/api/level", levelRoutes);
 app.use("/api/forum", forumRouter);
 
