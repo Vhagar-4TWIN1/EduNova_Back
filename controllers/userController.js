@@ -7,18 +7,18 @@ const badge = require("../models/badge");
 exports.getAllUsers = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 5;
+    const limit = parseInt(req.query.limit) || 100;
     const skip = (page - 1) * limit;
 
-    // Fetch users with pagination
-    const users = await User.find().select("-password").skip(skip).limit(limit);
+    const users = await User.find()
+      .select("-password")
+      .skip(skip)
+      .limit(limit)
+      .lean(); // Include all fields, including role and __t
 
-    // Count total users for pagination
     const totalUsers = await User.countDocuments();
-
     const totalPages = Math.ceil(totalUsers / limit);
 
-    // Respond with the paginated data
     res.status(200).json({
       users,
       totalPages,
@@ -153,21 +153,27 @@ exports.promoteToAdmin = async (req, res) => {
 exports.affectBadge = async (req, res) => {
   const { studentId, badgeId } = req.body;
   try {
-      const badge = await Badge.findById(badgeId);
-      if (!badge) {
-          return res.status(404).json({ success: false, message: 'Badge not found' });
-      }
-      const student = await Student.findByIdAndUpdate(
-          studentId,
-          { $addToSet: { achievedBadges: badgeId } }, // prevents duplicates
-          { new: true }
-        ).populate('achievedBadges');
-      return res.status(200).json({ success: true, message: 'Badge affected successfully' });
+    const badge = await Badge.findById(badgeId);
+    if (!badge) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Badge not found" });
+    }
+    const student = await Student.findByIdAndUpdate(
+      studentId,
+      { $addToSet: { achievedBadges: badgeId } }, // prevents duplicates
+      { new: true }
+    ).populate("achievedBadges");
+    return res
+      .status(200)
+      .json({ success: true, message: "Badge affected successfully" });
   } catch (error) {
-      console.error('❌ Error affecting badge:', error);
-      return res.status(500).json({ success: false, message: 'Internal server error' });
+    console.error("❌ Error affecting badge:", error);
+    return res
+      .status(500)
+      .json({ success: false, message: "Internal server error" });
   }
-}
+};
 
 module.exports = {
   getAllUsers: exports.getAllUsers,

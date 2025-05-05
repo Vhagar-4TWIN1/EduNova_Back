@@ -60,7 +60,7 @@ const userSchema = new mongoose.Schema(
     firstName: { type: String, required: false },
     lastName: { type: String, required: false },
     age: { type: Number, required: false },
-	provider: { type: String, required: false },  //facebook 
+    provider: { type: String, required: false }, //facebook
     email: { type: String, required: true, unique: true },
     verified: {
       type: Boolean,
@@ -90,8 +90,8 @@ const userSchema = new mongoose.Schema(
       enum: ["Admin", "Teacher", "Student"],
     },
     photo: { type: String }, // User profile photo path
-  },
-  { discriminatorKey: "role", timestamps: true }
+  }
+  //{ discriminatorKey: "role", timestamps: true }
 );
 
 const User = mongoose.model("User", userSchema);
@@ -111,7 +111,6 @@ const teacherSchema = new mongoose.Schema({
   experience: { type: String },
   cin: { type: String, unique: true, sparse: true },
   workCertificate: { type: String },
- 
 });
 const Teacher = User.discriminator("Teacher", teacherSchema);
 
@@ -127,8 +126,7 @@ const studentSchema = new mongoose.Schema({
     default: "video",
   },
   interests: [{ type: String }],
-  achievedBadges: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Badge' }],
-
+  achievedBadges: [{ type: mongoose.Schema.Types.ObjectId, ref: "Badge" }],
 });
 const Student = User.discriminator("Student", studentSchema);
 module.exports = { User, Admin, Teacher, Student };
