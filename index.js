@@ -8,7 +8,7 @@ require("dotenv").config();
 const bodyParser = require("body-parser");
 const app = express();
 const forumRouter = require("./routers/forumRouter");
-
+const VideoCallRouter = require("./routers/videCallRouter");
 const badgeRouter = require("./routers/badgeRouter");
 const moduleRouter = require("./routers/moduleRouter");
 const userRouter = require("./routers/userRouter");
@@ -57,6 +57,7 @@ const setupSkillTreeRoutes = require('./routers/skillTreeRouter');
 
 const performanceRoutes = require('./routers/performanceRouter');
 const quizRoutes = require("./routers/quiz");
+const VideoCall = require("./models/videoCall");
 console.log("MongoDB URI:", process.env.MONGODB_URI); // Debugging
 console.log("Port:", process.env.PORT);
 console.log("Session Secret:", process.env.SESSION_SECRET);
@@ -139,7 +140,7 @@ app.get("/", (req, res) => {
 const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
 app.use('/api/events', setupEventRoutes(wss));
 app.use('/api/skill-tree', setupSkillTreeRoutes(wss));
-
+app.use("/api/videCall",VideoCallRouter);
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
 
 app.get('/oauth', (req, res) => {
