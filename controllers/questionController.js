@@ -237,7 +237,6 @@ exports.updateQuestion = async (req, res) => {
   }
 };
 
-// Supprimer une question
 exports.deleteQuestion = async (req, res) => {
   try {
     const question = await Question.findById(req.params.id);

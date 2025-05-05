@@ -25,7 +25,7 @@ const session = require("express-session");
 const aiRoute = require("./routers/aiRouter");
 const userProgressRoutes = require("./routers/userProgressRoutes");
 const performanceRoutes = require('./routers/performanceRouter');
-
+const quizRoutes = require("./routers/quiz");
 console.log("MongoDB URI:", process.env.MONGODB_URI); // Debugging
 console.log("Port:", process.env.PORT);
 console.log("Session Secret:", process.env.SESSION_SECRET);
@@ -76,6 +76,7 @@ app.use(passport.session());
 // Routes
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/api/performance', performanceRoutes);
+app.use('/api/quiz', quizRoutes);
 app.use("/api/level", levelRoutes);
 app.use("/api/auth", authRouter);
 app.use("/api/users", userRouter);

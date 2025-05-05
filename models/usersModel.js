@@ -133,4 +133,3 @@ const studentSchema = new mongoose.Schema({
 const Student = User.discriminator("Student", studentSchema);
 module.exports = { User, Admin, Teacher, Student };
 
-module.exports = { User, Admin, Teacher, Student };

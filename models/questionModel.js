@@ -13,7 +13,7 @@ const answerSchema = new mongoose.Schema({
     type: Boolean,
     required: true
   }
-}, { _id: false });
+}, { _id: true });
 
 const questionSchema = new mongoose.Schema({
   questionText: {
