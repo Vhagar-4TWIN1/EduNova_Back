@@ -120,6 +120,7 @@ app.use(
 // Initialize Passport for authentication and manage sessions
 app.use(passport.initialize());
 app.use(passport.session());
+
 // Routes
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use("/api/performance", performanceRoutes);
@@ -146,6 +147,7 @@ app.use('/api/gemini', GeminiRoutes);
 app.use('/api/music', musicRouter);
 app.use('/music', musicRouter);
 app.use('/music', express.static(path.join(__dirname, 'music')));
+app.use("/module", moduleRouter);
 
 app.get("/", (req, res) => {
   res.json({ message: "Hello from the server" });

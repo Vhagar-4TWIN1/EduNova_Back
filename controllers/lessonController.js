@@ -170,33 +170,27 @@ exports.createLesson = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty())
     return res.status(400).json({ errors: errors.array() });
+
   try {
-    const { title, content, typeLesson, LMScontent, module, public_id } =
-      req.body;
+    const { title, content, typeLesson, LMScontent, module, public_id } = req.body;
 
-    const lesson = await Lesson.create({ title, content, typeLesson, fileUrl, public_id,moduleId });
-
-    const aiAnnotations = await generateAnnotations(lesson);
-    lesson.annotations.push({ userId: null,source: 'ai', highlights: aiAnnotations.highlights, notes: aiAnnotations.notes });
-    await lesson.save();
-
-    // Ensure the module exists before proceeding
-    const foundModule = await Modules.findById(module);
-    if (!foundModule) {
-      return res.status(404).json({ message: "Module not found" });
-    }
-
-    // 📦 Handle file upload using multer (check req.file)
+    // 1. Upload or fetch fileUrl first
     let fileUrl = null;
     if (req.file) {
-      // Upload to Cloudinary if needed
       const uploadResult = await uploadMediaToCloudinary(req.file.path);
       fileUrl = uploadResult.secure_url;
     } else if (req.body.fileUrl) {
       fileUrl = req.body.fileUrl;
     }
 
-    const newLesson = new Lesson({
+    // 2. Ensure module exists
+    const foundModule = await Modules.findById(module);
+    if (!foundModule) {
+      return res.status(404).json({ message: "Module not found" });
+    }
+
+    // 3. Create lesson
+    const lesson = await Lesson.create({
       title,
       content,
       typeLesson,
@@ -206,19 +200,21 @@ exports.createLesson = async (req, res) => {
       module,
     });
 
-    const savedLesson = await newLesson.save();
-    foundModule.lessons.push(savedLesson._id);
+    // 4. Push lesson to module
+    foundModule.lessons.push(lesson._id);
     await foundModule.save();
 
-    console.log("✅ Lesson created:", savedLesson._id);
-    res.status(201).json(savedLesson);
+   
+    await lesson.save();
+
+    console.log("✅ Lesson created:", lesson._id);
+    res.status(201).json(lesson);
   } catch (err) {
     console.error("❌ Error in createLesson:", err);
-    res
-      .status(500)
-      .json({ message: "Failed to create lesson", error: err.message });
+    res.status(500).json({ message: "Failed to create lesson", error: err.message });
   }
 };
+
 
 exports.generateAIAnnotations = async (req, res) => {
   try {
