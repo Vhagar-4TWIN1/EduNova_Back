@@ -165,6 +165,7 @@ exports.getLessonsByModule = async (req, res) => {
   }
 };
 
+
 exports.createLesson = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty())
@@ -173,11 +174,11 @@ exports.createLesson = async (req, res) => {
     const { title, content, typeLesson, LMScontent, module, public_id } =
       req.body;
 
-    console.log("📥 Creating lesson with module:", module);
+    const lesson = await Lesson.create({ title, content, typeLesson, fileUrl, public_id,moduleId });
 
-    if (!title || !content || !typeLesson || !module) {
-      return res.status(400).json({ message: "Missing required fields" });
-    }
+    const aiAnnotations = await generateAnnotations(lesson);
+    lesson.annotations.push({ userId: null,source: 'ai', highlights: aiAnnotations.highlights, notes: aiAnnotations.notes });
+    await lesson.save();
 
     // Ensure the module exists before proceeding
     const foundModule = await Modules.findById(module);
@@ -248,6 +249,8 @@ exports.generateAIAnnotations = async (req, res) => {
   }
 };
 
+
+
 exports.getAllLessons = async (_, res) => {
   try {
     const lessons = await Lesson.find();
@@ -272,9 +275,7 @@ exports.updateLesson = async (req, res) => {
     const updates = { ...req.body };
     if (req.file) updates.fileUrl = req.file.path;
 
-    const lesson = await Lesson.findByIdAndUpdate(req.params.id, updates, {
-      new: true,
-    });
+    const lesson = await Lesson.findByIdAndUpdate(req.params.id, updates, { new: true });
     if (!lesson) return res.status(404).json({ message: "Lesson not found" });
     res.status(200).json(lesson);
   } catch (error) {

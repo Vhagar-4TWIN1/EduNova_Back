@@ -9,6 +9,7 @@ const axios = require('axios');
 const { diplomaVerificationController } = require('./diplomaVerificationController');
 
 
+
 const {
   signupSchema,
   signinSchema,
@@ -19,6 +20,29 @@ const {
 const {User} = require("../models/usersModel");
 const { doHash, doHashValidation, hmacProcess } = require("../utils/hashing");
 const { transport, transport2 } = require("../middlewares/sendMail");
+
+
+
+  //gemini
+  exports.authenticate = (req, res, next) => {
+    try {
+      const token = req.cookies.Authorization?.split(' ')[1] || 
+                   req.headers.authorization?.split(' ')[1];
+      
+      if (!token) {
+        return res.status(401).json({ success: false, message: 'Authentication required' });
+      }
+  
+      const decoded = jwt.verify(token, process.env.TOKEN_SECRET);
+      req.user = decoded;
+      next();
+    } catch (error) {
+      console.error('Authentication error:', error);
+      return res.status(401).json({ success: false, message: 'Invalid or expired token' });
+    }
+  };
+
+//
 
 
 //upload profile pic 
@@ -42,6 +66,8 @@ exports.uploadProfileImage = (req, res) => {
   if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
   }
+
+
 
   upload(req, res, async (err) => {
     if (err instanceof multer.MulterError) {
@@ -86,9 +112,7 @@ exports.uploadProfileImage = (req, res) => {
   });
 };
 
-// Fonction pour l'inscription
-// In authController.js - modify the signup function
-// Modified signup function
+
 exports.signup = async (req, res) => {
   try {
     // Get reCAPTCHA token from headers
@@ -151,9 +175,8 @@ exports.signup = async (req, res) => {
     let newUser;
 
     if (role === "Teacher") {
-      // For teachers, we expect diploma verification to be done client-side first
-      // The frontend should have already verified the diploma before submitting
-      // So we just need to check if the workCertificate field is present
+      // For teachers, we expect diploma verification 
+
       if (!req.body.workCertificate) {
         return res.status(400).json({ 
           success: false, 
@@ -390,6 +413,8 @@ exports.signin = async (req, res) => {
       process.env.TOKEN_SECRET,
       { expiresIn: '8h' }
     );
+    console.log(existingUser._id)
+    console.log("logged in")
 
     // Check for active sessions within the last 8 hours
     const activeSessions = await ActivityLog.find({

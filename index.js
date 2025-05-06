@@ -31,6 +31,7 @@ const cron = require('node-cron');
 const schedulerRouter = require('./routers/schedulerRouter');const { google } = require("googleapis");
 const server = http.createServer(app);
 const ipRoutes = require("./routers/ipRoutes");
+const GeminiRoutes = require('./routers/GeminiRoutes');
 
 // Setup Socket.IO
 const io = new Server(server, {
@@ -51,6 +52,7 @@ const realTimeSubRouter = require("./routers/realTimeSubRouter");
 const stickyNoteRoutes = require("./routers/stickyNoteRoutes");
 const CalendarEvent = require('./models/calendarEvent');
 const annotationRoutes = require("./routers/annotationRoutes");
+const musicRouter = require('./routers/musicRouter');
 
 const setupEventRoutes        = require('./routers/calendarEventRouter');
 const setupSkillTreeRoutes = require('./routers/skillTreeRouter');
@@ -80,36 +82,42 @@ app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Serve static files from uploads directory
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+// Helmet can be used for extra security headers (if needed)
+// app.use(helmet());
 
-// Database connection
+// Serve static files from the uploads directory
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/resumes', express.static(path.join(__dirname, 'resumes'), {
+    setHeaders: (res) => {
+      res.set('Content-Type', 'application/pdf');
+    }
+  }));
+// Connect to MongoDB
 mongoose
-  .connect(process.env.MONGODB_URI)
-  .then(() => {
-    console.log("Connected to MongoDB");
-  })
-  .catch((error) => {
-    console.error("MongoDB connection error:", error);
-  });
+    .connect(process.env.MONGODB_URI)
+    .then(() => {
+        console.log('Connected to MongoDB');
+    })
+    .catch((error) => {
+        console.error('MongoDB connection error:', error);
+    });
 
 // Session setup
-
 app.use(
-  session({
-    secret: process.env.SESSION_SECRET,
-    resave: false,
-    saveUninitialized: true,
-    cookie: {
-      secure: process.env.NODE_ENV === "production", // En mode développement, mettez secure: false
-      httpOnly: true, // Cela empêche l'accès aux cookies via JavaScript
-      sameSite: "strict", // Vous pouvez aussi essayer 'lax' si cela pose problème
-      maxAge: 3600000, // Durée de validité du cookie (1 heure ici)
-    },
-  })
+    session({
+        secret: process.env.SESSION_SECRET,
+        resave: false,
+        saveUninitialized: true,
+        cookie: {
+            secure: process.env.NODE_ENV === 'production', // secure flag for production
+            httpOnly: true,
+            sameSite: 'strict',
+            maxAge: 3600000, // 1 hour
+        },
+    })
 );
 
-app.use("/module", moduleRouter);
+// Initialize Passport for authentication and manage sessions
 app.use(passport.initialize());
 app.use(passport.session());
 // Routes
@@ -134,6 +142,11 @@ app.use("/api/ip", ipRoutes);
 app.use("/api/languageTool", languageToolRouter);
 app.use("/api/subtitles", realTimeSubRouter);
 app.use("/api/stickynotes", stickyNoteRoutes);
+app.use('/api/gemini', GeminiRoutes);
+app.use('/api/music', musicRouter);
+app.use('/music', musicRouter);
+app.use('/music', express.static(path.join(__dirname, 'music')));
+
 app.get("/", (req, res) => {
   res.json({ message: "Hello from the server" });
 });
@@ -205,62 +218,50 @@ app.get('/auth', async (req, res) => {
     }
 });
 // LinkedIn OAuth Strategy
-const LinkedInStrategy = require("passport-linkedin-oauth2").Strategy;
+const LinkedInStrategy = require('passport-linkedin-oauth2').Strategy;
 
-passport.use(
-  new LinkedInStrategy(
-    {
-      clientID: process.env.LINKEDIN_CLIENT_ID, // Clé API LinkedIn
-      clientSecret: process.env.LINKEDIN_CLIENT_SECRET, // Secret LinkedIn
-      callbackURL: "http://localhost:5173/auth/linkedin/callback", // URL de redirection après l'authentification
-      scope: ["r_emailaddress", "r_liteprofile"], // Permissions demandées
-    },
-    async (token, tokenSecret, profile, done) => {
-      try {
-        // Enregistrez ou mettez à jour l'utilisateur dans votre base de données
-        const existingUser = await User.findOne({
-          email: profile.emails[0].value,
-        });
-
+passport.use(new LinkedInStrategy({
+    clientID: process.env.LINKEDIN_CLIENT_ID,
+    clientSecret: process.env.LINKEDIN_CLIENT_SECRET,
+    callbackURL: 'http://localhost:5173/auth/linkedin/callback',
+    scope: ['r_emailaddress', 'r_liteprofile'],
+}, async (token, tokenSecret, profile, done) => {
+    try {
+        // Check if the user already exists and update or create accordingly
+        const existingUser = await User.findOne({ email: profile.emails[0].value });
         if (!existingUser) {
-          const newUser = new User({
-            email: profile.emails[0].value,
-            linkedInId: profile.id,
-            name: profile.displayName,
-            token,
-          });
-          await newUser.save();
-          return done(null, newUser);
+            const newUser = new User({
+                email: profile.emails[0].value,
+                linkedInId: profile.id,
+                name: profile.displayName,
+                token,
+            });
+            await newUser.save();
+            return done(null, newUser);
         }
-
-        // Retourner l'utilisateur existant
         return done(null, existingUser);
-      } catch (error) {
-        console.error(error);
+    } catch (error) {
+        console.error('LinkedIn OAuth Error:', error);
         return done(error, null);
-      }
     }
-  )
-);
+}));
 
-// Sérialisation de l'utilisateur
+// Serialize and deserialize users for session management
 passport.serializeUser((user, done) => {
-  done(null, user.id);
+    done(null, user.id);
 });
 
-// Désérialisation de l'utilisateur
 passport.deserializeUser(async (id, done) => {
-  const user = await User.findById(id);
-  done(null, user);
+    const user = await User.findById(id);
+    done(null, user);
 });
 
-app.use("/api/questions", questionRouter);
-app.get(
-  "/auth/facebook/callback",
-  passport.authenticate("facebook", { failureRedirect: "/login" }),
+// Facebook OAuth callback route (assuming you've set up the corresponding strategy)
+app.get('/auth/facebook/callback', 
+  passport.authenticate('facebook', { failureRedirect: '/login' }), 
   (req, res) => {
     res.json({
-      message: "Login successful!",
+      message: 'Login successful!',
       user: req.user.user,
       token: req.user.token,
     });
