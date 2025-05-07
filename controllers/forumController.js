@@ -1,5 +1,6 @@
 const Post = require('../models/post');
 const Reply = require('../models/reply');
+const { analyzeToxicity } = require('../middlewares/toxicityCheck');
 
 // Create a new post
 exports.createPost = async (req, res) => {
@@ -20,6 +21,32 @@ exports.getAllPosts = async (req, res) => {
     res.json(posts);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch posts' });
+  }
+};
+exports.addVoiceReply = async (req, res) => {
+  try {
+    const postId = req.params.id;
+    const author = req.body.author; // This comes from FormData
+
+    if (!req.file) {
+      return res.status(400).json({ error: 'Audio file is required' });
+    }
+
+    const voicePath = `D:/PiValidation/EduNova_Back/uploads/${req.file.filename}`;
+
+    const reply = new Reply({
+      post: postId,
+      author, // Now properly getting from FormData
+      voiceUrl: voicePath
+    });
+
+    await reply.save();
+    await Post.findByIdAndUpdate(postId, { $push: { replies: reply._id } });
+
+    res.status(201).json(reply);
+  } catch (error) {
+    console.error("Error adding voice reply:", error);
+    res.status(500).json({ error: 'Failed to add voice reply' });
   }
 };
 
@@ -63,6 +90,15 @@ exports.addReplyToPost = async (req, res) => {
   try {
     const { content, author } = req.body;
     const postId = req.params.id;
+
+    const score = await analyzeToxicity(content);
+    console.log(score);
+    
+    if (score !== null && score >= 0.5) {
+      alert('Toxicity detected!');
+      return res.status(400).json({ error: 'Reply content is too toxic' });
+    }
+
     const reply = new Reply({ content, author, post: postId });
     await reply.save();
 
@@ -70,7 +106,7 @@ exports.addReplyToPost = async (req, res) => {
 
     res.status(201).json(reply);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to add reply' });
+    res.status(500).json({ error: 'Reply content is too toxic' });
   }
 };
 exports.upvoteReply = async (req, res) => {
@@ -92,5 +128,72 @@ exports.upvoteReply = async (req, res) => {
     res.status(200).json(reply);
   } catch (error) {
     res.status(500).json({ message: error.message });
+  }
+};
+exports.getTopRepliedPosts = async (req, res) => {
+  try {
+    const topPosts = await Post.aggregate([
+      {
+        $lookup: {
+          from: "replies", // The collection name in MongoDB (usually lowercase plural)
+          localField: "_id", // We match Post._id with Reply.post
+          foreignField: "post",
+          as: "postReplies"
+        }
+      },
+      {
+        $addFields: {
+          replyCount: { $size: "$postReplies" }
+        }
+      },
+      { $sort: { replyCount: -1 } },
+      { $limit: 2 },
+      {
+        $lookup: {
+          from: "users",
+          localField: "author",
+          foreignField: "_id",
+          as: "authorInfo"
+        }
+      },
+      { $unwind: "$authorInfo" },
+      {
+        $project: {
+          _id: 1,
+          title: 1,
+          content: 1,
+          createdAt: 1,
+          replyCount: 1,
+          author: {
+            _id: "$authorInfo._id",
+            username: "$authorInfo.username"
+          }
+        }
+      }
+    ]);
+
+    // If no posts with replies found, get the most recent posts as fallback
+    if (topPosts.length === 0) {
+      const fallbackPosts = await Post.find()
+        .sort({ createdAt: -1 })
+        .limit(2)
+        .populate('author', 'username')
+        .lean();
+      
+      const formattedPosts = fallbackPosts.map(post => ({
+        ...post,
+        replyCount: post.replies?.length || 0
+      }));
+
+      return res.json(formattedPosts);
+    }
+
+    res.json(topPosts);
+  } catch (error) {
+    console.error("Error fetching top posts:", error);
+    res.status(500).json({ 
+      error: 'Failed to fetch top posts',
+      details: error.message 
+    });
   }
 };
