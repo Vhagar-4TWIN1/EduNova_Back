@@ -105,6 +105,7 @@ exports.verifyDiploma = async (req, res) => {
           success: false, 
           message: err.message 
         });
+        console.error('❌ Error during file upload:', err);
       }
 
       if (!req.file) {

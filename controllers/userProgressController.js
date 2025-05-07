@@ -32,16 +32,29 @@ exports.getCompletedLessons = async (req, res) => {
   const { userId, moduleId } = req.params;
   try {
     const progress = await UserProgress.findOne({ userId, moduleId });
+    
+    // Send the response first
     res.json({ completedLessons: progress ? progress.completedLessons : [] });
-    await CalendarEvent.updateMany(
-      { lessonId, userId },
-      { $set: { completed: true, completedAt: new Date() } }
-    );
+
+    // Perform the update operation after the response
+    // Wrap the update operation in a separate try-catch block to ensure it doesn't affect the response
+    try {
+      await CalendarEvent.updateMany(
+        { lessonId, userId },
+        { $set: { completed: true, completedAt: new Date() } }
+      );
+    } catch (updateError) {
+      console.error('Error updating calendar events:', updateError);
+      // You can handle logging the error, but don't send another response.
+    }
 
   } catch (err) {
+    // Handle errors if any part of the process fails
     res.status(500).json({ error: err.message });
   }
 };
+
+
 
 exports.markLessonCompleted = async (req, res) => {
   const { userId, moduleId, lessonId } = req.body;
