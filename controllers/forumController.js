@@ -32,7 +32,7 @@ exports.addVoiceReply = async (req, res) => {
       return res.status(400).json({ error: 'Audio file is required' });
     }
 
-    const voicePath = `D:/PiValidation/EduNova_Back/uploads/${req.file.filename}`;
+    const voicePath = `/uploads/${req.file.filename}`;
 
     const reply = new Reply({
       post: postId,
