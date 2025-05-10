@@ -150,6 +150,84 @@ exports.promoteToAdmin = async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
+exports.updateStudentFields = async (req, res) => {
+  const { id } = req.params;
+  const {
+    identifier,
+    situation,
+    disease,
+    socialCase,
+    learningPreference,
+    interests,
+    customDisease,
+  } = req.body;
+
+  try {
+    const update = {
+      identifier,
+      situation,
+      disease: disease === "Other" ? customDisease : disease,
+      socialCase,
+      learningPreference,
+      interests,
+    };
+
+    const updatedUser = await User.findByIdAndUpdate(id, update, {
+      new: true,
+      runValidators: true,
+    }).select("-password");
+
+    if (!updatedUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res
+      .status(200)
+      .json({ message: "Student fields updated", data: updatedUser });
+  } catch (error) {
+    console.error("Error updating student fields:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+exports.updateStudentFields = async (req, res) => {
+  const { id } = req.params;
+  const {
+    identifier,
+    situation,
+    disease,
+    socialCase,
+    learningPreference,
+    interests,
+    customDisease,
+  } = req.body;
+
+  try {
+    const update = {
+      identifier,
+      situation,
+      disease: disease === "Other" ? customDisease : disease,
+      socialCase,
+      learningPreference,
+      interests,
+    };
+
+    const updatedUser = await User.findByIdAndUpdate(id, update, {
+      new: true,
+      runValidators: true,
+    }).select("-password");
+
+    if (!updatedUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res
+      .status(200)
+      .json({ message: "Student fields updated", data: updatedUser });
+  } catch (error) {
+    console.error("Error updating student fields:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
 exports.affectBadge = async (req, res) => {
   const { studentId, badgeId } = req.body;
   try {
@@ -182,4 +260,5 @@ module.exports = {
   deleteUser: exports.deleteUser,
   promoteToAdmin: exports.promoteToAdmin,
   affectBadge: exports.affectBadge,
+  updateStudentFields: exports.updateStudentFields,
 };
