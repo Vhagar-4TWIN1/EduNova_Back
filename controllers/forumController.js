@@ -1,15 +1,83 @@
 const Post = require('../models/post');
 const Reply = require('../models/reply');
 const { analyzeToxicity } = require('../middlewares/toxicityCheck');
+const UserProgress = require('../models/userProgress');
+
+exports.getRecommendedPosts = async (userId) => {
+  try {
+    // 1. Get ALL module progress entries for the user
+    const userProgresses = await UserProgress.find({ userId })
+      .populate({
+        path: 'moduleId',
+        select: 'title' // Get only the module titles
+      })
+      .exec();
+
+   
+
+    // 2. Extract all module titles
+    const moduleTitles = userProgresses
+      .map(progress => progress.moduleId?.title?.toLowerCase() || '')
+      .filter(title => title); // Remove undefined/null titles
+
+    // 3. Extract keywords from all titles
+    const allWords = moduleTitles.flatMap(title =>
+      title.split(/[\s,.-]+/).filter(Boolean)
+    );
+
+    // 4. Filter out common words
+    const excludeWords = ['and', 'the', 'for', 'with', 'basics', 'fundamentals'];
+    const filteredKeywords = [...new Set(
+      allWords.filter(word => word.length > 3 && !excludeWords.includes(word))
+    )]; // `Set` to remove duplicates
+
+    // 5. Find posts where any tag matches any keyword
+    const recommendedPosts = await Post.find({
+      tags: {
+        $in: filteredKeywords.map(keyword => new RegExp(keyword, 'i')) // Case-insensitive
+      }
+    })
+      .sort({ createdAt: -1 })
+      .limit(5)
+      .populate('author', 'username avatar')
+      .exec();
+
+    // 6. Return recommended or fallback posts
+    return recommendedPosts.length > 0
+      ? recommendedPosts
+      : await Post.find().sort({ createdAt: -1 }).limit(5).exec();
+
+  } catch (error) {
+    console.error('Error in getRecommendedPosts:', error);
+    // Fallback: recent posts on error
+    return await Post.find().sort({ createdAt: -1 }).limit(5).exec();
+  }
+};
 
 // Create a new post
 exports.createPost = async (req, res) => {
   try {
-    const { title, content, author } = req.body;
-    const post = new Post({ title, content, author });
+    const { title, content, author, tags } = req.body;
+    
+   const parsedTags = Array.isArray(tags)
+      ? tags
+      : tags
+      ? tags.split(',').map(tag => tag.trim())
+      : [];
+
+    const post = new Post({
+      title,
+      content,
+      author,
+      tags: parsedTags
+    });
+
+    console.log('Saving post with tags:', post.tags);
+    
     await post.save();
     res.status(201).json(post);
   } catch (error) {
+    console.error('Error creating post:', error);
     res.status(500).json({ error: 'Failed to create post' });
   }
 };

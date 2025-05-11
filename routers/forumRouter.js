@@ -5,6 +5,14 @@ const { auth } = require("../middlewares/auth");
 const upload = require('../middlewares/audioUploads');
 
 // Post routes
+router.get('/recommended', auth, async (req, res) => {
+  try {
+    const posts = await forumController.getRecommendedPosts(req.user.userId);
+    res.json(posts);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching recommended posts' });
+  }
+});
 router.post('/posts', forumController.createPost);
 router.get('/posts', forumController.getAllPosts);
 router.get('/posts/:id', forumController.getPostById);
