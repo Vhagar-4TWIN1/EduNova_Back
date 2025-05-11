@@ -897,6 +897,7 @@ exports.getActivityLogs = async (req, res) => {
         'VIDEO_CALL',
         'START_EVALUATION',
         'SUBMIT_EVALUATION',
+        'CHECK_LESSON_DURATION',
 		'FORUM',
 		'REPLY_FORUM'] },
       }).sort({ createdAt: 1 }); // Trier par date croissante

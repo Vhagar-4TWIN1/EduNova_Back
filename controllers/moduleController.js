@@ -115,4 +115,27 @@ exports.getModuleWithUserId  = async (req, res) => {
   }
 };
 
+exports.trackLessonDuration = async (req, res) => {
+  try {
+    const { moduleId, duration } = req.body;
+
+    if (!moduleId || !duration) {
+      return res.status(400).json({ message: "Missing moduleId or duration" });
+    }
+
+    await ActivityLog.create({
+      userId: req.user.userId,
+      email: req.user.email,
+      ipAddress: req.ip || "Unknown",
+      userAgent: req.headers["user-agent"] || "Unknown",
+      action: "CHECK_LESSON_DURATION",
+      duration: duration,
+      metadata: { moduleId }
+    });
+
+    res.status(200).json({ message: "Duration logged successfully" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
 

@@ -18,6 +18,7 @@ enum: [
         'CHECK_MODULE',
         'CHECK_LESSON',
 		'LESSON_COMPLETED',
+		'CHECK_LESSON_DURATION',
         'WATCH_MUSIC',
         'VIDEO_CALL',
         'START_EVALUATION',

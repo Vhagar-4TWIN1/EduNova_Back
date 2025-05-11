@@ -9,12 +9,13 @@ const {
   deleteModule,
   getModuleWithId,
   getModuleWithUserId,
+  trackLessonDuration
 } = require("../controllers/moduleController");
 const { auth } = require("../middlewares/auth");
 router.get("/modules/",auth, getModuleWithUserId)
 
 router.get("/:id",auth, getModuleWithId); 
-
+router.post("/check-lessons-duration", auth, trackLessonDuration);
 router.post("/add",auth, createModule);
 router.get("/",auth, getModules);
 router.put("/:id", auth ,updateModule);
