@@ -5,6 +5,7 @@ const path = require("path");
 const fs = require("fs");
 const axios = require("axios");
 const ffmpegPath = require('ffmpeg-static');
+console.log('FFmpeg path:', ffmpegPath);
 const youtubedl = require('youtube-dl-exec');
 
 

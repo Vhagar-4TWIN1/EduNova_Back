@@ -8,6 +8,15 @@ const { generateEnhancedResume, createResumePDF } = require('../utils/resumeUtil
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY_lou);
 
+
+const RESUMES_DIR = path.join(__dirname, '..', 'uploads', 'resumes');
+
+
+if (!fs.existsSync(RESUMES_DIR)) {
+  fs.mkdirSync(RESUMES_DIR, { recursive: true });
+}
+
+
 exports.askAI = async (req, res) => {
   try {
     const { question, userId } = req.body;
@@ -23,7 +32,7 @@ exports.askAI = async (req, res) => {
 
     // Gemini-specific formatting
     const model = genAI.getGenerativeModel({ 
-      model: "gemini-1.5-pro-002",  // or "gemini-1.5-pro" if you have access
+      model: "gemini-2.0-flash-exp",  // or "gemini-1.5-pro" if you have access
       // apiVersion: "v1" // You might need to specify this
     });
     
@@ -55,6 +64,8 @@ exports.askAI = async (req, res) => {
 
 
 exports.generateResume = async (req, res) => {
+  let tempFiles = []; // Track files to clean up
+  
   try {
     const userId = req.body.userId || req.user.userId;
     const user = await User.findById(userId);
@@ -62,46 +73,70 @@ exports.generateResume = async (req, res) => {
 
     // Validation checks
     if (!user) {
-      if (uploadedFile) fs.unlinkSync(uploadedFile.path);
-      return res.status(404).json({ error: 'User not found' });
+      throw new Error('User not found');
     }
-    if (!uploadedFile) return res.status(400).json({ error: 'No PDF file uploaded' });
+    if (!uploadedFile) {
+      throw new Error('No PDF file uploaded');
+    }
+    tempFiles.push(uploadedFile.path);
+
     if (uploadedFile.mimetype !== 'application/pdf') {
-      fs.unlinkSync(uploadedFile.path);
-      return res.status(400).json({ error: 'Only PDF files are allowed' });
+      throw new Error('Only PDF files are allowed');
     }
 
     // Generate enhanced resume
     const resumeText = await generateEnhancedResume(user, uploadedFile.path);
     
-    // Create PDF
-    const fileUrl = await createResumePDF(resumeText, user._id);
+    // Create PDF in the proper directory
+    const fileName = `resume_${user._id}_${Date.now()}.pdf`;
+    const filePath = path.join(RESUMES_DIR, fileName);
+    
+    await createResumePDF(resumeText, filePath); // Pass full path
+    tempFiles.push(filePath);
 
-    // Clean up
-    try {
-      fs.unlinkSync(uploadedFile.path);
-    } catch (err) {
-      console.error('Error cleaning upload:', err);
+    // Verify file was created
+    if (!fs.existsSync(filePath)) {
+      throw new Error('Failed to create resume file');
     }
 
-    res.json({ 
-      success: true,
-      file: fileUrl
+    // Set headers and send file
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="enhanced_resume_${user.name || user._id}.pdf"`
+    );
+    
+    // Stream the file
+    const fileStream = fs.createReadStream(filePath);
+    fileStream.pipe(res);
+
+    fileStream.on('end', () => {
+      // Clean up after sending
+      cleanUpFiles(tempFiles);
     });
 
   } catch (error) {
-    // Clean up on error
-    if (req.file?.path) fs.unlinkSync(req.file.path);
-    
     console.error('Resume Generation Error:', error);
-    const errorMessage = process.env.NODE_ENV === 'development' 
-      ? error.message 
-      : 'Failed to generate resume';
-      
-    res.status(500).json({ error: errorMessage });
+    cleanUpFiles(tempFiles);
+    res.status(500).json({ 
+      error: 'Failed to generate resume',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 };
 
+// Helper function for cleanup
+function cleanUpFiles(files) {
+  files.forEach(file => {
+    try {
+      if (file && fs.existsSync(file)) {
+        fs.unlinkSync(file);
+      }
+    } catch (cleanupError) {
+      console.error('Cleanup error:', cleanupError);
+    }
+  });
+}
 // Keep these functions unchanged:
 exports.getChatHistory = async (req, res) => { /* ... */ };
 async function getRecommendations(question, learningPref) { /* ... */ }
