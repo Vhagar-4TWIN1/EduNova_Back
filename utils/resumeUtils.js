@@ -8,7 +8,7 @@ const { extractFromPDF } = require('./fileUtils');
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY_lou);
 
 /**
- * Generates enhanced resume content from user data and uploaded PDF
+ * Gener ates enhanced resume content from user data and uploaded PDF
  */
 const generateEnhancedResume = async (userData, pdfPath) => {
   try {
