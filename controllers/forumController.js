@@ -132,68 +132,37 @@ exports.upvoteReply = async (req, res) => {
 };
 exports.getTopRepliedPosts = async (req, res) => {
   try {
-    const topPosts = await Post.aggregate([
-      {
-        $lookup: {
-          from: "replies", // The collection name in MongoDB (usually lowercase plural)
-          localField: "_id", // We match Post._id with Reply.post
-          foreignField: "post",
-          as: "postReplies"
-        }
-      },
-      {
-        $addFields: {
-          replyCount: { $size: "$postReplies" }
-        }
-      },
-      { $sort: { replyCount: -1 } },
-      { $limit: 2 },
-      {
-        $lookup: {
-          from: "users",
-          localField: "author",
-          foreignField: "_id",
-          as: "authorInfo"
-        }
-      },
-      { $unwind: "$authorInfo" },
-      {
-        $project: {
-          _id: 1,
-          title: 1,
-          content: 1,
-          createdAt: 1,
-          replyCount: 1,
-          author: {
-            _id: "$authorInfo._id",
-            username: "$authorInfo.username"
+    const posts = await Post.find()
+      .populate('author', 'username') // only get _id and username
+      .populate('replies') // optional: remove if you don’t need reply data
+      .lean();
+
+    // Sort posts by number of replies
+    posts.sort((a, b) => (b.replies?.length || 0) - (a.replies?.length || 0));
+
+    // Map the top two posts with safe access to author
+    const topPosts = posts.slice(0, 2).map(post => ({
+      _id: post._id,
+      title: post.title,
+      content: post.content,
+      createdAt: post.createdAt,
+      replyCount: post.replies?.length || 0,
+      author: post.author
+        ? {
+            _id: post.author._id,
+            username: post.author.username
           }
-        }
-      }
-    ]);
-
-    // If no posts with replies found, get the most recent posts as fallback
-    if (topPosts.length === 0) {
-      const fallbackPosts = await Post.find()
-        .sort({ createdAt: -1 })
-        .limit(2)
-        .populate('author', 'username')
-        .lean();
-      
-      const formattedPosts = fallbackPosts.map(post => ({
-        ...post,
-        replyCount: post.replies?.length || 0
-      }));
-
-      return res.json(formattedPosts);
-    }
+        : null
+    }));
 
     res.json(topPosts);
   } catch (error) {
     console.error("Error fetching top posts:", error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to fetch top posts',
-      details: error.message 
+      details: error.message
     });
   }
 };
+
+
