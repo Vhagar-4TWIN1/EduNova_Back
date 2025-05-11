@@ -172,6 +172,7 @@ exports.createLesson = async (req, res) => {
   try {
     const { title, content, typeLesson, LMScontent, module, public_id } =
       req.body;
+    console.log('Received module ID:', req.body.module);
 
     // 1. Upload or fetch fileUrl first
     let fileUrl = null;
@@ -183,13 +184,12 @@ exports.createLesson = async (req, res) => {
     }
 
     // 2. Ensure module exists
-    const mongoose = require("mongoose");
-    const foundModule = await Modules.findById(
-      new mongoose.Types.ObjectId(module)
-    );
+    const foundModule = await Modules.findById(req.body.module);
+
     if (!foundModule) {
       return res.status(404).json({ message: "Module not found" });
     }
+
 
     // 3. Create lesson
     const lesson = await Lesson.create({
@@ -201,7 +201,7 @@ exports.createLesson = async (req, res) => {
       LMScontent,
       module,
     });
-
+    
     // 4. Push lesson to module
     foundModule.lessons.push(lesson._id);
     await foundModule.save();

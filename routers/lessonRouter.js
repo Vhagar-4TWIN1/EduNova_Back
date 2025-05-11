@@ -26,7 +26,7 @@ router.patch(
 );
 router.get('/source/google', authenticate, lessonController.getGoogleLessons);
 
-router.post('/', authenticate, lessonValidation, lessonController.createLesson);
+router.post('/', authenticate, lessonValidation,upload.single("file"), lessonController.createLesson);
 router.get('/', authenticate, lessonController.getAllLessons);
 router.get('/source/google', authenticate, lessonController.getGoogleLessons);
 router.get('/:id', authenticate, lessonController.getLessonById);
