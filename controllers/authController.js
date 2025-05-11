@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const ActivityLog = require('../models/activityLog');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
@@ -939,6 +940,86 @@ exports.getActivityLogs = async (req, res) => {
     res.status(500).json({ success: false, message: 'Server error' });
   }
 };
+// Exemple : GET /api/activity-logs/:userId
+exports.getUserActivityLogs = async (req, res) => {
+  try {
+    const userId = new mongoose.Types.ObjectId(req.user.userId);
+    console.log("User ID:", userId);
+    const logs = await ActivityLog.find({ userId }).sort({ createdAt: -1 });
+
+    console.log("Logs récupérés:", logs);
+
+    res.status(200).json({
+      success: true,
+      logs,
+      message: 'Activity logs test',
+    });
+  } catch (error) {
+    console.error('Erreur test:', error);
+    res.status(500).json({ success: false, message: 'Erreur serveur' });
+  }
+};
+exports.getUserActionStats = async (req, res) => {
+  try {
+    const userId = new mongoose.Types.ObjectId(req.user.userId);
+
+    console.log("User ID:", userId);
+    
+    const results = await ActivityLog.aggregate([
+        { $match: { userId: userId } }, 
+      {
+        $group: {
+          _id: {
+            userId: "$userId",
+            action: "$action"
+          },
+          count: { $sum: 1 }
+        }
+      },
+      {
+        $group: {
+          _id: "$_id.userId",
+          actions: {
+            $push: {
+              action: "$_id.action",
+              count: "$count"
+            }
+          }
+        }
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "_id",
+          foreignField: "_id",
+          as: "user"
+        }
+      },
+      {
+        $unwind: "$user"
+      },
+      {
+        $project: {
+          _id: 0,
+          userId: "$_id",
+          email: "$user.email",
+          actions: 1
+        }
+      },
+      {
+        $sort: { email: 1 }
+      }
+    ]);
+    console.log("User action stats:", results);
+
+    res.status(200).json(results);
+  } catch (error) {
+    console.error("Aggregation error:", error);
+    res.status(500).json({ error: "Failed to get user action stats" });
+  }
+}
+
+
 
 exports.getUserSessionDuration = async (req, res) => {
   try {

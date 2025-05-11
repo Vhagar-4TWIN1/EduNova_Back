@@ -255,5 +255,8 @@ router.get(
   "/google",
   passport.authenticate("google", { scope: ["profile", "email"] })
 );
+router.get("/userActivity", auth, authController.getUserActivityLogs);
+router.get('/user-action-stats',auth, authController.getUserActionStats);
+
 
 module.exports = router;

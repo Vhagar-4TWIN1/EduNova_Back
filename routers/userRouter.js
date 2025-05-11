@@ -337,8 +337,7 @@ router.post("/delete-diploma", (req, res) => {
 router.patch("/affectbadges/:idUser/:idBadge", async (req, res) => {
   const { idUser, idBadge } = req.params;
   const { Student } = require("../models/usersModel");
-  const Badge = require("../models/badge"); // Import the Badge model
-
+  const Badge = require("../models/badge"); 
   try {
     const user = await Student.findById(idUser); // Use the Student model
     if (!user) {
