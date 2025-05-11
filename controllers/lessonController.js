@@ -131,7 +131,7 @@ exports.getLessonAudio = async (req, res) => {
 exports.getLessonsByModule = async (req, res) => {
   try {
     const { moduleId } = req.params;
-    const module = await Modules.findById(moduleId).populate('lessons');
+    const module = await Modules.findById(moduleId).populate("lessons");
     if (!module) {
       return res.status(404).json({ error: "Module not found" });
     }
@@ -140,7 +140,6 @@ exports.getLessonsByModule = async (req, res) => {
     return res.status(500).json({ error: error.message });
   }
 };
-
 
 exports.getGoogleLessons = async (req, res) => {
   try {
@@ -165,14 +164,14 @@ exports.getLessonsByModule = async (req, res) => {
   }
 };
 
-
 exports.createLesson = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty())
     return res.status(400).json({ errors: errors.array() });
 
   try {
-    const { title, content, typeLesson, LMScontent, module, public_id } = req.body;
+    const { title, content, typeLesson, LMScontent, module, public_id } =
+      req.body;
 
     // 1. Upload or fetch fileUrl first
     let fileUrl = null;
@@ -184,7 +183,10 @@ exports.createLesson = async (req, res) => {
     }
 
     // 2. Ensure module exists
-    const foundModule = await Modules.findById(module);
+    const mongoose = require("mongoose");
+    const foundModule = await Modules.findById(
+      new mongoose.Types.ObjectId(module)
+    );
     if (!foundModule) {
       return res.status(404).json({ message: "Module not found" });
     }
@@ -204,17 +206,17 @@ exports.createLesson = async (req, res) => {
     foundModule.lessons.push(lesson._id);
     await foundModule.save();
 
-   
     await lesson.save();
 
     console.log("✅ Lesson created:", lesson._id);
     res.status(201).json(lesson);
   } catch (err) {
     console.error("❌ Error in createLesson:", err);
-    res.status(500).json({ message: "Failed to create lesson", error: err.message });
+    res
+      .status(500)
+      .json({ message: "Failed to create lesson", error: err.message });
   }
 };
-
 
 exports.generateAIAnnotations = async (req, res) => {
   try {
@@ -245,8 +247,6 @@ exports.generateAIAnnotations = async (req, res) => {
   }
 };
 
-
-
 exports.getAllLessons = async (_, res) => {
   try {
     const lessons = await Lesson.find();
@@ -271,7 +271,9 @@ exports.updateLesson = async (req, res) => {
     const updates = { ...req.body };
     if (req.file) updates.fileUrl = req.file.path;
 
-    const lesson = await Lesson.findByIdAndUpdate(req.params.id, updates, { new: true });
+    const lesson = await Lesson.findByIdAndUpdate(req.params.id, updates, {
+      new: true,
+    });
     if (!lesson) return res.status(404).json({ message: "Lesson not found" });
     res.status(200).json(lesson);
   } catch (error) {

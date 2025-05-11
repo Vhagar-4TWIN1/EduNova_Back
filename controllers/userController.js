@@ -1,4 +1,6 @@
 const { User } = require("../models/usersModel");
+const { Student } = require("../models/usersModel");
+
 const fs = require("fs");
 const path = require("path");
 const mongoose = require("mongoose");
@@ -150,6 +152,99 @@ exports.promoteToAdmin = async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
+
+exports.updateStudentFields = async (req, res) => {
+  const { id } = req.params;
+  const {
+    identifier,
+    situation,
+    disease,
+    customDisease,
+    socialCase,
+    learningPreference,
+    interests,
+  } = req.body;
+
+  console.log("🔍 ID received:", id);
+  console.log("🧾 Incoming data:", req.body);
+
+  try {
+    // Use the correct Student model to ensure schema is respected
+    const update = {
+      identifier,
+      situation,
+      disease: disease === "Other" ? customDisease : disease,
+      customDisease: disease === "Other" ? customDisease : "",
+      socialCase,
+      learningPreference,
+      interests,
+    };
+
+    const updatedStudent = await Student.findByIdAndUpdate(id, update, {
+      new: true,
+      runValidators: true,
+    }).select("-password");
+
+    if (!updatedStudent) {
+      console.log("❌ Student not found with ID:", id);
+      return res.status(404).json({ message: "Student not found" });
+    }
+
+    console.log("✅ Student updated:", updatedStudent);
+
+    res.status(200).json({
+      message: "Student fields updated successfully",
+      data: updatedStudent,
+    });
+  } catch (error) {
+    console.error("❌ Error updating student fields:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+/*
+exports.updateStudentFields = async (req, res) => {
+  const { id } = req.params;
+  const {
+    identifier,
+    situation,
+    disease,
+    socialCase,
+    learningPreference,
+    interests,
+    customDisease,
+  } = req.body;
+
+  try {
+    const update = {
+      identifier,
+      situation,
+      disease: disease === "Other" ? customDisease : disease,
+      socialCase,
+      learningPreference,
+      interests,
+    };
+
+    const updatedUser = await User.findByIdAndUpdate(id, update, {
+      new: true,
+      runValidators: true,
+    }).select("-password");
+
+    if (!updatedUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res
+      .status(200)
+      .json({ message: "Student fields updated", data: updatedUser });
+  } catch (error) {
+    console.error("Error updating student fields:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+
+*/
 exports.affectBadge = async (req, res) => {
   const { studentId, badgeId } = req.body;
   try {
@@ -182,4 +277,5 @@ module.exports = {
   deleteUser: exports.deleteUser,
   promoteToAdmin: exports.promoteToAdmin,
   affectBadge: exports.affectBadge,
+  updateStudentFields: exports.updateStudentFields,
 };

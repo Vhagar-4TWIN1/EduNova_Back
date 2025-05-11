@@ -1,0 +1,641 @@
+Hello everyone, welcome to this video of introduction to the language formation of Java, which is a language that you may have even without
+using on your computer system via a few programs. It is something that is used in a lot of
+the domain and that is also integrated in a lot of solutions and it would not be surprising that you
+will have software on your computer that just uses the language Java in any
+virtual machine in Java to execute the programs done via this language. So in this little
+intro, I will show you a fairly quick presentation of this last one. We are exposing some
+content that you can see to study and learn this language and learn how to install it
+simply because it is not very long, not very complicated. So we will open directly a
+Java page here, we will go on the site Java, a big model, even if I mainly
+you do a little detail, so here is a little bit, maybe some of the things that are going to talk to
+some that are on the logo level that seems to have a coffee cup with a little bit of
+smoke, this kind of thing, so it's maybe a name that tells you something, it's maybe even a
+language that you already had aboard or you already had software that are used to
+this last one. The language Java was created in 1995 by the micro system, so an
+intro post that tells you about something that we call to be able to be faster than
+sun, simply. And then you bought it in 2009, I believe by the
+ORAC society, which is also a very, very big company, and we can see that the logo here is
+present, we have the ORAC society well marked here, which has bought the project so
+Java by the following in 2009, so it's done in this way. So it's a language that was
+designed at the base in all cases, it was planned for that at the base, to allow
+to make systems embedded, for example, in your car, in electronic devices, to have
+programs embedded on all its supports, it's for this one that was designed and created
+in any case, the base was designed for that, but it is found with the evolution that
+he had, the updates, and let's say the adoption by the user and by the developers,
+well, their change of use is not necessarily the one that was expected, so even if they
+use a lot in the market too, it's not there where they really excel or where we
+find the most. We will find it, mainly and the most, in terms of the application,
+in software, for example, you will have it on the computer, and we will not
+find it in web as well, because we can make websites with, for example,
+G2E, which is written Java E for those who know, which is an extension, in fact,
+precise Java, which allows you to do solutions or web applications with
+GSP services, such as things, it might say, in any case, it might say
+something to some of you, but once again, I don't know if you have
+another language, if you already heard of certain things in Java, or that you are
+all simply pure beginners in a format, perhaps even, so in any case,
+it doesn't matter where you have the prerequisites or not, or the bases that you can have
+in a format or not, if you have any base, this course will obviously be for
+import who, so it won't be a problem. So the Java language is a language
+that is object to the base, it's not like, for example, it's more and more
+or other languages that can be multi-paradigm, that is to say, that can
+allow you to program several different ways for Java, we are in a language
+that is object, it's a language a little higher than it is, more and more, for example,
+which will not propose you several ways to develop your applications,
+it is either object, or object, so there is no choice, it is object programming,
+we are going to manipulate classes, as you are going to learn, if you do not know
+in any case the concepts from the following, we will have the heritage, we will have
+polymorphism, we are going to use a lot, a lot of things related to everything that is programming
+oriented, object, or diminutive, p-o-o, so it's things that we are going to study,
+obviously, in Java, even if you will need to study things that are not
+necessarily, that are not directly related to the object technology, for example,
+the books, the functions, all that, we will still try to start from the beginning
+of the training, to keep it, to keep it in the center, because the Java language is an
+object, so it would be completely incoherent to put in the cards this
+object technology of the language, since it is part of an integral, so we will always try
+always be oriented in this approach, which is an object of the language, the interest of Java,
+since it was a language that was planned in any case, based on being
+embarked a little everywhere, it is a language that is portable, how it will work,
+and you will create a code, you will program, you will create your
+program, we will write code, then you will compile pseudo-compilation, but I will
+not go into details that the goal is not to enter anything very complex, very specific
+on it, in bytecode, the bytecode is a pseudo code that can be interpreted
+then by a virtual machine, so the Java machine will be executed, it will
+read a bytecode that is a pseudo code, a pseudo code, in fact, that the
+Java virtual machine is able to understand, so Java does not have a
+compiled language from a native code, for example, it is more and more
+known, language like that, a little more level, and this does not have a completely
+interpreted language, as it would be, for example, even Python is not a good example,
+because Python is also a pseudo-compilation, so it is even quite
+complicated now to find languages that are purely of the
+interpreted language, perhaps, there is also the UI, but there are also
+cases where the UI can be made of pseudo-compilation, we will take the
+UI because it would be a little more parallel to this case, so in the language that is
+purely interpreted, if you write a code, there is an interpreter that is able to
+translate it to execute the instructions you have given, Java is a little bit
+between the two, it is compiled in a certain way, and we get a code
+to determine if you want code that is interpreted by a virtual machine that is
+able to translate it, I mean, to execute the instructions that you have
+ordered, so here it is, how does it work? I will not go again in the
+detail, it is enough for the understanding and everything we will see
+later, and it is necessary to come back to some things in
+the function of the notions that we have in the middle of the assembly, we will come
+to follow it eventually. So it is a very portable language, because
+partly you install the virtual machine that is on Linux, that is on Windows,
+on Mac OS, that is on Android, not a port, you can
+execute a pseudo-code, so the famous bytecode could be executed without
+modifying the code source that was created at the base, so you write a
+program once and you can execute it everywhere, this is the principle
+precisely of this portability of the code, and so it works via virtual machine.
+We are talking a little bit about it. So in the past, even if the project
+was bought in 2009 by Roi, we have to know that in 2006, it has changed
+the license, if you know a little the principle of license, there are
+the software, the proprietary license, between them, you were not the
+code source of the software, you could not modify it, you could not
+you could not, for example, adapt it, analyze it, consult it, see
+clearly sell a version, how it is, a modified version of the
+language. However, I will move on in 2006, without open source, there is
+this GPL license, so those who are interested, you can always
+teach you on the GPL license, I will not go into detail, not more than
+it will be too far, it is a license of us, you can look at it, even if
+now we have the version v3, but you also have the GPL2 or the GPL, the
+other first version, so you can look a little bit at what it consists of, and you
+will find a lot of information interesting if you don't know it already, so
+in 2006, we had this passage in open source license, and we have
+big models, two more or less Java versions that coexist, okay, which
+contain each one in parallel, we have the version, we will say
+initially Sun, okay, the proprietary version, and we have the
+open source version, so we call it the open GDK, you may have
+also heard this name for some, which touches a little bit the
+computer, open GDK, and it is an open source version of the environment, for
+example, the environment that will be able to execute Java and
+eventually develop, so here it is a little bit like it will happen, so I will
+come as for the introduction on other programming languages that I
+habitually do, what I do habitually do, it will answer a little bit
+to the question that can come back often, why do we need Java, for
+several things, Java is a language that is independent of the platform, so
+that's a very good point, it's what we do precisely, as I told you, you
+have a single code to write, and then you can execute it on a
+virtual machine, it can import your code, it will execute in a few details,
+in a few exceptions, or it will have to be done at the moment, a few little
+modifications, but practically never, practically never, your code will be
+absolutely portable, since it is independent of the platform, so this
+portability, it also gives us comfort, in my sense there is no other
+advantage, that's my personal life, obviously, it does not take that as a
+absolute truth, it's my life on the language, it also allows you to have
+a whole library that is available in standard, for example, in Java, in
+native, in standard, there are libraries that are integrated inside, you
+can manipulate many things, we can manipulate databases, we can
+manipulate different types of formats of data, in fact, without having
+downloadable or configuring external libraries, things that
+you would need, for example, to do as on a longer, longer-term level,
+like the C++, we know more and more, for example, if you wanted to manipulate
+database, you would have to download a library, and who says
+charging library, do not necessarily say something portable, and that
+you will have to adapt, if you do it on Windows, or Linux, for example,
+that's not seen as a default for a longer-term level, for example, so it's
+an advantage, in any case, you have to see like that, an advantage of Java language,
+because if you need to manipulate things quite
+particular, infrastructures quite particular, in priori, in
+practically all cases, Java already has everything that we need in standard,
+okay, that's a language, which has a whole library that are
+very vast, that is, it is impossible that one day you know all
+all the libraries of Java, everything that they propose, because there are
+really a lot of things, there are really things to do on the web of the database,
+to do the application, to do it from there, from there, from there, from the
+networks, we have all a bunch of things, and practically everything is already
+available in standard, so do not need to start to download
+things made by other people, or external libraries, you already know that
+it is available in standard, and it can still be quite
+pleasant with the app. So here I am going to say the two big
+essential points of Java, if you have to give two big advantages, the
+language there, two points, two at all, it's their independence
+from your platform, and the fact that there are a lot of
+functionalities available in standard, so do not need to download
+other things, apart. The problem is that obviously, as
+all programming languages, there is no perfect language,
+you know, I think now, apart from all the videos that I
+say publish on the channel, it is that the quality of a language,
+it is generally also defaults. The problem with Java, well,
+it's simply because it is designed like that, so you can't
+do everything, it is not perfect, it is that you do not have the possibility
+to manage the memory. If you want, for example, to do a program
+that I have the same month very specifically, so that it is
+programming, it will be more good at the system programming, it will not be
+possible in Java, where, for example, it is more and more than
+allow. So here it is, it's not even an inconvenience, I don't even
+want to say it's an inconvenience, it's just that it's a
+language limit, the most important thing is the limit, rather than
+a commitment or default, what is not a default is that it is
+not designed in any way to do the programming system or
+the memory management, if we want to do the memory management, we
+will certainly not use Java, it will be a very bad choice, so
+we will talk more about the limit. So the limit of Java is that we
+can't manage the memory management, there, for example, you can
+do it more and more, which will be able to do it all, which
+allows me to manage the same month, to do the programming
+very good level. So, since there is not just a
+more good level programming, there is also a virtual machine
+that is supposed to launch the code code, the bytecode of Java, it
+is obviously a language that would have an execution more slow, my
+attention, we will not say again that it has an execution
+slow, it's just that it would have an execution more slow due to
+compilating languages in native, such as C++, for example, if
+you should make performance tests of benchmarks very high
+level, that you compare C++ with Java, C++ will be
+always ahead, it's normal, it's a more advanced language, it's
+a language that can allow you to program more bass, it's
+language, so therefore, which is compiled in native.
+Okay, we have a source code, we have the skills of
+compilations, we have a binary, so obviously, this kind of language
+and I said it elsewhere in the formation C++ will be
+always the language I can perform, compared to Java, it was
+evident. Java needs a virtual machine, so the fact of having a
+virtual machine that turns into parallel, which in addition will do
+a lot of things in addition, so we will have the opportunity to talk
+about the formation, obviously, the more slow execution,
+once again, it has a compilating language, but it's going to be
+what we say is slower than it is more and more, which is slow.
+Of course, we have to always take things in a relative way,
+it remains very fast, compared to the use that we have to have
+in this language. So that's the limit, also in the language,
+it's time for execution to do such a very very critical thing,
+of course, Java would not necessarily be the good choice, so
+we have to pay attention to that.
+After, the point also which is interesting to know at the level of another
+limit of Java is its integration in fact with the system,
+on which you work, which is quite weak, which is normal, because Java
+will be a portable language. So from now on, you want a language
+that is independent of a platform, it will not be too much attached to a
+particular platform, so you lose a few times an integration
+with the system in particular. For example, if you want to start
+manipulating PDFs, you manipulate a type of office file,
+where, for example, you work with your
+email message system that you have on your OS,
+it will be quite delicate with Java, because a lot of things will be
+very complicated in this way. Because the language, again, is not
+planned to be very attached to the support, so in the
+particular platform, but stay, we will say a little bit, we
+surface, to stay sufficiently portable and independent of each
+entry. So what you have said here is the default,
+it's the default of its quality, it's that we are in some
+some of everything, well, it makes some limits in
+consequence, it's quite normal. Here is the big model,
+I mean, the five Artenians, okay, all of them are
+independent, and it's the platform, the standardization of
+a lot, a lot of functionality in the language, and the three limits are
+to have a big model, well, it's obviously not the management of the
+possible memory, not the point of view, not this kind of thing,
+obviously, it seems logical, an execution that will be
+much slower than a completely compiled language, it's also logical,
+and very good integration with the system, it's normal, because it is
+portable once again, so it's all done, it goes into the logic of things.
+Here is for the essential points that we can numerate
+in this language, now that everything is said, we will
+go through a tool of the tool, what do we need for Java,
+like for the other languages, and you need a editor of code, in
+any way, we will work like that, we will not use a
+development environment that can be ultra-low, which can be
+very slow, which requires a lot of configuration, there will be
+where there will be tutorials all over the moment, we will look at this video,
+tutorials on other formations, on other playlist, to install a
+development environment, whether it be clips, netbins, visual studio,
+or others, all that, so I reserve it for videos,
+and it may already be published if you look at this video a
+little later than the moment I recorded it, why not?
+Otherwise, for this training, we will always try to
+try to make sure that you know that I try to make a maximum
+independent of all tools, you must know when Java,
+you are not obliged, but I am sure that you will have
+two people on three who will also say that
+that you need to install a development environment for
+programming Java, which is archifo, you will just need to have
+compilation tools, in any case, development tools,
+and with your code editor and a simple
+Indo command, you can compile bytecode, your program,
+and execute them with the virtual machine without problems.
+So, you need a code editor, the simplest,
+that you want, the most practical, the one that you play, the most,
+so I give names here, like Atom, Bracket, you have visual studio code,
+there is sublime text, there is no other plus plus,
+in short, you have all a tab, so you can look if you are looking for
+examples, I am sure that I am able to find
+some comparisons, there you have the sites that you
+do comparisons eventually, so search for
+preference, it is a code editor that is not read a
+particular language, it is not a code editor
+especially for Java, because it means that it will have to
+install a different code editor by language, if you
+program, or you would program in several languages.
+So you have Atom, you have Bracket, there are not many,
+I use in videos currently, I use the studio code,
+I have used sublime text, I change too, because I
+search a little bit what corresponds to me the best, so there is
+no better, once again, it depends on what you prefer,
+depending on your taste, your preference,
+is it that you want in English, in French, etc., with a system of
+theme or name, a system of self-completion,
+plugins, etc., you see what you like, and you download and install
+the one that you prefer in the long one, no more plus,
+which is a little old, but which is not very well known,
+which is very practical, so here is a little
+code editor, and once you have this editor
+to download and install, you will need
+Java, with the tools of development, so we are going to install it.
+So on Windows, we will start by Windows, we will come
+then on Linux and MacOS, we will even talk about MacOS because it is
+quite fast, you will go to Java SE, in any case you will search Java SE,
+and you will arrive like that on the site of Oracle, with a priori on this page,
+so you have a link, if necessary, you will
+get on the page of Oracle for the download of Java,
+you have to distinguish two things, so here you see how I do this video,
+the current version is the current version 10, so it is Java 10,
+and you have two particular cases, you have what we call the
+GDECA, the GDECA, in fact, it puts it at the same time,
+the GRE, the GRE is the runtime environment, so it is the environment of
+the launch, which will allow you to turn your program
+more developed. So if a day, for example, you have a program
+that needs Java to work, you will just need the GRE,
+the virtual machine, someone who would be a user and not a developer,
+you, as a developer, you will need, sometimes, tools of development,
+plus this famous GRE, which is the virtual machine, so you will install the GDECA.
+So we do just that, download, you turn on this page,
+you pass, you accept the license, of course, if you need it,
+I start by reading the licenses, reading the conditions,
+there are a lot that they do not do, but they do not hesitate to read,
+to see what they return, it is always important, and you can choose the platform.
+So if you are on Windows, you are going to download this file,
+it is an executable, if you are on my Quest, you can take the
+executable DMG, it is an executable also for the system.
+So logically, it should be installed very simply.
+For the news, you can go through there, but it is a little more delicate,
+so we will come back to you on a Linux system,
+to show you how to install a command line,
+it will be more practical, because it is quite complex,
+it is not enough to beat it, it is enough to run.
+In install Java, like that, via the package,
+so we will see that other way.
+So on Windows, on Windows, on Windows,
+it is called as a GDECA,
+I have a GDECA,
+here I had it here,
+because I really downloaded it already, because it is a bit long,
+it takes a few hundred megabytes, they did not necessarily have a
+lot of bandwidth, so it is quite long.
+So I had downloaded it before.
+So we will install it.
+It would be good for people who put the screen on it.
+So here we are on the interface,
+so you will come from a moment, the installer that starts,
+you do the next, you leave it by default, you see a software is here,
+the tools, you also have the source code,
+the source code, I have a good name, it does not interest you.
+We install it, so it is quite fast,
+and then we install the GRE on the device,
+so here it is the GDECA, which is installed,
+and then it should start, or the installer of the GRE.
+So it is quite fast, it is not very long,
+and then you will have like that, all the tools that are in place.
+Here it is, so here it is the GRE,
+now I continue in the browser, I advise you not to do it,
+the apps, because there are small files of security
+for that, so if you do not serve it,
+it is not necessarily useful to leave it.
+Here we are going to let it turn,
+once the installation will be done,
+you will have the tools installed, and we will see a little particularity
+to activate the Java in the real environment.
+It is obviously important to do it,
+it will allow you to use it in a common language,
+as we do it usually with all the other languages of programming,
+if you follow, of course, other forms.
+We will activate all that, which will not do it all alone,
+unlike Python, for example, and allow you to add there.
+The command of the executable file,
+especially from the interpreter,
+at the variable pass.
+Here, so once it is installed,
+we will go on
+program, I have to see the Java somewhere here,
+here the Java, so you are in your repertoire,
+as if you were sent in 64,
+especially when you are in 64,
+yes, you are more than 32, it will be finished,
+only than the support 64 bit.
+You will be in your Java repertoire,
+and you have like that the tools,
+so logically we know where to go.
+It's going to be here, I think.
+So you are in Java, you are in the GDK,
+you are in BIMS, we want to use the development,
+and you have to look for Java with a C at the end,
+.exe, you have to come here.
+This is the tool that allows us to transform in bytecode our program.
+So in this way,
+here you will be able to copy it.
+And you will add the variable in the environment pass.
+So on Windows 10, it's fast,
+finally a keyboard on the start menu,
+we do not allow you to tap environment,
+and you will be able to change the variables in the system environment.
+On Windows 7, you will open the start menu,
+you will have the menu system option,
+you will make a keyboard on it,
+property, and then on the left,
+the menu you must have a variable in the environment,
+and you will fall on the same window,
+we allow the system to move,
+the little button will be in the environment here,
+and here you will modify the variable pass.
+Here,
+modify.
+So on Windows 10, it's like that now,
+that is, that each path is 1 to 1,
+on Windows 7, in fact, you have only one text,
+and all the paths that you see here,
+are separated by individual points.
+So depending on your choice, of course,
+you are waiting for it to work.
+So on Windows 10, it's easy, we make new ones,
+we call it the path I have,
+we can manually add a keyboard on the end,
+we do enter, and that's it.
+So what did it do?
+It simply said that,
+to access to the executable,
+I'm going to empty it,
+so the executable that is here,
+I don't need, I don't need to tap all this way.
+Because if I don't add the variable in the environment pass,
+when I want to be in a terminal,
+we can do it, for example,
+I would have obliged to tap all this way,
+okay,
+until here,
+we will arrive,
+copy,
+paste,
+and do that, I'm going to point it out,
+to use it,
+which is a bit long, to do all this.
+So, thanks to the player in the environment,
+I would simply do this,
+because the repertoire here,
+the file program, I'm going to jadecabin,
+is to add the variable in the environment,
+so it is able to find all what was put
+in this variable in the environment.
+So there, we will have the same thing.
+Okay?
+Yes.
+So there, it works.
+By the way,
+we will see how it works by the following,
+when we will create our first program.
+So there, it looks like it works,
+from the bottom,
+to the installation level,
+for Windows.
+So that's for Windows,
+for Mac, well, it's okay,
+after I don't know how it works,
+the system of variable in the environment,
+you see, I'm not on Mac,
+so I won't be able to help you, unfortunately.
+Here,
+so we will put it here,
+hop.
+We continue now with Linux,
+we will not go on Linux.
+So on Linux, in general,
+we will no longer install the version,
+we can sort,
+by the way, open jadecab,
+it's very nice if you want,
+then you can install the sun version,
+it's like you,
+like that, you arrange,
+but, in general, we will prefer open jadecab,
+and I think that the majority of the systems,
+now, are installed by default,
+so to speak,
+I will launch a terminal,
+we will look if there is,
+already what is a Java,
+no, there is no open jadecab,
+apparently,
+at least it is not here,
+no,
+you may write open,
+not open,
+no, it is not here,
+okay,
+so there, they tell you,
+they propose you to install
+versions,
+so that if you don't know what to install,
+because you don't have to do something
+with PIF,
+no more,
+go on the internet,
+you will see for those who are not necessarily,
+and we will go on the dock,
+so if you are on a distribution,
+that it is from the Ubuntu,
+Linux Mint,
+like that,
+that's a version,
+under budget desktop,
+so it's a Ubuntu,
+there are finally a version,
+based on from the base,
+or Ubuntu,
+or you can go into the dock,
+in fact, Ubuntu Ubuntu,
+that will often,
+everything that needs to be installed,
+for a thing,
+even if it's not at all,
+completely a day,
+because you need to,
+of course,
+it will be a day,
+and with Java,
+you have to install OpenGDK,
+because I don't know what the version is in the depots,
+I don't think it's the 10th,
+I think it will be the 8th or 9th,
+maybe,
+but,
+there it is,
+so what it offers several things,
+so it offers you the right to install,
+install several versions,
+what you can do,
+what to do,
+several versions,
+if it's singing,
+and we will stay on something simple,
+especially,
+OpenGDK,
+you have installed on it,
+there it is.
+So the free implementation,
+OpenGDK,
+so that's what we want,
+this page,
+well, we will see on it,
+you see,
+we don't know,
+you have the proprietary version of Java,
+if you will,
+and you have the implementation,
+free OpenGDK,
+if you want,
+so we will learn more,
+I openGDK,
+and apparently,
+it's the...
+9,
+ah, they have the 9th,
+apparently,
+so you have a version by default,
+otherwise,
+you can install a particular version,
+but now we will install,
+so default,
+GDK,
+you should do it.
+Okay,
+so we are going,
+under the Petigate update,
+we are going to play the packages,
+already.
+If you are on Arche Linux,
+or in our distribution,
+it is that you are on something
+already a little more complicated
+to use,
+so that,
+well,
+you could destroy it,
+I think,
+if you installed,
+and if you are on this kind of
+OS Linux,
+it is that you will be in prior,
+you will destroy it all alone
+to install the good package.
+So,
+I will have those
+that are especially on Ubuntu.
+Install.
+And it was default,
+GDK,
+it was that.
+It's weird to have to call it like that.
+Okay, that's it.
+So, in prior, the version
+by default that installs,
+it's the 8th.
+But, well,
+it doesn't matter,
+anyway.
+We will not necessarily use
+once again
+functionalities
+that have arrived with Java 10,
+because it means that if you are on Java 8,
+and it will probably
+the majority of you,
+it won't work.
+When I told you,
+there are a lot of
+native available things,
+so,
+obviously,
+not all of the information.
+We will study
+the concepts of Java.
+We will study
+a few libraries
+in standard on things
+that are interesting to do.
+And, after, there are other things
+that you want to learn,
+this will be you
+learning from the start,
+not yourself in autonomous.
+We will not be able to do
+a 300-300-5 format
+that could
+maybe not be 10% of the language,
+because it's really, really very vast,
+and a lot of things.
+So, now, I'm going to install.
+And then we will check
+that Java C is working.
+No, no, it should be the exact.
+There you go,
+so if you have all that is fixed,
+it's good.
+And, you know, how it works,
+it works.
+Okay.
+You see, it's installed, and we can use it.
+In the command line, it will be the same thing as on Windows or on the MacOS.
+It will be able to tap, we will see later, I will go down and we will put a few arguments behind to be able to convert this code
+and then execute our program with the command, all simply, I will go down.
+So, for the installation, you see, it's very fast to configure it, it's not very very good.
+And you have like that, all the tools that are ready, a little bit of other OS.
+From this point on, there is something that is not functional, if I go down, it does not work.
+So, when I go down, on the terminal, it does not work the same thing as me.
+Well, do not hesitate to comment, we will see.
+And of course, take all the steps, you will see if you have published something.
+So, Windows, you have to publish, add on the variable in the path, the path, on MacOS, I think it's like for Linux,
+it will not need to be needed, it will be able to do it all alone.
+Linux, you have seen, it was generated all alone by default, as a matter of fact, no problem.
+At this level, I hope it was sufficiently explicit.
+I think I'm going to do a detailed presentation of the language, even if we are going to go in a little bit more in detail by the following.
+I wait for you for the next session, we will create our first program in Java.
+See you soon for the following of these videos.
+I feel like something is missing, but I feel like the world is still still missing.
