@@ -9,6 +9,7 @@ const axios = require('axios');
 const { diplomaVerificationController } = require('./diplomaVerificationController');
 
 
+
 const {
   signupSchema,
   signinSchema,
@@ -19,6 +20,29 @@ const {
 const {User} = require("../models/usersModel");
 const { doHash, doHashValidation, hmacProcess } = require("../utils/hashing");
 const { transport, transport2 } = require("../middlewares/sendMail");
+
+
+
+  //gemini
+  exports.authenticate = (req, res, next) => {
+    try {
+      const token = req.cookies.Authorization?.split(' ')[1] || 
+                   req.headers.authorization?.split(' ')[1];
+      
+      if (!token) {
+        return res.status(401).json({ success: false, message: 'Authentication required' });
+      }
+  
+      const decoded = jwt.verify(token, process.env.TOKEN_SECRET);
+      req.user = decoded;
+      next();
+    } catch (error) {
+      console.error('Authentication error:', error);
+      return res.status(401).json({ success: false, message: 'Invalid or expired token' });
+    }
+  };
+
+//
 
 
 //upload profile pic 
@@ -42,6 +66,8 @@ exports.uploadProfileImage = (req, res) => {
   if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
   }
+
+
 
   upload(req, res, async (err) => {
     if (err instanceof multer.MulterError) {
@@ -86,9 +112,7 @@ exports.uploadProfileImage = (req, res) => {
   });
 };
 
-// Fonction pour l'inscription
-// In authController.js - modify the signup function
-// Modified signup function
+
 exports.signup = async (req, res) => {
   try {
     // Get reCAPTCHA token from headers
@@ -151,9 +175,8 @@ exports.signup = async (req, res) => {
     let newUser;
 
     if (role === "Teacher") {
-      // For teachers, we expect diploma verification to be done client-side first
-      // The frontend should have already verified the diploma before submitting
-      // So we just need to check if the workCertificate field is present
+      // For teachers, we expect diploma verification 
+
       if (!req.body.workCertificate) {
         return res.status(400).json({ 
           success: false, 
@@ -390,6 +413,8 @@ exports.signin = async (req, res) => {
       process.env.TOKEN_SECRET,
       { expiresIn: '8h' }
     );
+    console.log(existingUser._id)
+    console.log("logged in")
 
     // Check for active sessions within the last 8 hours
     const activeSessions = await ActivityLog.find({
@@ -458,38 +483,121 @@ exports.signin = async (req, res) => {
 };
 
 
+// exports.signout = async (req, res) => {
+//   try {
+//     let user = req.user;
+
+//     // 1. Récupérer le token depuis les cookies si req.user est manquant
+//     if (!user && req.cookies?.token) {
+//       try {
+//         const decoded = jwt.verify(req.cookies.token, process.env.JWT_SECRET);
+//         user = await User.findById(decoded.id);
+//       } catch (err) {
+//         console.error("Erreur lors du décodage du token:", err);
+//       }
+//     }
+
+//     // 2. Enregistrer l’activité LOGOUT si utilisateur trouvé
+//     if (user) {
+//       const lastLogin = await ActivityLog.findOne({
+//         userId: user._id,
+//         action: 'LOGIN',
+//       }).sort({ createdAt: -1 });
+
+//       const duration = lastLogin
+//         ? Date.now() - lastLogin.createdAt.getTime()
+//         : null;
+
+//       try {
+//         await ActivityLog.create({
+//           userId: user._id,
+//           email: user.email,
+//           action: 'LOGOUT',
+//           ipAddress: req.ip || 'Unknown',
+//           userAgent: req.headers['user-agent'] || 'Unknown',
+//           duration,
+//         });
+//         console.log("Activité LOGOUT enregistrée");
+//       } catch (err) {
+//         console.error("Erreur enregistrement LOGOUT:", err);
+//       }
+//     } else {
+//       console.warn("Utilisateur non identifié lors du logout");
+//     }
+
+//     // 3. Supprimer le cookie
+//     res.clearCookie('token', {
+//       httpOnly: true,
+//       sameSite: 'strict',
+//       secure: process.env.NODE_ENV === 'production',
+//     });
+
+//     // 4. Répondre au client
+//     res.status(200).json({ success: true, message: "Déconnexion réussie" });
+//   } catch (error) {
+//     console.error("Erreur dans signout:", error);
+//     res.status(500).json({ success: false, message: "Erreur serveur" });
+//   }
+// };
+
+
 exports.signout = async (req, res) => {
-   if (!req.user || !req.user.userId) {
-      return res.status(401).json({ success: false, message: 'Unauthorized: User not authenticated' });
+  try {
+    // 1. Debug : Afficher l'en-tête Authorization
+    console.log("Authorization header:", req.headers.authorization);
+
+    let user = null;
+
+    // 2. Récupération et décodage du token
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.split(' ')[1];
+
+      try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        console.log("Token décodé:", decoded);
+        user = await User.findById(decoded.id);
+        console.log("Utilisateur trouvé:", user?.email);
+      } catch (err) {
+        console.error("Erreur de vérification du token:", err.message);
+      }
+    } else {
+      console.warn("Aucun token trouvé dans l'en-tête Authorization.");
     }
-  
-    const userId = req.user.userId;
-  
-    // Trouver la dernière action LOGIN de l'utilisateur
-    const lastLogin = await ActivityLog.findOne({
-      userId,
-      action: 'LOGIN',
-    }).sort({ createdAt: -1 });
-    let totalDuration = 0;
-    if (lastLogin) {
-      const duration = Date.now() - lastLogin.createdAt.getTime();
-      totalDuration += duration;
-  
-      // Enregistrement de l'action LOGOUT avec la durée de la session
+
+    // 3. Enregistrement de l'activité LOGOUT
+    if (user) {
+      const lastLogin = await ActivityLog.findOne({
+        userId: user._id,
+        action: 'LOGIN',
+      }).sort({ createdAt: -1 });
+
+      const duration = lastLogin
+        ? Date.now() - lastLogin.createdAt.getTime()
+        : null;
+
       await ActivityLog.create({
-        userId,
-        email: req.user.email,
+        userId: user._id,
+        email: user.email,
         action: 'LOGOUT',
         ipAddress: req.ip || 'Unknown',
         userAgent: req.headers['user-agent'] || 'Unknown',
         duration,
       });
+
+      console.log("Activité LOGOUT enregistrée.");
+    } else {
+      console.warn("Impossible d’enregistrer LOGOUT : utilisateur non trouvé.");
     }
-  res
-    .clearCookie('Authorization')
-    .status(200)
-    .json({ success: true, message: 'logged out successfully' });
+
+    res.status(200).json({ success: true, message: "Déconnexion réussie" });
+  } catch (error) {
+    console.error("Erreur dans signout:", error.message);
+    res.status(500).json({ success: false, message: "Erreur serveur" });
+  }
 };
+
+
 
 exports.getAllUsers = async (req, res) => {
   try {

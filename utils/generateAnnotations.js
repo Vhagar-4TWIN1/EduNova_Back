@@ -1,231 +1,190 @@
-const path = require("path");
-const axios = require("axios");
-const fs = require("fs");
-const pdfParse = require("pdf-parse");
-const Tesseract = require("tesseract.js");
-const sharp = require("sharp");
-const { execSync } = require("child_process");
+console.log('🎲 [generateAIAnnotations controller file loaded]');
 
-// Use CommonJS import style for OpenAI
-const OpenAI = require("openai");
+const fs = require('fs');
+const path = require('path');
+const axios = require('axios');
+const ffmpeg = require('fluent-ffmpeg');
+const { SpeechClient } = require('@google-cloud/speech');
+const Tesseract = require('tesseract.js');
+const PDFParser = require('pdf-parse');
 
-
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
-});
-
-
-// Ensure temporary directory exists
-const tempDir = path.join(__dirname, "../temp");
-if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir);
+// Mongoose Lesson model
+const Lesson = require('../models/lesson');
+// Initialize Google Cloud Speech-to-Text Client
+const speechClient = new SpeechClient();
 
 /**
- * Extract text from a PDF file
+ * Main controller to generate AI annotations for a lesson,
+ * handling 'pdf', 'video', 'photo', 'image', 'audio', or 'text'.
  */
-async function extractFromPDF(pdfUrl) {
+async function generateAIAnnotations(req, res) {
+  console.log('🔔 [generateAIAnnotations] invoked');
+  const lessonId = req.params.id;
+  console.log('🔔 Lesson ID:', lessonId, '| UserID:', req.body.userId);
+
+  let lesson;
   try {
-    const response = await axios.get(pdfUrl, { responseType: "arraybuffer" });
-    const data = await pdfParse(response.data);
-    return data.text;
-  } catch (error) {
-    console.error("Error extracting PDF:", error.message);
-    return "";
-  }
-}
-
-/**
- * Extract text from an image using Tesseract with preprocessing
- */
-async function extractFromImage(imageUrl) {
-  try {
-    // Download the image
-    const response = await axios.get(imageUrl, { responseType: "arraybuffer" });
-    const ext = path.extname(imageUrl).toLowerCase();
-    const imagePath = path.join(tempDir, `image${ext}`);
-    fs.writeFileSync(imagePath, response.data);
-
-    // Preprocess image for better OCR: grayscale, normalize, and resize
-    const cleanedImagePath = path.join(tempDir, "cleaned.png");
-    await sharp(imagePath)
-      .grayscale()
-      .normalize()
-      .resize({ width: 1200 })
-      .toFile(cleanedImagePath);
-
-    const result = await Tesseract.recognize(cleanedImagePath, "eng");
-    return result.data.text;
-  } catch (error) {
-    console.error("Error extracting image text:", error.message);
-    return "";
-  }
-}
-
-/**
- * Extract text from audio or video.
- * Converts the media file to WAV using ffmpeg and then calls Whisper CLI for transcription.
- */
-async function extractFromAudioOrVideo(fileUrl) {
-  try {
-    const ext = path.extname(fileUrl).toLowerCase();
-    const response = await axios.get(fileUrl, { responseType: "arraybuffer" });
-    const filePath = path.join(tempDir, `media${ext}`);
-    fs.writeFileSync(filePath, response.data);
-
-    // Convert media file to WAV
-    const wavPath = path.join(tempDir, "input.wav");
-    execSync(`ffmpeg -i "${filePath}" -ar 16000 -ac 1 -f wav "${wavPath}"`);
-
-    // Run Whisper CLI (ensure whisper is installed and in your PATH)
-    // Using a higher-quality model ("medium") may help improve transcription accuracy.
-    execSync(
-      `whisper "${wavPath}" --language en --model medium --output_dir "${tempDir}" --output_format txt`
-    );
-
-    // Whisper writes a .txt file with the same basename as the WAV file
-    const txtPath = path.join(tempDir, "input.txt");
-    const text = fs.readFileSync(txtPath, "utf-8");
-    return text;
-  } catch (error) {
-    console.error("Error extracting audio/video:", error.message);
-    return "";
-  }
-}
-
-/**
- * Extract text from file based on file URL and lesson type.
- */
-const extractTextFromFile = async (fileUrl, typeLesson) => {
-  const ext = path.extname(fileUrl).toLowerCase();
-
-  if (typeLesson === "pdf" || ext === ".pdf") {
-    return await extractFromPDF(fileUrl);
-  }
-  if (
-    [".png", ".jpg", ".jpeg", ".webp"].includes(ext) ||
-    typeLesson === "image" ||
-    typeLesson === "photo"
-  ) {
-    return await extractFromImage(fileUrl);
-  }
-  if (
-    [".mp3", ".mp4", ".wav", ".m4a", ".webm"].includes(ext) ||
-    typeLesson === "audio" ||
-    typeLesson === "video"
-  ) {
-    return await extractFromAudioOrVideo(fileUrl);
-  }
-  if (typeLesson === "text") {
-    return "No extraction needed for plain text.";
-  }
-  return "";
-};
-
-/**
- * Clean text by reducing whitespace and removing non-ASCII characters
- */
-const cleanText = (text) =>
-  text.replace(/\s+/g, " ").replace(/[^\x20-\x7E]+/g, "").trim();
-
-/**
- * Format prompt for the ChatGPT model.
- * We force the model to respond with JSON wrapped in triple backticks.
- */
-const formatPrompt = (rawText) => `
-You are an AI assistant helping annotate learning materials.
-Please analyze the content below and generate structured annotations and highlights.
-Return your result solely as valid JSON in the following format:
-{
-  "highlights": [
-    { "text": "Key Idea 1", "color": "#fdd835" },
-    { "text": "Key Idea 2", "color": "#f44336" },
-    { "text": "Key Idea 3", "color": "#2196f3" }
-  ],
-  "notes": [
-    { "content": "Annotation 1" },
-    { "content": "Annotation 2" },
-    { "content": "Annotation 3" }
-  ]
-}
-
-Respond ONLY with raw JSON between triple backticks.
-Example:
-\`\`\`json
-{
-  "highlights": [
-    { "text": "Example Highlight", "color": "#fdd835" },
-    { "text": "Another Highlight", "color": "#f44336" },
-    { "text": "Last Highlight", "color": "#2196f3" }
-  ],
-  "notes": [
-    { "content": "Annotation note one" },
-    { "content": "Annotation note two" },
-    { "content": "Annotation note three" }
-  ]
-}
-\`\`\`
-
-CONTENT:
-"""
-${rawText.slice(0, 3000)}
-"""
-`;
-
-/**
- * Configure OpenAI API client
- */
-
-/**
- * Generate annotations based on the lesson file content.
- * 1. Extracts text from the file.
- * 2. Cleans the text and creates a prompt.
- * 3. Calls ChatGPT to get structured annotations.
- */
-exports.generateAnnotations = async (lesson) => {
-  try {
-    // 1. Extract text from the lesson file
-    const extractedText = await extractTextFromFile(lesson.fileUrl, lesson.typeLesson);
-    if (!extractedText || extractedText.trim().length < 50) {
-      throw new Error("Extracted text is too short or empty.");
-    }
-
-    // 2. Clean the extracted text and prepare the prompt
-    const cleaned = cleanText(extractedText);
-    const prompt = formatPrompt(cleaned);
-
-    // 3. Call ChatGPT (using gpt-3.5-turbo) to generate annotations
-    const response = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
-      messages: [
-        {
-          role: "system",
-          content: "You are a helpful assistant for educational content.",
-        },
-        { role: "user", content: prompt },
-      ],
-      temperature: 0.7,
-      max_tokens: 600,
-    });
-
-    const output = response.data.choices[0].message.content.trim();
-
-    // 4. Extract JSON from the response: look for text between triple backticks
-    const jsonMatch = output.match(/```json([\s\S]*?)```/);
-    const jsonText = jsonMatch ? jsonMatch[1].trim() : output;
-    const parsed = JSON.parse(jsonText);
-
-    // 5. Add timestamps to notes if not already present
-    const notesWithTimestamp = (parsed.notes || []).map((note) => ({
-      content: note.content,
-      createdAt: new Date(),
-    }));
-
-    return {
-      highlights: parsed.highlights || [],
-      notes: notesWithTimestamp,
-    };
+    lesson = await Lesson.findById(lessonId);
+    console.log('📚 Lesson fetched:', lesson);
   } catch (err) {
-    console.error("AI Annotation Error:", err);
-    return { highlights: [], notes: [] };
+    console.error('❌ Error fetching lesson:', err);
+    return res.status(500).json({ error: 'Error fetching lesson', details: err.message });
   }
-};
+
+  if (!lesson) {
+    console.error('❌ Lesson not found:', lessonId);
+    return res.status(404).json({ error: 'Lesson not found' });
+  }
+
+  const { fileUrl, typeLesson, content: lessonContent } = lesson;
+  console.log('ℹ️ Raw typeLesson:', typeLesson, '| fileUrl:', fileUrl);
+
+  // Normalize
+  const normalizedType = (typeLesson || '').toLowerCase().trim();
+  console.log('🔄 Normalized typeLesson:', normalizedType);
+
+  let extractedText = '';
+  try {
+    switch (normalizedType) {
+      case 'text':
+        console.log('📖 Processing text');
+        extractedText = await handleText(lessonContent);
+        break;
+      case 'pdf':
+        console.log('📄 Processing PDF');
+        extractedText = await handlePdf(fileUrl);
+        break;
+      case 'photo':
+      case 'image':
+        console.log('🖼️ Processing image');
+        extractedText = await handleImage(fileUrl);
+        break;
+      case 'video':
+        console.log('🎞️ Processing video');
+        extractedText = await handleVideo(fileUrl);
+        break;
+      case 'audio':
+        console.log('🔊 Processing audio');
+        extractedText = await handleAudio(fileUrl);
+        break;
+      default:
+        console.error('❌ Unsupported file type in switch:', normalizedType);
+        return res.status(400).json({ error: ` aaaaaaaaaa: ${typeLesson}`, normalizedType });
+    }
+  } catch (err) {
+    console.error(`❌ Error extracting text for type [${normalizedType}]:`, err);
+    return res.status(400).json({ error: `Failed to extract text for type ${typeLesson}`, details: err.message });
+  }
+
+  console.log('✅ Extracted text length:', extractedText.length);
+  if (!extractedText || extractedText.trim().length < 10) {
+    console.error('❌ Extracted text too short');
+    return res.status(400).json({ error: 'Extracted text too short or empty' });
+  }
+
+  console.log('🤖 Calling AI for annotations');
+  let annotations;
+  try {
+    annotations = await generateAnnotationsFromAI(extractedText);
+  } catch (err) {
+    console.error('❌ AI annotation generation error:', err);
+    return res.status(500).json({ error: 'AI annotation generation failed', details: err.message });
+  }
+
+  // Append and save
+  const newAnnotation = { userId: req.body.userId || null, highlights: annotations.highlights || [], notes: annotations.notes || [] };
+  lesson.annotations.push(newAnnotation);
+  try {
+    await lesson.save();
+    console.log('💾 Annotation saved');
+  } catch (err) {
+    console.error('❌ Error saving annotation:', err);
+    return res.status(500).json({ error: 'Error saving annotation', details: err.message });
+  }
+
+  return res.status(200).json({ message: 'AI annotations added successfully', added: newAnnotation, allAnnotations: lesson.annotations });
+}
+
+// ─── Handlers ─────────────────────────────────────────────────────────────────────
+
+async function handleText(content) {
+  console.log('📖 handleText');
+  if (!content || content.trim().length < 10) throw new Error('Insufficient text content');
+  return content;
+}
+
+async function handlePdf(url) {
+  console.log('📄 handlePdf =>', url);
+  const buffer = /^https?:\/\//i.test(url)
+    ? Buffer.from((await axios.get(url, { responseType: 'arraybuffer' })).data)
+    : fs.readFileSync(path.resolve(url));
+  const data = await PDFParser(buffer);
+  return data.text.trim();
+}
+
+async function handleImage(url) {
+  console.log('🖼️ handleImage =>', url);
+  return new Promise((resolve, reject) => {
+    const src = /^https?:\/\//i.test(url) ? url : path.resolve(url);
+    Tesseract.recognize(src, 'eng', { logger: m => console.log('Tesseract:', m) })
+      .then(({ data: { text } }) => text && text.trim().length > 0 ? resolve(text.trim()) : reject(new Error('No text found')))
+      .catch(err => reject(err));
+  });
+}
+
+async function handleVideo(url) {
+  console.log('🎞️ handleVideo =>', url);
+  const audioPath = await extractAudioFromVideo(url);
+  return extractTextFromAudio(audioPath);
+}
+
+async function handleAudio(url) {
+  console.log('🔊 handleAudio =>', url);
+  return extractTextFromAudio(url);
+}
+
+// ─── Utilities ────────────────────────────────────────────────────────────────────
+
+function extractAudioFromVideo(videoUrl) {
+  console.log('🔉 extractAudioFromVideo =>', videoUrl);
+  return new Promise((resolve, reject) => {
+    const src = /^https?:\/\//i.test(videoUrl) ? path.resolve('temp/video.mp4') : path.resolve(videoUrl);
+    const out = path.resolve('temp/audio-output.wav');
+    ffmpeg(src).audioChannels(1).audioFrequency(16000).toFormat('wav')
+      .on('end', () => resolve(out))
+      .on('error', err => reject(err))
+      .save(out);
+  });
+}
+
+async function extractTextFromAudio(audioPath) {
+  console.log('🔍 extractTextFromAudio =>', audioPath);
+  if (/^https?:\/\//i.test(audioPath)) throw new Error('Remote audio not supported');
+  const bytes = fs.readFileSync(path.resolve(audioPath)).toString('base64');
+  const request = { audio: { content: bytes }, config: { encoding: 'LINEAR16', sampleRateHertz: 16000, languageCode: 'en-US' } };
+  const [resp] = await speechClient.recognize(request);
+  return resp.results.map(r => r.alternatives[0].transcript).join('\n');
+}
+
+// ─── AI ─────────────────────────────────────────────────────────────────────────
+
+async function generateAnnotationsFromAI(fullText) {
+  console.log('🤖 generateAnnotationsFromAI', fullText.length);
+  const prompt = `
+You are EduNova’s AI annotation assistant. Provide only JSON:
+{"highlights":[{"text":"str","color":"#RRGGBB"}],"notes":[{"content":"str"}]}
+Transcript: ${fullText}
+`;
+  const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    method: 'POST', headers: { Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ model: 'meta-llama/llama-4-maverick', messages: [{ role: 'system', content: 'Return only JSON.' }, { role: 'user', content: prompt }], temperature: 0, max_tokens: 1000 })
+  });
+  if (!response.ok) throw new Error('AI error');
+  const data = await response.json();
+  const raw = data.choices[0].message.content.replace(/^```(?:json)?\s*/i, '').replace(/```$/, '');
+  const parsed = JSON.parse(raw);
+  if (!parsed.highlights || !parsed.notes) throw new Error('Invalid JSON');
+  return parsed;
+}
+
+module.exports = { generateAIAnnotations };

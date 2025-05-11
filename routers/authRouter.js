@@ -1,5 +1,7 @@
 const express = require("express");
 const authController = require("../controllers/authController");
+const changePasswordController = require("../controllers/changePasswordController");
+const { auth } = require("../middlewares/auth");
 const { identifier } = require("../middlewares/identification");
 const router = express.Router();
 const axios = require("axios");
@@ -43,7 +45,7 @@ const diplomaVerificationController = require("../controllers/diplomaVerificatio
 // Routes pour la gestion des utilisateurs
 router.post("/signup", authController.signup);
 router.post("/signin", authController.signin);
-router.post("/signout",  authController.signout);
+router.post("/signout", authController.signout);
 
 router.patch(
   "/send-verification-code",
@@ -67,6 +69,7 @@ router.patch(
 
 router.get("/getUserSessionDuration", authController.getActivityLogs);
 router.get("/activity-logs", authController.getActivityLogs);
+router.patch("/changePassword", auth,changePasswordController.changePassword)
 // Route pour démarrer l'authentification LinkedIn
 
 //******************************************************************************Linkedin********************************************************* */

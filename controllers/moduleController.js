@@ -4,7 +4,9 @@ const Lesson = require("../models/lesson");
 
 exports.createModule = async (req, res) => {
   try {
-    const newModule = new Module(req.body);
+    console.log("Connected user:", req.user); // Should show the logged-in user's ID
+
+    const newModule = new Module({...req.body, userId : req.user.userId});
     await newModule.save();
     res.status(201).json(newModule);
   } catch (error) {
@@ -65,3 +67,18 @@ exports.getModuleWithId = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
+exports.getModuleWithUserId  = async (req, res) => {
+  try {
+    const modules = await Module.find({ userId: req.user.userId }).populate('lessons');
+    
+    if (!modules || modules.length === 0) {
+      return res.status(404).json({ message: "No modules found for this user" });
+    }
+
+    res.json(modules);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+
