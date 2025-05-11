@@ -122,12 +122,10 @@ const studentSchema = new mongoose.Schema({
   socialCase: { type: Boolean, default: false },
   learningPreference: {
     type: String,
-    enum: ["video", "pdf"],
-    default: "video",
+    enum: ["video", "pdf", "audio", "image"],
   },
   interests: [{ type: String }],
   achievedBadges: [{ type: mongoose.Schema.Types.ObjectId, ref: "Badge" }],
 });
 const Student = User.discriminator("Student", studentSchema);
 module.exports = { User, Admin, Teacher, Student };
-

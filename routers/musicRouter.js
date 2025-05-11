@@ -5,6 +5,7 @@ const path = require("path");
 const fs = require("fs");
 const axios = require("axios");
 const ffmpegPath = require('ffmpeg-static');
+console.log('FFmpeg path:', ffmpegPath);
 const youtubedl = require('youtube-dl-exec');
 const { auth } = require("../middlewares/auth");
 const ActivityLog = require('../models/activityLog');
@@ -409,6 +410,7 @@ router.get("/metadata/:filename", async (req, res) => {
 
 
 
+
 // Ajoutez ces routes supplémentaires
 
 // Sauvegarder les playlists personnalisées
@@ -465,6 +467,7 @@ router.get("/preload/:trackId", async (req, res) => {
     res.status(500).json({ error: "Failed to preload track" });
   }
 });
+
 
 // In your musicRouter.js
 // In your musicRouter.js

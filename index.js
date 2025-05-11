@@ -28,11 +28,12 @@ const levelRoutes = require("./routers/levelRouter");
 const questionRouter = require("./routers/questionRoutes");
 const googleClassroomRouter = require("./routers/googleClassroomRouter");
 const axios = require("axios");
-const cron = require('node-cron');
-const schedulerRouter = require('./routers/schedulerRouter');const { google } = require("googleapis");
+const cron = require("node-cron");
+const schedulerRouter = require("./routers/schedulerRouter");
+const { google } = require("googleapis");
 const server = http.createServer(app);
 const ipRoutes = require("./routers/ipRoutes");
-const GeminiRoutes = require('./routers/GeminiRoutes');
+const GeminiRoutes = require("./routers/GeminiRoutes");
 
 // Setup Socket.IO
 const io = new Server(server, {
@@ -51,14 +52,14 @@ const translateRouter = require("./routers/translateRouter");
 const languageToolRouter = require("./routers/langToolRouter");
 const realTimeSubRouter = require("./routers/realTimeSubRouter");
 const stickyNoteRoutes = require("./routers/stickyNoteRoutes");
-const CalendarEvent = require('./models/calendarEvent');
+const CalendarEvent = require("./models/calendarEvent");
 const annotationRoutes = require("./routers/annotationRoutes");
-const musicRouter = require('./routers/musicRouter');
+const musicRouter = require("./routers/musicRouter");
 
-const setupEventRoutes        = require('./routers/calendarEventRouter');
-const setupSkillTreeRoutes = require('./routers/skillTreeRouter');
+const setupEventRoutes = require("./routers/calendarEventRouter");
+const setupSkillTreeRoutes = require("./routers/skillTreeRouter");
 
-const performanceRoutes = require('./routers/performanceRouter');
+const performanceRoutes = require("./routers/performanceRouter");
 const quizRoutes = require("./routers/quiz");
 const VideoCall = require("./models/videoCall");
 console.log("MongoDB URI:", process.env.MONGODB_URI); // Debugging
@@ -80,20 +81,24 @@ app.use(
   })
 );
 app.use(cookieParser());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // Helmet can be used for extra security headers (if needed)
 // app.use(helmet());
 
 // Serve static files from the uploads directory
-app.use("/api/questions", questionRouter);
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-app.use('/resumes', express.static(path.join(__dirname, 'resumes'), {
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+app.use(
+  "/resumes",
+  express.static(path.join(__dirname, "resumes"), {
     setHeaders: (res) => {
-      res.set('Content-Type', 'application/pdf');
-    }
-  }));
+      res.set("Content-Type", "application/pdf");
+    },
+  })
+);
+app.use("/api/questions", questionRouter);
+
 // Connect to MongoDB
 mongoose
     .connect(process.env.MONGODB_URI)
@@ -106,17 +111,17 @@ mongoose
 
 // Session setup
 app.use(
-    session({
-        secret: process.env.SESSION_SECRET,
-        resave: false,
-        saveUninitialized: true,
-        cookie: {
-            secure: process.env.NODE_ENV === 'production', // secure flag for production
-            httpOnly: true,
-            sameSite: 'strict',
-            maxAge: 3600000, // 1 hour
-        },
-    })
+  session({
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: true,
+    cookie: {
+      secure: process.env.NODE_ENV === "production", // secure flag for production
+      httpOnly: true,
+      sameSite: "strict",
+      maxAge: 3600000, // 1 hour
+    },
+  })
 );
 
 // Initialize Passport for authentication and manage sessions
@@ -133,128 +138,119 @@ app.use("/api/level", levelRoutes);
 app.use("/api/forum", forumRouter);
 
 app.use("/api/auth", authRouter);
-app.use('/api/google', googleClassroomRouter);
+app.use("/api/google", googleClassroomRouter);
 app.use("/api/users", userRouter);
 app.use("/api/lessons", lessonRouter);
 app.use("/api/badges", badgeRouter);
 app.use("/api/ai", aiRoute);
 app.use("/api/progress", userProgressRoutes);
-app.use('/api/scheduler', schedulerRouter);
+app.use("/api/scheduler", schedulerRouter);
 app.use("/api/translate", translateRouter);
 app.use("/api/ip", ipRoutes);
 app.use("/api/languageTool", languageToolRouter);
 app.use("/api/subtitles", realTimeSubRouter);
 app.use("/api/stickynotes", stickyNoteRoutes);
-app.use('/api/gemini', GeminiRoutes);
-app.use('/api/music', musicRouter);
-app.use('/music', musicRouter);
-app.use('/music', express.static(path.join(__dirname, 'music')));
+app.use("/api/gemini", GeminiRoutes);
+app.use("/api/music", musicRouter);
+app.use("/music", musicRouter);
+app.use("/music", express.static(path.join(__dirname, "music")));
 app.use("/module", moduleRouter);
 
 app.get("/", (req, res) => {
   res.json({ message: "Hello from the server" });
 });
-const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
-app.use('/api/events', setupEventRoutes(wss));
-app.use('/api/skill-tree', setupSkillTreeRoutes(wss));
+const wss = new WebSocketServer({ server: httpServer, path: "/ws" });
+app.use("/api/events", setupEventRoutes(wss));
+app.use("/api/skill-tree", setupSkillTreeRoutes(wss));
 //app.use("/api/videCall",VideoCallRouter);
-const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
+const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
 
-app.get('/oauth', (req, res) => {
-    const redirect_uri = 'http://localhost:3000/auth';
-    res.redirect(`https://github.com/login/oauth/authorize?client_id=${process.env.CLIENT_ID}&redirect_uri=${redirect_uri}&scope=user:email`);
+app.get("/oauth", (req, res) => {
+  const redirect_uri = "http://localhost:3000/auth";
+  res.redirect(
+    `https://github.com/login/oauth/authorize?client_id=${process.env.CLIENT_ID}&redirect_uri=${redirect_uri}&scope=user:email`
+  );
 });
-app.use("/api/lessons", annotationRoutes);
+//app.use("/api/lessons", annotationRoutes);
 
-app.get('/auth', async (req, res) => {
-    const { code } = req.query;
-    try {
-        const tokenRes = await axios.post('https://github.com/login/oauth/access_token', {
-            client_id: process.env.CLIENT_ID,
-            client_secret: process.env.CLIENT_SECRET,
-            code,
-        }, {
-            headers: { accept: 'application/json' },
-        });
-  
-        const token = tokenRes.data.access_token;
-        const userRes = await axios.get('https://api.github.com/user', {
-            headers: { Authorization: `token ${token}` },
-        });
-        const emailsRes = await axios.get('https://api.github.com/user/emails', {
-            headers: { Authorization: `token ${token}` },
-        });
-  
-        const githubUser = userRes.data;
-        const primaryEmail = emailsRes.data.find(email => email.primary && email.verified)?.email ||
-                             emailsRes.data[0]?.email ||
-                             `${githubUser.login}@github.com`;
-  
-        let user = await User.findOne({ email: primaryEmail });
-  
-        if (!user) {
-            const randomPassword = Math.random().toString(36).slice(-8);
-            const hashedPassword = await bcrypt.hash(randomPassword, 10);
-          
-            user = new User({
-                firstName: githubUser.name?.split(' ')[0] || githubUser.login,
-                lastName: githubUser.name?.split(' ')[1] || '',
-                email: primaryEmail,
-                password: hashedPassword,
-                country: 'Unknown',
-                role: 'Student',
-                photo: githubUser.avatar_url,
-            });
-          
-            await user.save();
-        }
-  
-        const jwtToken = jwt.sign({
-            userId: user._id,
-            email: user.email,
-            role: user.role,
-        }, process.env.TOKEN_SECRET, { expiresIn: '8h' });
-      await ActivityLog.create({
+app.get("/auth", async (req, res) => {
+  const { code } = req.query;
+  try {
+    const tokenRes = await axios.post(
+      "https://github.com/login/oauth/access_token",
+      {
+        client_id: process.env.CLIENT_ID,
+        client_secret: process.env.CLIENT_SECRET,
+        code,
+      },
+      {
+        headers: { accept: "application/json" },
+      }
+    );
+
+    const token = tokenRes.data.access_token;
+    const userRes = await axios.get("https://api.github.com/user", {
+      headers: { Authorization: `token ${token}` },
+    });
+    const emailsRes = await axios.get("https://api.github.com/user/emails", {
+      headers: { Authorization: `token ${token}` },
+    });
+
+    const githubUser = userRes.data;
+    const primaryEmail =
+      emailsRes.data.find((email) => email.primary && email.verified)?.email ||
+      emailsRes.data[0]?.email ||
+      `${githubUser.login}@github.com`;
+
+    let user = await User.findOne({ email: primaryEmail });
+
+    if (!user) {
+      const randomPassword = Math.random().toString(36).slice(-8);
+      const hashedPassword = await bcrypt.hash(randomPassword, 10);
+
+      user = new User({
+        firstName: githubUser.name?.split(" ")[0] || githubUser.login,
+        lastName: githubUser.name?.split(" ")[1] || "",
+        email: primaryEmail,
+        password: hashedPassword,
+        country: "Unknown",
+        role: "Student",
+        photo: githubUser.avatar_url,
+      });
+
+      await user.save();
+    }
+
+    const jwtToken = jwt.sign(
+      {
+        userId: user._id,
+        email: user.email,
+        role: user.role,
+      },
+      process.env.TOKEN_SECRET,
+      { expiresIn: "8h" }
+    );
+await ActivityLog.create({
         userId: user._id,
         email: user.email,
         ipAddress: req.ip || 'Unknown',
         userAgent: req.headers['user-agent'] || 'Unknown',
         action: 'LOGIN',
       });
-        res.redirect(`${FRONTEND_URL}/home?token=${jwtToken}`);
-    } catch (err) {
-        console.error('GitHub OAuth Error:', err.response?.data || err.message || err);
-        res.status(500).json({ error: 'GitHub OAuth failed', details: err.response?.data || err.message });
-    }
+    res.redirect(`${FRONTEND_URL}/home?token=${jwtToken}`);
+  } catch (err) {
+    console.error(
+      "GitHub OAuth Error:",
+      err.response?.data || err.message || err
+    );
+    res.status(500).json({
+      error: "GitHub OAuth failed",
+      details: err.response?.data || err.message,
+    });
+  }
 });
-// LinkedIn OAuth Strategy
-const LinkedInStrategy = require('passport-linkedin-oauth2').Strategy;
 
-passport.use(new LinkedInStrategy({
-    clientID: process.env.LINKEDIN_CLIENT_ID,
-    clientSecret: process.env.LINKEDIN_CLIENT_SECRET,
-    callbackURL: 'http://localhost:5173/auth/linkedin/callback',
-    scope: ['r_emailaddress', 'r_liteprofile'],
-}, async (token, tokenSecret, profile, done) => {
-    try {
-        // Check if the user already exists and update or create accordingly
-        const existingUser = await User.findOne({ email: profile.emails[0].value });
-        if (!existingUser) {
-            const newUser = new User({
-                email: profile.emails[0].value,
-                linkedInId: profile.id,
-                name: profile.displayName,
-                token,
-            });
-            await newUser.save();
-            return done(null, newUser);
-        }
-        return done(null, existingUser);
-    } catch (error) {
-        console.error('LinkedIn OAuth Error:', error);
-        return done(error, null);
-    }
-}));
+
 
 // Serialize and deserialize users for session management
 passport.serializeUser((user, done) => {
@@ -267,8 +263,9 @@ passport.deserializeUser(async (id, done) => {
 });
 
 // Facebook OAuth callback route (assuming you've set up the corresponding strategy)
-app.get('/auth/facebook/callback', 
-  passport.authenticate('facebook', { failureRedirect: '/login' }), 
+app.get(
+  "/auth/facebook/callback",
+  passport.authenticate("facebook", { failureRedirect: "/login" }),
   (req, res) => {
     res.json({
       message: 'Login successful!',
@@ -332,15 +329,15 @@ function formatData(data) {
 
   return { sessions, pages };
 }
-wss.on('connection', (ws) => {
-  ws.on('message', (message) => {
+wss.on("connection", (ws) => {
+  ws.on("message", (message) => {
     try {
       const { type } = JSON.parse(message.toString());
-      if (type === 'ping') {
-        ws.send(JSON.stringify({ type: 'pong' }));
+      if (type === "ping") {
+        ws.send(JSON.stringify({ type: "pong" }));
       }
     } catch (err) {
-      console.error('Error parsing WS message:', err);
+      console.error("Error parsing WS message:", err);
     }
   });
 });
@@ -348,33 +345,34 @@ const PORT = process.env.PORT || 3000;
 httpServer.listen(PORT, () => {
   console.log(`Listening (HTTP + WS) on port ${PORT}…`);
 });
-cron.schedule('*/1 * * * *', async () => {
+cron.schedule("*/1 * * * *", async () => {
   try {
-    const now     = new Date();
-    const in30min = new Date(now.getTime() + 30*60*1000);
+    const now = new Date();
+    const in30min = new Date(now.getTime() + 30 * 60 * 1000);
     const upcoming = await CalendarEvent.find({
-      start:       { $gte: now, $lte: in30min },
-      readyEmitted:{ $ne: true }
+      start: { $gte: now, $lte: in30min },
+      readyEmitted: { $ne: true },
     });
 
     for (const ev of upcoming) {
-      wss.clients.forEach(ws => {
+      wss.clients.forEach((ws) => {
         if (ws.readyState === ws.OPEN) {
-          ws.send(JSON.stringify({
-            type:    'events:ready',
-            payload: {
-              id:        ev._id,
-              title:     ev.title,
-              start:     ev.start,
-              lessonId:  ev.lessonId,
-              duration:  ev.durationMin
-            }
-          }));
+          ws.send(
+            JSON.stringify({
+              type: "events:ready",
+              payload: {
+                id: ev._id,
+                title: ev.title,
+                start: ev.start,
+                lessonId: ev.lessonId,
+                duration: ev.durationMin,
+              },
+            })
+          );
         }
       });
-
     }
   } catch (err) {
-    console.error('Cron reminder error:', err);
+    console.error("Cron reminder error:", err);
   }
 });

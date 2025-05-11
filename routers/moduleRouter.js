@@ -9,7 +9,6 @@ const {
   deleteModule,
   getModuleWithId,
   getModuleWithUserId,
-  trackLessonDuration
 } = require("../controllers/moduleController");
 const { auth } = require("../middlewares/auth");
 router.get("/modules/",auth, getModuleWithUserId)

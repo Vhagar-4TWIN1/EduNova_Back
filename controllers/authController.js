@@ -306,67 +306,7 @@ async function verifyDiploma(diplomaImage) {
   }
 }
 
-// Add this helper function to authController.js
-async function verifyDiploma(diplomaImage) {
-  try {
-    // Create a mock request object for the verification controller
-    const mockReq = {
-      file: {
-        path: diplomaImage, // This should be the path to the uploaded image
-        originalname: 'diploma.jpg'
-      },
-      user: {} // Mock user object
-    };
-    
-    const mockRes = {
-      status: (code) => ({
-        json: (data) => data
-      })
-    };
 
-    // Call the verification controller
-    const result = await diplomaVerificationController.verifyDiploma(mockReq, mockRes);
-    return result;
-  } catch (error) {
-    console.error('Diploma verification error:', error);
-    return {
-      success: false,
-      message: 'Diploma verification failed',
-      errors: { system: 'Verification process error' }
-    };
-  }
-}
-
-// Add this helper function to authController.js
-async function verifyDiploma(diplomaImage) {
-  try {
-    // Create a mock request object for the verification controller
-    const mockReq = {
-      file: {
-        path: diplomaImage, // This should be the path to the uploaded image
-        originalname: 'diploma.jpg'
-      },
-      user: {} // Mock user object
-    };
-    
-    const mockRes = {
-      status: (code) => ({
-        json: (data) => data
-      })
-    };
-
-    // Call the verification controller
-    const result = await diplomaVerificationController.verifyDiploma(mockReq, mockRes);
-    return result;
-  } catch (error) {
-    console.error('Diploma verification error:', error);
-    return {
-      success: false,
-      message: 'Diploma verification failed',
-      errors: { system: 'Verification process error' }
-    };
-  }
-}
 
 
 exports.signin = async (req, res) => {

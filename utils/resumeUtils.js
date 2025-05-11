@@ -8,7 +8,7 @@ const { extractFromPDF } = require('./fileUtils');
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY_lou);
 
 /**
- * Generates enhanced resume content from user data and uploaded PDF
+ * Gener ates enhanced resume content from user data and uploaded PDF
  */
 const generateEnhancedResume = async (userData, pdfPath) => {
   try {
@@ -26,7 +26,7 @@ const generateEnhancedResume = async (userData, pdfPath) => {
     Uploaded Resume Content:
     ${pdfText.substring(0, 10000)}`; // Limit to first 10k chars
 
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro-002" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
     const result = await model.generateContent(prompt);
     return (await result.response).text();
   } catch (error) {
@@ -35,29 +35,23 @@ const generateEnhancedResume = async (userData, pdfPath) => {
   }
 };
 
-/**
- * Creates a PDF file from generated resume text
- */
-const createResumePDF = async (resumeText, userId) => {
-  try {
+
+const createResumePDF = async (resumeText, outputPath) => {
+  return new Promise((resolve, reject) => {
     const doc = new PDFDocument();
-    const fileName = `resume_${userId}_${Date.now()}.pdf`;
-    const filePath = path.join(__dirname, `../resumes/${fileName}`);
-
-    await new Promise((resolve, reject) => {
-      const stream = fs.createWriteStream(filePath);
-      doc.pipe(stream);
-      doc.font('Times-Roman').fontSize(12).text(resumeText);
-      doc.end();
-      stream.on('finish', resolve);
-      stream.on('error', reject);
+    const stream = fs.createWriteStream(outputPath);
+    
+    doc.pipe(stream);
+    doc.fontSize(12).text(resumeText, {
+      align: 'left',
+      width: 500
     });
-
-    return `/resumes/${fileName}`;
-  } catch (error) {
-    console.error('PDF creation error:', error);
-    throw new Error('Failed to create PDF file');
-  }
+    
+    doc.end();
+    
+    stream.on('finish', () => resolve(outputPath));
+    stream.on('error', reject);
+  });
 };
 
 module.exports = {

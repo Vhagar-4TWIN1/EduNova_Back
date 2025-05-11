@@ -12,6 +12,7 @@ const {
   updateUser,
   deleteUser,
   promoteToAdmin,
+  updateStudentFields,
 } = require("../controllers/userController");
 
 // Configure multer for file uploads
@@ -95,66 +96,48 @@ router.get("/", getAllUsers);
 // Read one user by ID
 router.get("/:id", getUserById);
 
+router.patch("/:id/student-fields", updateStudentFields);
+
 // Update user
 router.patch("/:id", updateUser);
 
 // Custom endpoint for updating student fields
-router.patch("/:id/student-fields", async (req, res) => {
-  console.log("➡️ Incoming student update:", req.body);
+router.patch("/:id/teacher-fields", async (req, res) => {
   const { id } = req.params;
-  const {
-    identifier,
-    situation,
-    disease,
-    socialCase,
-    learningPreference,
-    interests,
-  } = req.body;
+  const { number, bio, cv, diplomas, experience, cin, workCertificate } =
+    req.body;
 
   try {
-    console.log("Updating student fields for ID:", id);
-    console.log("Student data received:", req.body);
+    console.log("Updating teacher fields for ID:", id);
 
-    // Import the Student model - make sure this is properly imported
-    const { Student } = require("../models/usersModel");
+    const { User } = require("../models/usersModel");
 
-    // First check if the user is a student
-    const student = await Student.findById(id);
-    if (!student) {
-      return res.status(404).json({
-        message: "Student not found with this ID",
-      });
+    // ✅ Use User.findById, not Teacher
+    const user = await User.findById(id);
+    if (!user || user.role !== "Teacher") {
+      return res
+        .status(404)
+        .json({ message: "Teacher not found with this ID" });
     }
 
-    // Build update object - only include fields that are provided
     const updateData = {};
-    if (identifier !== undefined) updateData.identifier = identifier;
-    if (situation !== undefined) updateData.situation = situation;
-    if (disease !== undefined) updateData.disease = disease;
-    if (socialCase !== undefined) updateData.socialCase = socialCase;
+    if (number !== undefined) updateData.number = number;
+    if (bio !== undefined) updateData.bio = bio;
+    if (cv !== undefined) updateData.cv = cv;
+    if (diplomas !== undefined) updateData.diplomas = diplomas;
+    if (experience !== undefined) updateData.experience = experience;
+    if (cin !== undefined) updateData.cin = cin;
+    if (workCertificate !== undefined)
+      updateData.workCertificate = workCertificate;
 
-    console.log("Updating with data:", updateData);
+    const updated = await User.findByIdAndUpdate(id, updateData, {
+      new: true,
+    });
 
-    // Update the student fields directly
-    const updatedStudent = await Student.findByIdAndUpdate(
-      req.params.id,
-      {
-        identifier,
-        situation,
-        disease,
-        socialCase,
-        learningPreference,
-        interests,
-      },
-      { new: true }
-    );
-
-    console.log("Updated student:", updatedStudent);
-
-    res.status(200).json(updatedStudent);
+    return res.status(200).json(updated);
   } catch (error) {
-    console.error("Error updating student fields:", error);
-    res.status(500).json({ message: error.message });
+    console.error("Error updating teacher fields:", error);
+    return res.status(500).json({ message: error.message });
   }
 });
 
