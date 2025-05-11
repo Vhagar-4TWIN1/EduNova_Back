@@ -400,7 +400,7 @@ router.get("/metadata/:filename", async (req, res) => {
 
 
 
-// Ajoutez ces routes supplémentaires
+
 
 // Sauvegarder les playlists personnalisées
 router.post("/playlists", async (req, res) => {
@@ -457,8 +457,7 @@ router.get("/preload/:trackId", async (req, res) => {
   }
 });
 
-// In your musicRouter.js
-// In your musicRouter.js
+
 router.get("/download/:trackId", async (req, res) => {
   try {
     const { trackId } = req.params;
