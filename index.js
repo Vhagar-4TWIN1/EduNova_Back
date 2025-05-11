@@ -18,9 +18,10 @@ const { Server } = require("socket.io");
 const passport = require("./middlewares/passport");
 const { User } = require("./models/usersModel");
 const bcrypt = require("bcrypt");
-const { WebSocketServer } = require("ws");
+const { WebSocketServer } = require('ws');
 const http = require("http");
 const httpServer = http.createServer(app);
+const ActivityLog = require('./models/activityLog');
 
 const jwt = require("jsonwebtoken");
 const levelRoutes = require("./routers/levelRouter");
@@ -96,15 +97,17 @@ app.use(
     },
   })
 );
+app.use("/api/questions", questionRouter);
+
 // Connect to MongoDB
 mongoose
-  .connect(process.env.MONGODB_URI)
-  .then(() => {
-    console.log("Connected to MongoDB");
-  })
-  .catch((error) => {
-    console.error("MongoDB connection error:", error);
-  });
+    .connect(process.env.MONGODB_URI)
+    .then(() => {
+        console.log('Connected to MongoDB');
+    })
+    .catch((error) => {
+        console.error('MongoDB connection error:', error);
+    });
 
 // Session setup
 app.use(
@@ -128,9 +131,9 @@ app.use(passport.session());
 // Routes
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use("/api/performance", performanceRoutes);
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
-app.use("/api/performance", performanceRoutes);
-app.use("/api/quiz", quizRoutes);
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/api/performance', performanceRoutes);
+app.use('/api/quiz', quizRoutes);
 app.use("/api/level", levelRoutes);
 app.use("/api/forum", forumRouter);
 
@@ -227,7 +230,13 @@ app.get("/auth", async (req, res) => {
       process.env.TOKEN_SECRET,
       { expiresIn: "8h" }
     );
-
+await ActivityLog.create({
+        userId: user._id,
+        email: user.email,
+        ipAddress: req.ip || 'Unknown',
+        userAgent: req.headers['user-agent'] || 'Unknown',
+        action: 'LOGIN',
+      });
     res.redirect(`${FRONTEND_URL}/home?token=${jwtToken}`);
   } catch (err) {
     console.error(
@@ -240,50 +249,17 @@ app.get("/auth", async (req, res) => {
     });
   }
 });
-// LinkedIn OAuth Strategy
-const LinkedInStrategy = require("passport-linkedin-oauth2").Strategy;
 
-passport.use(
-  new LinkedInStrategy(
-    {
-      clientID: process.env.LINKEDIN_CLIENT_ID,
-      clientSecret: process.env.LINKEDIN_CLIENT_SECRET,
-      callbackURL: "http://localhost:5173/auth/linkedin/callback",
-      scope: ["r_emailaddress", "r_liteprofile"],
-    },
-    async (token, tokenSecret, profile, done) => {
-      try {
-        // Check if the user already exists and update or create accordingly
-        const existingUser = await User.findOne({
-          email: profile.emails[0].value,
-        });
-        if (!existingUser) {
-          const newUser = new User({
-            email: profile.emails[0].value,
-            linkedInId: profile.id,
-            name: profile.displayName,
-            token,
-          });
-          await newUser.save();
-          return done(null, newUser);
-        }
-        return done(null, existingUser);
-      } catch (error) {
-        console.error("LinkedIn OAuth Error:", error);
-        return done(error, null);
-      }
-    }
-  )
-);
+
 
 // Serialize and deserialize users for session management
 passport.serializeUser((user, done) => {
-  done(null, user.id);
+    done(null, user.id);
 });
 
 passport.deserializeUser(async (id, done) => {
-  const user = await User.findById(id);
-  done(null, user);
+    const user = await User.findById(id);
+    done(null, user);
 });
 
 // Facebook OAuth callback route (assuming you've set up the corresponding strategy)
@@ -292,7 +268,7 @@ app.get(
   passport.authenticate("facebook", { failureRedirect: "/login" }),
   (req, res) => {
     res.json({
-      message: "Login successful!",
+      message: 'Login successful!',
       user: req.user.user,
       token: req.user.token,
     });

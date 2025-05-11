@@ -423,38 +423,122 @@ exports.signin = async (req, res) => {
 };
 
 
+// exports.signout = async (req, res) => {
+//   try {
+//     let user = req.user;
+
+//     // 1. Récupérer le token depuis les cookies si req.user est manquant
+//     if (!user && req.cookies?.token) {
+//       try {
+//         const decoded = jwt.verify(req.cookies.token, process.env.JWT_SECRET);
+//         user = await User.findById(decoded.id);
+//       } catch (err) {
+//         console.error("Erreur lors du décodage du token:", err);
+//       }
+//     }
+
+//     // 2. Enregistrer l’activité LOGOUT si utilisateur trouvé
+//     if (user) {
+//       const lastLogin = await ActivityLog.findOne({
+//         userId: user._id,
+//         action: 'LOGIN',
+//       }).sort({ createdAt: -1 });
+
+//       const duration = lastLogin
+//         ? Date.now() - lastLogin.createdAt.getTime()
+//         : null;
+
+//       try {
+//         await ActivityLog.create({
+//           userId: user._id,
+//           email: user.email,
+//           action: 'LOGOUT',
+//           ipAddress: req.ip || 'Unknown',
+//           userAgent: req.headers['user-agent'] || 'Unknown',
+//           duration,
+//         });
+//         console.log("Activité LOGOUT enregistrée");
+//       } catch (err) {
+//         console.error("Erreur enregistrement LOGOUT:", err);
+//       }
+//     } else {
+//       console.warn("Utilisateur non identifié lors du logout");
+//     }
+
+//     // 3. Supprimer le cookie
+//     res.clearCookie('token', {
+//       httpOnly: true,
+//       sameSite: 'strict',
+//       secure: process.env.NODE_ENV === 'production',
+//     });
+
+//     // 4. Répondre au client
+//     res.status(200).json({ success: true, message: "Déconnexion réussie" });
+//   } catch (error) {
+//     console.error("Erreur dans signout:", error);
+//     res.status(500).json({ success: false, message: "Erreur serveur" });
+//   }
+// };
+
+
 exports.signout = async (req, res) => {
-   if (!req.user || !req.user.userId) {
-      return res.status(401).json({ success: false, message: 'Unauthorized: User not authenticated' });
+  try {
+    // 1. Debug : Afficher l'en-tête Authorization
+    console.log("Authorization header:", req.headers.authorization);
+
+    let user = null;
+
+    // 2. Récupération et décodage du token
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.split(' ')[1];
+
+      try {
+        const decoded = jwt.verify(token, process.env.TOKEN_SECRET);
+
+        console.log("Token décodé:", decoded);
+        user = await User.findById(decoded.userId);
+        console.log("Utilisateur trouvé:", user?.email);
+      } catch (err) {
+        console.error("Erreur de vérification du token:", err.message);
+      }
+    } else {
+      console.warn("Aucun token trouvé dans l'en-tête Authorization.");
     }
-  
-    const userId = req.user.userId;
-  
-    // Trouver la dernière action LOGIN de l'utilisateur
-    const lastLogin = await ActivityLog.findOne({
-      userId,
-      action: 'LOGIN',
-    }).sort({ createdAt: -1 });
-    let totalDuration = 0;
-    if (lastLogin) {
-      const duration = Date.now() - lastLogin.createdAt.getTime();
-      totalDuration += duration;
-  
-      // Enregistrement de l'action LOGOUT avec la durée de la session
+
+    // 3. Enregistrement de l'activité LOGOUT
+    if (user) {
+      const lastLogin = await ActivityLog.findOne({
+        userId: user._id,
+        action: 'LOGIN',
+      }).sort({ createdAt: -1 });
+
+      const duration = lastLogin
+        ? Date.now() - lastLogin.createdAt.getTime()
+        : null;
+
       await ActivityLog.create({
-        userId,
-        email: req.user.email,
+        userId: user._id,
+        email: user.email,
         action: 'LOGOUT',
         ipAddress: req.ip || 'Unknown',
         userAgent: req.headers['user-agent'] || 'Unknown',
         duration,
       });
+
+      console.log("Activité LOGOUT enregistrée.");
+    } else {
+      console.warn("Impossible d’enregistrer LOGOUT : utilisateur non trouvé.");
     }
-  res
-    .clearCookie('Authorization')
-    .status(200)
-    .json({ success: true, message: 'logged out successfully' });
+
+    res.status(200).json({ success: true, message: "Déconnexion réussie" });
+  } catch (error) {
+    console.error("Erreur dans signout:", error.message);
+    res.status(500).json({ success: false, message: "Erreur serveur" });
+  }
 };
+
+
 
 exports.getAllUsers = async (req, res) => {
   try {
@@ -742,7 +826,20 @@ exports.getActivityLogs = async (req, res) => {
       // Récupérer tous les logs de l'utilisateur (LOGIN et LOGOUT)
       const logs = await ActivityLog.find({
         userId: user._id,
-        action: { $in: ['LOGIN', 'LOGOUT'] },
+        action: { $in: ['LOGIN',
+        'LOGOUT',
+        'PASSWORD_CHANGE',
+        'SIGNUP',
+        'CHECK_MODULE',
+        'CHECK_LESSON',
+		'LESSON_COMPLETED',
+        'WATCH_MUSIC',
+        'VIDEO_CALL',
+        'START_EVALUATION',
+        'SUBMIT_EVALUATION',
+        'CHECK_LESSON_DURATION',
+		'FORUM',
+		'REPLY_FORUM'] },
       }).sort({ createdAt: 1 }); // Trier par date croissante
 
       let totalDuration = 0;

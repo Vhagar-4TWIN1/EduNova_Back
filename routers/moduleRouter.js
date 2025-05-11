@@ -10,14 +10,16 @@ const {
   deleteModule,
   getModuleWithId,
   getModuleWithUserId,
+  trackLessonDuration
 } = require("../controllers/moduleController");
 const { auth } = require("../middlewares/auth");
+router.get("/modules/",auth, getModuleWithUserId)
 
-router.get("/", auth, getModules);
-router.get("/modules/", auth, getModuleWithUserId);
-router.post("/add", auth, createModule);
-router.get("/:id", getModuleWithId);
-router.put("/:id", auth, updateModule);
-router.delete("/:id", auth, deleteModule);
-router.get("/modules/:moduleId/lessons", lessonController.getLessonsByModule);
+router.get("/:id",auth, getModuleWithId); 
+router.post("/check-lessons-duration", auth, trackLessonDuration);
+router.post("/add",auth, createModule);
+router.get("/",auth, getModules);
+router.put("/:id", auth ,updateModule);
+router.delete("/:id",auth, deleteModule);
+router.get("/modules/:moduleId/lessons",auth, lessonController.getLessonsByModule);
 module.exports = router;

@@ -190,7 +190,6 @@ exports.createLesson = async (req, res) => {
       return res.status(404).json({ message: "Module not found" });
     }
 
-
     // 3. Create lesson
     const lesson = await Lesson.create({
       title,
@@ -217,6 +216,7 @@ exports.createLesson = async (req, res) => {
       .json({ message: "Failed to create lesson", error: err.message });
   }
 };
+
 
 exports.generateAIAnnotations = async (req, res) => {
   try {
@@ -255,7 +255,6 @@ exports.getAllLessons = async (_, res) => {
     res.status(500).json({ error: error.message });
   }
 };
-
 exports.getLessonById = async (req, res) => {
   try {
     const lesson = await Lesson.findById(req.params.id);
