@@ -10,8 +10,23 @@ const activityLogSchema = mongoose.Schema(
 		action: {
 			type: String,
 			required: true,
-			enum: ['LOGIN', 'LOGOUT', 'PASSWORD_CHANGE', 'SIGNUP'],
-		},
+enum: [
+        'LOGIN',
+        'LOGOUT',
+        'PASSWORD_CHANGE',
+        'SIGNUP',
+        'CHECK_MODULE',
+        'CHECK_LESSON',
+		'LESSON_COMPLETED',
+		'CHECK_LESSON_DURATION',
+        'WATCH_MUSIC',
+        'VIDEO_CALL',
+        'START_EVALUATION',
+        'SUBMIT_EVALUATION',
+		'FORUM',
+		'REPLY_FORUM'
+
+      ],		},
 		ipAddress: {
 			type: String,
 			required: true,
@@ -20,6 +35,10 @@ const activityLogSchema = mongoose.Schema(
 			type: String,
 			required: true,
 		},
+		duration: { // Ajoutez ce champ
+      type: Number,
+      default: 0,
+    },
 	},
 	{
 		timestamps: true,

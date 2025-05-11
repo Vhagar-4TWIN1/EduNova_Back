@@ -54,6 +54,7 @@ exports.getRecommendedPosts = async (userId) => {
   }
 };
 
+const ActivityLog = require('../models/activityLog');
 
 // Create a new post
 exports.createPost = async (req, res) => {
@@ -77,11 +78,32 @@ exports.createPost = async (req, res) => {
     
     await post.save();
     res.status(201).json(post);
+
+
+    console.log('REQ.USER:', req.user);
+    console.log('REQ.BODY:', req.body);
+
+    const newPost = new Post({
+      title: req.body.title,
+      content: req.body.content,
+      author: req.user.id // ou ._id selon comment tu stockes dans le JWT
+    });
+    await ActivityLog.create({
+    userId: req.user.userId,
+    email: req.user.email,
+    ipAddress: req.ip || 'Unknown',
+    userAgent: req.headers['user-agent'] || 'Unknown',
+    action: 'FORUM'
+  });
+
+    const savedPost = await newPost.save();
+    res.status(201).json(savedPost);
   } catch (error) {
-    console.error('Error creating post:', error);
-    res.status(500).json({ error: 'Failed to create post' });
+    console.error('Erreur dans createPost:', error.message);
+    res.status(500).json({ error: 'Erreur serveur lors de la création du post.' });
   }
 };
+
 
 // Get all posts
 exports.getAllPosts = async (req, res) => {
@@ -172,10 +194,16 @@ exports.addReplyToPost = async (req, res) => {
     await reply.save();
 
     await Post.findByIdAndUpdate(postId, { $push: { replies: reply._id } });
-
+     await ActivityLog.create({
+    userId: req.user.userId,
+    email: req.user.email,
+    ipAddress: req.ip || 'Unknown',
+    userAgent: req.headers['user-agent'] || 'Unknown',
+    action: 'REPLY_FORUM'
+  });
     res.status(201).json(reply);
   } catch (error) {
-    res.status(500).json({ error: 'Reply content is too toxic' });
+    res.status(500).json({ error: 'Failed to add reply' });
   }
 };
 exports.upvoteReply = async (req, res) => {
