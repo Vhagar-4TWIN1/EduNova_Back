@@ -11,13 +11,13 @@ const {
   getModuleWithUserId,
 } = require("../controllers/moduleController");
 const { auth } = require("../middlewares/auth");
-router.get("/modules/",auth, getModuleWithUserId)
+router.get("/:id", getModuleWithId);
 
-router.get("/:id", getModuleWithId); 
+router.get("/modules/", auth, getModuleWithUserId);
 
-router.post("/add",auth, createModule);
-router.get("/",auth, getModules);
-router.put("/:id", auth ,updateModule);
-router.delete("/:id",auth, deleteModule);
+router.post("/add", auth, createModule);
+router.get("/", auth, getModules);
+router.put("/:id", auth, updateModule);
+router.delete("/:id", auth, deleteModule);
 router.get("/modules/:moduleId/lessons", lessonController.getLessonsByModule);
 module.exports = router;
