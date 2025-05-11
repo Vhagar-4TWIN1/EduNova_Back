@@ -554,9 +554,10 @@ exports.signout = async (req, res) => {
       const token = authHeader.split(' ')[1];
 
       try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const decoded = jwt.verify(token, process.env.TOKEN_SECRET);
+
         console.log("Token décodé:", decoded);
-        user = await User.findById(decoded.id);
+        user = await User.findById(decoded.userId);
         console.log("Utilisateur trouvé:", user?.email);
       } catch (err) {
         console.error("Erreur de vérification du token:", err.message);
@@ -885,7 +886,19 @@ exports.getActivityLogs = async (req, res) => {
       // Récupérer tous les logs de l'utilisateur (LOGIN et LOGOUT)
       const logs = await ActivityLog.find({
         userId: user._id,
-        action: { $in: ['LOGIN', 'LOGOUT'] },
+        action: { $in: ['LOGIN',
+        'LOGOUT',
+        'PASSWORD_CHANGE',
+        'SIGNUP',
+        'CHECK_MODULE',
+        'CHECK_LESSON',
+		'LESSON_COMPLETED',
+        'WATCH_MUSIC',
+        'VIDEO_CALL',
+        'START_EVALUATION',
+        'SUBMIT_EVALUATION',
+		'FORUM',
+		'REPLY_FORUM'] },
       }).sort({ createdAt: 1 }); // Trier par date croissante
 
       let totalDuration = 0;

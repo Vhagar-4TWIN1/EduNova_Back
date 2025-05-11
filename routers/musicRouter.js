@@ -6,6 +6,8 @@ const fs = require("fs");
 const axios = require("axios");
 const ffmpegPath = require('ffmpeg-static');
 const youtubedl = require('youtube-dl-exec');
+const { auth } = require("../middlewares/auth");
+const ActivityLog = require('../models/activityLog');
 
 
 
@@ -304,7 +306,7 @@ router.get("/tracks", async (req, res) => {
 
 
 // Nouvelle route de recherche YouTube
-router.get("/youtube/search", async (req, res) => {
+router.get("/youtube/search",auth, async (req, res) => {
   try {
     const { query } = req.query;
     
@@ -333,6 +335,14 @@ router.get("/youtube/search", async (req, res) => {
       thumbnail: item.snippet.thumbnails?.medium?.url || '',
       isYouTube: true
     }));
+   
+    await ActivityLog.create({
+        userId: req.user.userId,
+        email: req.user.email,
+        ipAddress: req.ip || 'Unknown',
+        userAgent: req.headers['user-agent'] || 'Unknown',
+        action: 'WATCH_MUSIC'
+      });
 
     res.json(results);
   } catch (error) {

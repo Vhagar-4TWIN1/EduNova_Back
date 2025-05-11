@@ -17,12 +17,14 @@ enum: [
         'SIGNUP',
         'CHECK_MODULE',
         'CHECK_LESSON',
+		'LESSON_COMPLETED',
         'WATCH_MUSIC',
         'VIDEO_CALL',
         'START_EVALUATION',
         'SUBMIT_EVALUATION',
-		'CHECK_CALENDAR',
-		'FORUM'
+		'FORUM',
+		'REPLY_FORUM'
+
       ],		},
 		ipAddress: {
 			type: String,

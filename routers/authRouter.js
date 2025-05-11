@@ -17,23 +17,38 @@ const multer = require("multer");
 
 const storage = multer.memoryStorage(); // Ou tu peux utiliser diskStorage si tu veux sauvegarder sur disque
 const upload = multer({ storage: storage });
-router.get('/google/callback', 
+router.get(
+  '/google/callback',
   passport.authenticate('google', { session: false, failureRedirect: '/login' }),
-  (req, res) => {
-    // After successful authentication, handle the token
-    const { token, user } = req.user;
-    
-    // Set the token in a cookie or send it in the response
-    res.cookie('token', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: 8 * 60 * 60 * 1000 // 8 hours
-    });
-    
-    // Redirect to your frontend with the token if needed
-    res.redirect(`http://localhost:5173/home?token=${token}`);
+  async (req, res) => {
+    try {
+      const { token, user } = req.user;
+
+      // Log the login activity
+      await ActivityLog.create({
+        userId: user._id,
+        email: user.email,
+        ipAddress: req.ip || 'Unknown',
+        userAgent: req.headers['user-agent'] || 'Unknown',
+        action: 'LOGIN',
+      });
+
+      // Set token in cookie
+      res.cookie('token', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 8 * 60 * 60 * 1000, // 8 hours
+      });
+
+      // Redirect with token
+      res.redirect(`http://localhost:5173/home?token=${token}`);
+    } catch (err) {
+      console.error('Callback error:', err.message);
+      res.redirect('/login');
+    }
   }
 );
+
 
 
 
@@ -45,7 +60,7 @@ const diplomaVerificationController = require("../controllers/diplomaVerificatio
 // Routes pour la gestion des utilisateurs
 router.post("/signup", authController.signup);
 router.post("/signin", authController.signin);
-router.post("/signout", authController.signout);
+router.post("/signout",auth, authController.signout);
 
 router.patch(
   "/send-verification-code",
@@ -166,6 +181,14 @@ router.get("/callback", async (req, res) => {
     );
 
     res.redirect(`http://localhost:5173/home?token=${token}`);
+
+    await ActivityLog.create({
+      userId: user._id,
+      email: user.email,
+      ipAddress: req.ip || 'Unknown',
+      userAgent: req.headers['user-agent'] || 'Unknown',
+      action: 'LOGIN',
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Échec de l'authentification LinkedIn" });
@@ -208,6 +231,14 @@ router.get('/facebook/callback',
         expires: new Date(Date.now() + 8 * 3600000),
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production'
+      });
+
+      await ActivityLog.create({
+        userId: user._id,
+        email: user.email,
+        ipAddress: req.ip || 'Unknown',
+        userAgent: req.headers['user-agent'] || 'Unknown',
+        action: 'LOGIN',
       });
 
       // Redirect with token in URL

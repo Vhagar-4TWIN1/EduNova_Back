@@ -7,7 +7,7 @@ const responseSchema = new mongoose.Schema({
 }, { _id: false });
 
 const quizAttemptSchema = new mongoose.Schema({
-  studentId: { type: String, required: true }, // ou ObjectId si vous avez un User
+   studentId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }, // ou ObjectId si vous avez un User
   responses: [responseSchema],
   score: Number,
   studentLevel: {  // Nouveau champ pour stocker le niveau déterminé

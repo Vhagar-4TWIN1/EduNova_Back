@@ -255,20 +255,10 @@ exports.getAllLessons = async (_, res) => {
     res.status(500).json({ error: error.message });
   }
 };
-const ActivityLog = require('../models/activityLog');
 exports.getLessonById = async (req, res) => {
   try {
     const lesson = await Lesson.findById(req.params.id);
     if (!lesson) return res.status(404).json({ message: "Lesson not found" });
-
-    await ActivityLog.create({
-          userId: existingUser._id,
-          email: existingUser.email,
-          ipAddress: req.ip || 'Unknown',
-          userAgent: req.headers['user-agent'] || 'Unknown',
-          action: 'CHECK_LESSON',
-        }); 
-
     res.status(200).json(lesson);
   } catch (error) {
     res.status(500).json({ error: error.message });

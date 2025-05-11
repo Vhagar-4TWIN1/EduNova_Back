@@ -13,11 +13,11 @@ const {
 const { auth } = require("../middlewares/auth");
 router.get("/modules/",auth, getModuleWithUserId)
 
-router.get("/:id", getModuleWithId); 
+router.get("/:id",auth, getModuleWithId); 
 
 router.post("/add",auth, createModule);
 router.get("/",auth, getModules);
 router.put("/:id", auth ,updateModule);
 router.delete("/:id",auth, deleteModule);
-router.get("/modules/:moduleId/lessons", lessonController.getLessonsByModule);
+router.get("/modules/:moduleId/lessons",auth, lessonController.getLessonsByModule);
 module.exports = router;

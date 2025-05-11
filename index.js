@@ -21,6 +21,7 @@ const bcrypt = require("bcrypt");
 const { WebSocketServer } = require('ws');
 const http = require("http");
 const httpServer = http.createServer(app);
+const ActivityLog = require('./models/activityLog');
 
 const jwt = require("jsonwebtoken");
 const levelRoutes = require("./routers/levelRouter");
@@ -213,7 +214,13 @@ app.get('/auth', async (req, res) => {
             email: user.email,
             role: user.role,
         }, process.env.TOKEN_SECRET, { expiresIn: '8h' });
-  
+      await ActivityLog.create({
+        userId: user._id,
+        email: user.email,
+        ipAddress: req.ip || 'Unknown',
+        userAgent: req.headers['user-agent'] || 'Unknown',
+        action: 'LOGIN',
+      });
         res.redirect(`${FRONTEND_URL}/home?token=${jwtToken}`);
     } catch (err) {
         console.error('GitHub OAuth Error:', err.response?.data || err.message || err);

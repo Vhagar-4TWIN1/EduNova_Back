@@ -89,7 +89,7 @@ exports.addReplyToPost = async (req, res) => {
     email: req.user.email,
     ipAddress: req.ip || 'Unknown',
     userAgent: req.headers['user-agent'] || 'Unknown',
-    action: 'FORUM'
+    action: 'REPLY_FORUM'
   });
     res.status(201).json(reply);
   } catch (error) {
