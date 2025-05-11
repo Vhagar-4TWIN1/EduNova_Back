@@ -9,32 +9,35 @@ exports.getRecommendedPosts = async (userId) => {
     const userProgresses = await UserProgress.find({ userId })
       .populate({
         path: 'moduleId',
-        select: 'title' // Get only the module titles
+        select: 'title'
       })
       .exec();
 
-   
+    // 👉 Return empty array if no user progress
+    if (!userProgresses || userProgresses.length === 0) {
+      return [];
+    }
 
     // 2. Extract all module titles
     const moduleTitles = userProgresses
       .map(progress => progress.moduleId?.title?.toLowerCase() || '')
-      .filter(title => title); // Remove undefined/null titles
+      .filter(title => title);
 
-    // 3. Extract keywords from all titles
+    // 3. Extract keywords
     const allWords = moduleTitles.flatMap(title =>
       title.split(/[\s,.-]+/).filter(Boolean)
     );
 
-    // 4. Filter out common words
+    // 4. Filter common words
     const excludeWords = ['and', 'the', 'for', 'with', 'basics', 'fundamentals'];
     const filteredKeywords = [...new Set(
       allWords.filter(word => word.length > 3 && !excludeWords.includes(word))
-    )]; // `Set` to remove duplicates
+    )];
 
-    // 5. Find posts where any tag matches any keyword
+    // 5. Find matching posts
     const recommendedPosts = await Post.find({
       tags: {
-        $in: filteredKeywords.map(keyword => new RegExp(keyword, 'i')) // Case-insensitive
+        $in: filteredKeywords.map(keyword => new RegExp(keyword, 'i'))
       }
     })
       .sort({ createdAt: -1 })
@@ -42,17 +45,15 @@ exports.getRecommendedPosts = async (userId) => {
       .populate('author', 'username avatar')
       .exec();
 
-    // 6. Return recommended or fallback posts
-    return recommendedPosts.length > 0
-      ? recommendedPosts
-      : await Post.find().sort({ createdAt: -1 }).limit(5).exec();
+    // 6. Return recommended posts
+    return recommendedPosts;
 
   } catch (error) {
     console.error('Error in getRecommendedPosts:', error);
-    // Fallback: recent posts on error
-    return await Post.find().sort({ createdAt: -1 }).limit(5).exec();
+    return [];
   }
 };
+
 
 // Create a new post
 exports.createPost = async (req, res) => {
