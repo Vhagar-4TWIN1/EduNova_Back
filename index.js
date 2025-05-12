@@ -60,6 +60,9 @@ const setupEventRoutes = require("./routers/calendarEventRouter");
 const setupSkillTreeRoutes = require("./routers/skillTreeRouter");
 
 const performanceRoutes = require("./routers/performanceRouter");
+
+const studyRoutes = require('./routers/studyRoutes');
+
 const quizRoutes = require("./routers/quiz");
 const VideoCall = require("./models/videoCall");
 console.log("MongoDB URI:", process.env.MONGODB_URI); // Debugging
@@ -86,7 +89,7 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // Helmet can be used for extra security headers (if needed)
 // app.use(helmet());
-
+app.use('/api/study', studyRoutes);
 // Serve static files from the uploads directory
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use(
