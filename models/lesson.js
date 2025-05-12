@@ -26,6 +26,15 @@ const lessonSchema = new mongoose.Schema({
   public_id: {type :String},
   LMScontent: { type: String },
   annotations: [annotationSchema],
+  estimatedDuration: { type: Number, default: 1 }, // in minutes
+ difficulty: { 
+    type: String, 
+    enum: ['beginner', 'intermediate', 'advanced'], 
+    default: 'intermediate' 
+  },
 }, { timestamps: true });
 
+
+
 module.exports = mongoose.model('Lesson', lessonSchema);
+
