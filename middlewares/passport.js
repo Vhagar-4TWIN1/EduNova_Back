@@ -2,7 +2,7 @@ const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const FacebookStrategy = require('passport-facebook').Strategy;
 const jwt = require('jsonwebtoken');
-const { User } = require("../models/usersModel");
+const { User ,Student} = require("../models/usersModel");
 
 const bcrypt = require('bcrypt');
 const { signin } = require("../controllers/authController");
@@ -89,29 +89,35 @@ passport.use(
     if (!savedPath) {
       console.log("⚠️ No image downloaded, using default avatar.");
     }
+   
         
         const country = profile.placesLived && profile.placesLived.length > 0
   ? profile.placesLived[0].value  // Extract first location
   : "Unknown"; // Default if not available
-        if (!user) {
-          // Create new user if doesn't exist
-          user = new User({
-            email: profile.emails[0].value,
-            verified: true,
-            password: 'password',  // You should eventually allow the user to reset this
-            country:country ,     // You might want to collect this info later
-            age: 20,                // Collect or set age based on user input later
-            firstName: profile.name.givenName,
-            lastName: profile.name.familyName,
-            role: 'Student',
-            photo: "localhost:3000/"+savedPath
+                  if (!user) {
+            // 👇 Crée un nouvel utilisateur en tant que Student (discriminator)
+            user = new Student({
+              email: profile.emails[0].value,
+              verified: true,
+              password: 'password',  // à remplacer par un token temporaire ou rien du tout
+              country: country || "Unknown",
+              age: null,
+              firstName: profile.name.givenName,
+              lastName: profile.name.familyName,
+              role: 'Student', // même si c'est redondant, utile pour cohérence
+              photo: "localhost:3000/" + savedPath,
+              identifier: null,
+              situation: "",
+              disease: "",
+              socialCase: false
+            });
 
-          });
-          await user.save();
-          console.log("New User Created:", JSON.stringify(user, null, 2));
-        } else {
-          console.log("Existing User:", JSON.stringify(user, null, 2));
-        }
+            await user.save();
+            console.log("✅ New Student Created:", JSON.stringify(user, null, 2));
+          }
+          else {
+                    console.log("Existing User:", JSON.stringify(user, null, 2));
+                  }
 
         // Generate JWT token
         const token = jwt.sign(
