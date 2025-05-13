@@ -7,7 +7,7 @@ const { evaluateAndAssignBadges } = require("../controllers/userController");
 const router = express.Router();
 const axios = require("axios");
 const passport = require("../middlewares/passport");
-const Badge = require("../models/Badge");
+const Badge = require("../models/badge");
 
 require("dotenv").config(); // Load environment variables from .env file
 
