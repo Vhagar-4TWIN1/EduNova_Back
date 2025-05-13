@@ -277,34 +277,57 @@ exports.affectBadge = async (req, res) => {
 const BADGE_RULES = [
   {
     action: 'CHECK_MODULE',
-    count: 10,
-    title: 'Explorateur de modules',
+    
+    title: 'Master Learner',
   },
   {
     action: 'CHECK_LESSON',
-    count: 10,
+    
     title: 'Lecteur assidu',
   },
   {
     action: 'START_EVALUATION',
-    count: 5,
+   
     title: 'Aventurier des quiz',
   },
   {
     action: 'LOGIN',
-    count: 6,
+   
     title: 'Loyal User',
   },
   {
     action: 'FORUM',
-    count: 1, 
+    
     title: 'Forum Expert',
   },
   {
     action: 'REPLY_FORUM',
-    count: 4, 
+    
     title: 'Community Helper',
   },
+  {
+    action: 'CHECK_LESSON_DURATION',
+    
+    title: 'Focus Master',
+  },
+  {
+    action: 'LESSON_COMPLETED',
+   
+    title: 'Lesson Finisher',
+  },
+   {
+    action: 'WATCH_MUSIC',
+
+    title: 'Rhythm Seeker',
+  },
+  {
+    action: 'SIGNUP',
+    title: 'Welcome Explorer'
+  },
+  {
+    action: 'SUBMIT_EVALUATION',
+    title: 'Quiz Huiz'
+  }
 
 ];
 exports.evaluateAndAssignBadges = async (userId) => {
@@ -322,10 +345,12 @@ exports.evaluateAndAssignBadges = async (userId) => {
     const badgeIdsToAssign = [];
 
     for (const rule of BADGE_RULES) {
+      const badge = await Badge.findOne({ title: rule.title });
       const actionStat = stats.find((s) => s._id === rule.action);
-      if (actionStat && actionStat.count >= rule.count) {
-        const badge = await Badge.findOne({ title: rule.title });
         if (badge) {
+      if (actionStat && actionStat.count >= badge.points) {
+        
+      
           badgeIdsToAssign.push(badge._id);
         }
       }

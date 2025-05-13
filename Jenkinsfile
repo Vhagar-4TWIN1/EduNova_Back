@@ -35,6 +35,7 @@ pipeline {
         stage('Build application') {
             steps {
                 script {
+                    
                     sh 'npm run build-dev'
                 }
             }
@@ -43,7 +44,9 @@ pipeline {
         stage('Building images (node and mongo)') {
             steps {
                 script {
-                    sh('docker-compose build')
+                    docker.withRegistry('https://index.docker.io/v1/', 'dockerhub') {
+        sh 'docker-compose build'
+      }
                 }
             }
         }

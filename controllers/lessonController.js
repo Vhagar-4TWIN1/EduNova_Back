@@ -188,17 +188,6 @@ exports.getGoogleLessons = async (req, res) => {
   }
 };
 
-exports.getLessonsByModule = async (req, res) => {
-  try {
-    const { moduleId } = req.params;
-
-    const module = await Modules.findById(moduleId).populate("lessons");
-    res.status(200).json(module.lessons);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
-
 exports.createLesson = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty())

@@ -9,7 +9,7 @@ console.log('FFmpeg path:', ffmpegPath);
 const youtubedl = require('youtube-dl-exec');
 const { auth } = require("../middlewares/auth");
 const ActivityLog = require('../models/activityLog');
-
+const { evaluateAndAssignBadges } = require("../controllers/userController");
 
 
 // Configuration multer
@@ -344,7 +344,8 @@ router.get("/youtube/search",auth, async (req, res) => {
         userAgent: req.headers['user-agent'] || 'Unknown',
         action: 'WATCH_MUSIC'
       });
-
+      console.log("User ID:", req.user.userId);
+      await evaluateAndAssignBadges(req.user.userId);
     res.json(results);
   } catch (error) {
     console.error("YouTube Search Error:", error);

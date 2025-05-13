@@ -2,6 +2,7 @@
 const Module = require("../models/module");
 const Lesson = require("../models/lesson");
 const ActivityLog = require('../models/activityLog');
+const { evaluateAndAssignBadges } = require("../controllers/userController");
 
 exports.createModule = async (req, res) => {
   try {
@@ -26,6 +27,7 @@ exports.getModules = async (req, res) => {
         userAgent: req.headers['user-agent'] || 'Unknown',
         action: 'CHECK_MODULE'
       });
+      await evaluateAndAssignBadges(req.user.userId);
 
     res.json(modules);
   } catch (error) {
@@ -69,6 +71,7 @@ exports.getModuleWithId = async (req, res) => {
         userAgent: req.headers['user-agent'] || 'Unknown',
         action: 'CHECK_LESSON'
       });
+    await evaluateAndAssignBadges(req.user.userId);
     res.json(module);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -88,6 +91,7 @@ exports.getModuleWithId = async (req, res) => {
         userAgent: req.headers['user-agent'] || 'Unknown',
         action: 'CHECK_LESSON'
       });
+        await evaluateAndAssignBadges(req.user.userId);
 
         res.json(module);
     } catch (error) {
@@ -109,6 +113,7 @@ exports.getModuleWithUserId  = async (req, res) => {
         userAgent: req.headers['user-agent'] || 'Unknown',
         action: 'CHECK_LESSON'
       });
+    await evaluateAndAssignBadges(req.user.userId);
     res.json(modules);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -132,6 +137,7 @@ exports.trackLessonDuration = async (req, res) => {
       duration: duration,
       metadata: { moduleId }
     });
+    await evaluateAndAssignBadges(req.user.userId);
 
     res.status(200).json({ message: "Duration logged successfully" });
   } catch (error) {
