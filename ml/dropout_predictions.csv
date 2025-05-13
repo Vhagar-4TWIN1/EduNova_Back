@@ -1,0 +1,5 @@
+total_actions,total_duration,nb_login,nb_lesson,days_since_last_activity,userId,real_dropout,predicted_dropout_probability,risk_level
+1,0,0,0,6,68196f2cb78d81f37aa37d3a,1,59.73,🟡 Moyen
+135,5100506,10,37,0,67ceddb3f025f4843e0d78a1,0,12.67,🟢 Faible
+1,0,0,0,6,68197f75a67b0465392b5461,1,59.73,🟡 Moyen
+1,0,0,0,12,6811eb2872720fa56c44423f,1,59.73,🟡 Moyen

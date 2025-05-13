@@ -6,6 +6,7 @@ const { lessonValidation } = require("../middlewares/validator");
 const upload = require("../middlewares/upload");
 const passport = require("../middlewares/passport");
 const authenticate = passport.authenticateJWT;
+const { generateAIAnnotations } = require("../controllers/annotationController");
 
 const isTeacher = (req, res, next) => {
   if (req.user.role === 'teacher') {
@@ -35,7 +36,7 @@ router.patch('/:id', authenticate, upload.single('file'), lessonValidation, less
 router.delete('/:id', authenticate, lessonController.deleteLesson);
 router.get('/:id/tts', authenticate, lessonController.getLessonAudio);
 router.post('/:id/annotation', authenticate, lessonController.addAnnotation);
-router.post('/:id/generate-annotations', authenticate, lessonController.generateAIAnnotations);
+router.post('/:id/generate-ai-annotations', authenticate, generateAIAnnotations);
 router.get('/:id/audio', authenticate, lessonController.getLessonAudio);
 router.get('/module/:moduleId', authenticate, lessonController.getLessonsByModule);
 

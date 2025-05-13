@@ -9,4 +9,4 @@ const badgeSchema = new mongoose.Schema({
 
 });
 
-module.exports = mongoose.model('Badge', badgeSchema);
+module.exports = mongoose.models.Badge || mongoose.model('Badge', badgeSchema);

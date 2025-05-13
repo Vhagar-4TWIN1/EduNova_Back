@@ -7,6 +7,10 @@ const path = require('path');
 const fs = require ('fs');
 const axios = require('axios');
 const { diplomaVerificationController } = require('./diplomaVerificationController');
+const mongoose = require('mongoose');
+const { evaluateAndAssignBadges } = require("../controllers/userController");
+
+
 
 
 
@@ -525,6 +529,7 @@ exports.signout = async (req, res) => {
         userAgent: req.headers['user-agent'] || 'Unknown',
         duration,
       });
+      await evaluateAndAssignBadges(user._id);
 
       console.log("Activité LOGOUT enregistrée.");
     } else {
@@ -945,5 +950,67 @@ exports.getUserSessionDuration = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, message: 'An error occurred while retrieving session duration.' });
+  }
+ 
+
+
+};
+ exports.getUserActionStats = async (req, res) => {
+  try {
+    const userId = new mongoose.Types.ObjectId(req.user.userId);
+
+    console.log("User ID:", userId);
+    
+    const results = await ActivityLog.aggregate([
+        { $match: { userId: userId } }, 
+      {
+        $group: {
+          _id: {
+            userId: "$userId",
+            action: "$action"
+          },
+          count: { $sum: 1 }
+        }
+      },
+      {
+        $group: {
+          _id: "$_id.userId",
+          actions: {
+            $push: {
+              action: "$_id.action",
+              count: "$count"
+            }
+          }
+        }
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "_id",
+          foreignField: "_id",
+          as: "user"
+        }
+      },
+      {
+        $unwind: "$user"
+      },
+      {
+        $project: {
+          _id: 0,
+          userId: "$_id",
+          email: "$user.email",
+          actions: 1
+        }
+      },
+      {
+        $sort: { email: 1 }
+      }
+    ]);
+    console.log("User action stats:", results);
+
+    res.status(200).json(results);
+  } catch (error) {
+    console.error("Aggregation error:", error);
+    res.status(500).json({ error: "Failed to get user action stats" });
   }
 };

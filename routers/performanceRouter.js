@@ -14,8 +14,8 @@ const sendToGoogleAnalytics = async (eventData) => {
         }]
       }, {
         params: {
-          api_secret: 'VOTRE_API_SECRET',
-          measurement_id: 'G-2ZXG67XCYF'
+          api_secret: GA_API_SECRET,
+          measurement_id: GA_MEASUREMENT_ID
         }
       });
     } catch (err) {
