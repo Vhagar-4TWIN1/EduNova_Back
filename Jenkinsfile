@@ -35,6 +35,7 @@ pipeline {
         stage('Build application') {
             steps {
                 script {
+                    
                     sh 'npm run build-dev'
                 }
             }
@@ -43,6 +44,7 @@ pipeline {
         stage('Building images (node and mongo)') {
             steps {
                 script {
+                    sh 'docker login'
                     sh('docker-compose build')
                 }
             }
