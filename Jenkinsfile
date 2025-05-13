@@ -44,7 +44,6 @@ pipeline {
         stage('Building images (node and mongo)') {
             steps {
                 script {
-                    sh 'docker login'
                     sh('docker-compose build')
                 }
             }
