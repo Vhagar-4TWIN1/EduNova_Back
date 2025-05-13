@@ -292,7 +292,7 @@ app.get("/api/analytics", async (req, res) => {
       property: `properties/485035007`,
       requestBody: {
         dateRanges: [{ startDate: "30daysAgo", endDate: "today" }],
-        dimensions: [{ name: "date" }, { name: "pageTitle" }],
+        dimensions: [{ name: "date" }, { name: "pagePath" }],
         metrics: [
           { name: "activeUsers" },
           { name: "screenPageViews" },
@@ -322,7 +322,7 @@ function formatData(data) {
     });
 
     pages.push({
-      pageTitle: row.dimensionValues[1].value || "(not set)",
+      pagePath: row.dimensionValues[1].value || "(not set)",
       pageViews: row.metricValues[1].value,
     });
   });
