@@ -839,7 +839,7 @@ exports.getActivityLogs = async (req, res) => {
         'SIGNUP',
         'CHECK_MODULE',
         'CHECK_LESSON',
-		'LESSON_COMPLETED',
+		    'LESSON_COMPLETED',
         'WATCH_MUSIC',
         'VIDEO_CALL',
         'START_EVALUATION',

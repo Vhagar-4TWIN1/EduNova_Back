@@ -324,6 +324,10 @@ const BADGE_RULES = [
     action: 'SIGNUP',
     title: 'Welcome Explorer'
   },
+  {
+    action: 'SUBMIT_EVALUATION',
+    title: 'Quiz Huiz'
+  }
 
 ];
 exports.evaluateAndAssignBadges = async (userId) => {
