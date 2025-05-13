@@ -14,7 +14,7 @@ router.post('/start/:moduleId/:lessonId', async (req, res) => {
       console.log("Start session endpoint hit");
   try {
     // Validate IDs
-    if (!isValidId(req.params.moduleId)) {  // Fixed: Added missing parenthesis
+    if (!isValidId(req.params.moduleId)) {  
       return res.status(400).json({ error: 'Invalid module ID format' });
     }
     if (!isValidId(req.params.lessonId)) {
@@ -52,6 +52,8 @@ router.post('/start/:moduleId/:lessonId', async (req, res) => {
 });
 
 
+
+
 router.post('/supplementary/:moduleId', auth, upload.single('file'), async (req, res) => {
   try {
     if (!isValidId(req.params.moduleId)) {
@@ -86,9 +88,10 @@ router.post('/supplementary/:moduleId', auth, upload.single('file'), async (req,
       difficulty
     };
 
-    // Ajoutez soit l'URL soit le chemin du fichier
-    if (type === 'pdf') {
-      lessonData.filePath = file.path; // Stockez le chemin du fichier
+  if (type === 'pdf') {
+      // Stocker le nom original du fichier et le nom du fichier sur le serveur
+      lessonData.filePath = req.file.filename;
+      lessonData.originalFileName = req.file.originalname;
     } else {
       lessonData.resourceUrl = resourceUrl;
     }

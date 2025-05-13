@@ -191,6 +191,9 @@ app.get("/auth", async (req, res) => {
       }
     );
 
+
+
+
     const token = tokenRes.data.access_token;
     const userRes = await axios.get("https://api.github.com/user", {
       headers: { Authorization: `token ${token}` },
@@ -253,6 +256,26 @@ await ActivityLog.create({
   }
 });
 
+
+app.get('/pdf/:filename', (req, res) => {
+  const filename = req.params.filename;
+  
+  // Sécurité: vérifier que le nom de fichier ne contient pas de chemins relatifs
+  if (filename.includes('..') || filename.includes('/')) {
+    return res.status(400).json({ error: 'Invalid filename' });
+  }
+
+  const filePath = path.join(__dirname, 'uploads', filename);
+  
+  if (fs.existsSync(filePath)) {
+    // Définir les en-têtes pour forcer le téléchargement
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.sendFile(filePath);
+  } else {
+    res.status(404).json({ error: 'File not found' });
+  }
+});
 
 
 // Serialize and deserialize users for session management
