@@ -44,7 +44,9 @@ pipeline {
         stage('Building images (node and mongo)') {
             steps {
                 script {
-                    sh('docker-compose build')
+                    docker.withRegistry('https://index.docker.io/v1/', 'dockerhub') {
+        sh 'docker-compose build'
+      }
                 }
             }
         }
