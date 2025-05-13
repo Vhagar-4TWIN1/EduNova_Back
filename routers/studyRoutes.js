@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
+const multer = require('multer');
+const upload = multer({ dest: 'uploads/' });
 const StudySession = require('../models/studySession');
 const SupplementaryLesson = require('../models/supplementaryLesson');
 const {auth} = require('../middlewares/auth');
@@ -12,7 +14,7 @@ router.post('/start/:moduleId/:lessonId', async (req, res) => {
       console.log("Start session endpoint hit");
   try {
     // Validate IDs
-    if (!isValidId(req.params.moduleId)) {  // Fixed: Added missing parenthesis
+    if (!isValidId(req.params.moduleId)) {  
       return res.status(400).json({ error: 'Invalid module ID format' });
     }
     if (!isValidId(req.params.lessonId)) {
@@ -50,33 +52,59 @@ router.post('/start/:moduleId/:lessonId', async (req, res) => {
 });
 
 
-router.post('/supplementary/:moduleId',auth, async (req, res) => {
+
+
+router.post('/supplementary/:moduleId', auth, upload.single('file'), async (req, res) => {
   try {
     if (!isValidId(req.params.moduleId)) {
       return res.status(400).json({ error: 'Invalid module ID' });
     }
 
-    const { title, content, resourceUrl, type } = req.body;
-    if (!title || !content || !resourceUrl || !type) {
+    const { title, content, resourceUrl, type, duration, platform, difficulty } = req.body;
+    const file = req.file; // Fichier uploadé
+
+    if (!title || !content || !type) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    const lesson = new SupplementaryLesson({
+    // Pour les PDF, vérifiez qu'un fichier a été uploadé
+    if (type === 'pdf' && !file) {
+      return res.status(400).json({ error: 'PDF file is required' });
+    }
+
+    // Pour les autres types, vérifiez l'URL
+    if (type !== 'pdf' && !resourceUrl) {
+      return res.status(400).json({ error: 'Resource URL is required' });
+    }
+
+    const lessonData = {
       moduleId: req.params.moduleId,
       title,
       content,
-      resourceUrl,
       type,
-      duration: req.body.duration || 0,
-      createdBy: req.user.userId
-    });
+      duration: duration || 0,
+      createdBy: req.user.userId,
+      platform,
+      difficulty
+    };
 
+  if (type === 'pdf') {
+      // Stocker le nom original du fichier et le nom du fichier sur le serveur
+      lessonData.filePath = req.file.filename;
+      lessonData.originalFileName = req.file.originalname;
+    } else {
+      lessonData.resourceUrl = resourceUrl;
+    }
+
+    const lesson = new SupplementaryLesson(lessonData);
     await lesson.save();
+
     res.status(201).json(lesson);
   } catch (err) {
+    console.error('Error creating lesson:', err);
     res.status(500).json({ 
       error: 'Failed to create supplementary lesson',
-      details: err.message
+      details: process.env.NODE_ENV === 'development' ? err.message : undefined
     });
   }
 });
