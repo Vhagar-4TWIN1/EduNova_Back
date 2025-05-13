@@ -9,13 +9,16 @@ const supplementaryLessonSchema = new mongoose.Schema({
   },
   title: { type: String, required: true },
   content: { type: String, required: true },
-  resourceUrl: { type: String, required: true },
+  resourceUrl: { type: String }, 
+  filePath: { type: String }, 
   type: { 
     type: String, 
-    enum: ['video', 'article', 'exercise', 'other'],
+    enum: ['video', 'article', 'exercise', 'pdf', 'other'],
     required: true
   },
-  duration: { type: Number  }, // in minutes
+  duration: { type: Number, default: 0 },
+  platform: { type: String }, 
+  difficulty: { type: String }, 
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
@@ -24,3 +27,5 @@ const supplementaryLessonSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 module.exports = mongoose.model('SupplementaryLesson', supplementaryLessonSchema);
+
+
