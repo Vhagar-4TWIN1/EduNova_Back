@@ -1,7 +1,7 @@
 # [EduNova - AI-Powered Learning Platform](https://your-link-here.com)  
 [![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/Vhagar-4TWIN1/EduNova_Back.git)
 
-![EduNova Preview](media/edunova-preview.gif)
+![EduNova Preview](Edunova.png)
 
 > ✨ **EduNova** is the next-generation intelligent learning platform, developed at *Esprit School of Engineering*, designed to provide fully personalized education through AI, real-time analytics, and learner-centric features.
 
@@ -79,6 +79,16 @@ npm run dev
 cd ml
 pip install -r requirements.txt
 python api.py
+```
+
+4. **Video Transcription setup**
+
+```bash
+python3.10 -m venv whisper-env
+whisper-env\Scripts\activate
+pip install --upgrade pip setuptools wheel
+pip install git+https://github.com/openai/whisper.git
+whisper "C:\path\to\your\video.mp4" --model base --language en
 ```
 
 > Make sure MongoDB is running locally or update the `DATABASE_URL` in your `.env` file.
