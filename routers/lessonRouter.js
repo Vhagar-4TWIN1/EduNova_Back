@@ -16,6 +16,7 @@ const isTeacher = (req, res, next) => {
 };
 
 // ✅ Accepts JSON body from frontend (because the file is already uploaded to Cloudinary)
+router.get('/:id/track', authenticate, lessonController.trackLessonView);
 router.get("/", authenticate, lessonController.getAllLessons);
 router.get("/:id", authenticate, lessonController.getLessonById);
 router.patch(
@@ -42,3 +43,6 @@ router.get('/module/:moduleId', authenticate, lessonController.getLessonsByModul
 
 
 module.exports = router;
+
+
+

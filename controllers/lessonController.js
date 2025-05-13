@@ -11,6 +11,8 @@ const Tesseract = require("tesseract.js");
 const pdfParse = require("pdf-parse");
 const Modules = require("../models/module");
 const Lesson = require("../models/lesson");
+const StudyTime = require('../models/studySession');
+const SupplementaryLesson = require('../models/supplementaryLesson');
 const { generateTTS } = require("../utils/textToSpeech");
 const {
   createCourse: createGoogleCourse,
@@ -125,6 +127,39 @@ exports.getLessonAudio = async (req, res) => {
   } catch (err) {
     console.error("❌ TTS/STT Error:", err);
     res.status(500).json({ error: err.message });
+  }
+};
+
+
+
+exports.trackLessonView = async (req, res) => {
+  try {
+    const { lessonId } = req.params;
+    const userId = req.user.userId;
+    
+    const lesson = await Lesson.findById(lessonId).populate('module');
+    if (!lesson) {
+      return res.status(404).json({ message: 'Lesson not found' });
+    }
+    
+    if (!lesson.module) {
+      return res.status(400).json({ message: 'Lesson is not associated with a module' });
+    }
+
+    const studySession = new StudyTime({
+      userId,
+      moduleId: lesson.module._id,
+      lessonId,
+      startTime: new Date()
+    });
+    await studySession.save();
+    
+    res.json({ 
+      lesson,
+      studySessionId: studySession._id 
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 };
 
@@ -322,3 +357,4 @@ const syncWithLMS = async (lesson) => {
     console.error("LMS Sync Error:", error.message);
   }
 };
+
