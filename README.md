@@ -1,9 +1,6 @@
 
 # [EduNova - AI-Powered Learning Platform](https://your-link-here.com)  
-[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/your-repo/edunova)  
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](https://github.com/your-repo/edunova/blob/main/LICENSE)  
-[![Join the Community](https://img.shields.io/discord/0000000000000000000?label=Join%20Us%20on%20Discord&logo=discord)](https://discord.gg/yourdiscord)  
-[![Twitter Follow](https://img.shields.io/twitter/follow/yourhandle?style=social)](https://twitter.com/yourhandle)
+[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/Vhagar-4TWIN1/EduNova_Back.git)  
 
 ![EduNova Preview](media/edunova-preview.gif)
 
@@ -30,7 +27,7 @@
 ## 📸 Demo
 
 Coming soon! 🚧  
-Join our **[Beta Waitlist](https://your-link-here.com)** to get early access!
+Join our **[EduNova](https://your-link-here.com)** to get early access!
 
 ---
 
@@ -38,8 +35,8 @@ Join our **[Beta Waitlist](https://your-link-here.com)** to get early access!
 
 - Frontend: `React`, `Tailwind CSS`
 - Backend: `Node.js`, `Express`, `MongoDB`
-- AI Services: `Python (Flask)`, `Transformers`, `OpenAI`
-- DevOps: `Docker`, `GitHub Actions`, `Power BI API`, `Jenkins`
+- AI Services: `Python (Flask)`, `Transformers`, `OpenAI` , `Gemini`
+- DevOps: `Docker`, `Prometheus`, `Grafana`, `Jenkins` ,`SonarQube`,`Nexus`
 
 ---
 
@@ -49,55 +46,18 @@ Join our **[Beta Waitlist](https://your-link-here.com)** to get early access!
 
 ```bash
 # Clone the repo
-git clone https://github.com/your-repo/edunova.git
-cd edunova
-
-# Frontend
-cd client
-npm install
-npm run dev
+git clone https://github.com/Vhagar-4TWIN1/EduNova_Back.git
+cd EduNova_Back
 
 # Backend
-cd ../server
-npm install
+npm install 
 npm run dev
-```
 
-Visit: `http://localhost:3000`
+# AI
+cd ml
+pip install -r requirements.txt
+python api.py
 
----
-
-## ⚙️ Environment Variables
-
-Create a `.env` file in both `/client` and `/server` directories:
-
-### `server/.env`
-
-```env
-MONGODB_URI=your_mongodb_uri
-OPENAI_API_KEY=your_api_key
-JWT_SECRET=your_secret
-```
-
-### `client/.env`
-
-```env
-VITE_BACKEND_URL=http://localhost:5000
-```
-
----
-
-## 📁 File Structure
-
-```
-edunova/
-├── client/             # React frontend
-├── server/             # Express backend
-├── ai-engine/          # Python-based AI services
-├── media/              # Images, GIFs
-├── README.md
-└── ...
-```
 
 ---
 
@@ -108,40 +68,21 @@ Includes developer setup, API routes, AI module integration, and more.
 
 ---
 
-## 📬 Reporting Issues
-
-Please open issues on the [GitHub Issues Page](https://github.com/your-repo/edunova/issues).  
-Tips:
-- Describe the bug clearly
-- Include screenshots or terminal logs
-- Mention your system/environment
-
----
 
 ## 💬 Get in Touch
 
 - 💻 [Contact Us](https://your-link-here.com/contact)
-- ✨ [Join the Beta](https://your-link-here.com)
-- 📬 [Newsletter](https://your-link-here.com/newsletter)
-
----
-
-## 📚 License
-
-This project is licensed under the **MIT License**.  
-See [`LICENSE`](./LICENSE) for more information.
 
 ---
 
 ## 🔗 Useful Links
 
 - [LinkedIn Post](https://linkedin.com/your-post)
-- [Join our Discord](https://discord.gg/yourdiscord)
 - [Esprit School of Engineering](https://esprit.tn)
 
 ---
 
 ## ❤️ Credits
 
-Thanks to the **Esprit Team**, our guide **Prof. [Name]**, and all contributors.  
+Thanks to the **Vhagar**, our guide **Prof. [Assma Ayari]**, and all contributors.  
 Proudly built by learners, for learners.
