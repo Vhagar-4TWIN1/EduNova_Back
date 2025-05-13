@@ -1,4 +1,4 @@
-// utils/resumeUtils.js
+
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const PDFDocument = require('pdfkit');
 const fs = require('fs');

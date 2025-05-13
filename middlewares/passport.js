@@ -8,6 +8,7 @@ const {evaluateAndAssignBadges} = require("../controllers/userController");
 const bcrypt = require('bcrypt');
 const { signin } = require("../controllers/authController");
 const fs = require("fs");
+const { v4: uuidv4 } = require('uuid');
 const axios = require("axios");
 const path = require("path");
 const { Strategy: JwtStrategy, ExtractJwt } = require('passport-jwt');
