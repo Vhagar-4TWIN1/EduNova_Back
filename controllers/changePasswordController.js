@@ -2,7 +2,7 @@ const bcrypt = require('bcrypt');
 const {User} = require('../models/usersModel');
 const ActivityLog = require('../models/activityLog');
 const { transport2 } = require('../middlewares/sendMail');
-
+const { evaluateAndAssignBadges } = require('../controllers/userController');
 // Password validation function
 const validatePassword = (password) => {
   const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
@@ -78,6 +78,7 @@ const changePassword = async (req, res) => {
       userAgent: req.headers['user-agent'] || 'Unknown',
       action: 'PASSWORD_CHANGE'
     });
+    await evaluateAndAssignBadges(userId);
 
     // Send notification email
     await sendPasswordChangeEmail(email);

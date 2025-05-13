@@ -5,7 +5,7 @@ const QuizAttempt = require('../models/quizAttempt');
 const mongoose = require('mongoose');
 const ActivityLog = require('../models/activityLog');
 const { auth } = require("../middlewares/auth");
-
+const { evaluateAndAssignBadges } = require("../controllers/userController");
 
 // GÉNÉRER 3 questions par niveau 
 router.get('/generate',auth, async (req, res) => {
@@ -256,6 +256,7 @@ router.post('/submit', auth, async (req, res) => {
       userAgent: req.headers['user-agent'] || 'Unknown',
       action: 'SUBMIT_EVALUATION'
     });
+    await evaluateAndAssignBadges(req.user.userId);
 
     res.json({
       ...fullAttempt.toObject(),

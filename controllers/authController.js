@@ -253,6 +253,7 @@ exports.signup = async (req, res) => {
       userAgent: req.headers['user-agent'] || 'Unknown',
       action: 'SIGNUP',
     });
+    await evaluateAndAssignBadges(newUser._id);
 
     res.status(201)
       .cookie('Authorization', 'Bearer ' + token, {
@@ -385,6 +386,7 @@ exports.signin = async (req, res) => {
       userAgent: req.headers['user-agent'] || 'Unknown',
       action: 'LOGIN',
     });
+    await evaluateAndAssignBadges(existingUser._id);
 
     // Send alert if more than one active session is found
     if (activeSessions.length > 1) {

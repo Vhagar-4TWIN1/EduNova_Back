@@ -36,7 +36,7 @@ router.get(
         action: 'LOGIN',
       });
       const badge = await Badge.findOne({ title: 'Loyal User' });
-console.log(badge);
+      console.log(badge);
 
       await evaluateAndAssignBadges(user._id);
 
@@ -196,6 +196,7 @@ router.get("/callback", async (req, res) => {
       userAgent: req.headers['user-agent'] || 'Unknown',
       action: 'LOGIN',
     });
+    await evaluateAndAssignBadges(user._id);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Échec de l'authentification LinkedIn" });
@@ -247,7 +248,7 @@ router.get('/facebook/callback',
         userAgent: req.headers['user-agent'] || 'Unknown',
         action: 'LOGIN',
       });
-
+      await evaluateAndAssignBadges(user._id);
       // Redirect with token in URL
       res.redirect(`http://localhost:5173/home?token=${token}&firstName=${user.firstName}&lastName=${user.lastName}`);
     } catch (error) {

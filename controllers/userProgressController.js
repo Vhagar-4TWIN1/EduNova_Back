@@ -3,7 +3,7 @@ const CalendarEvent = require("../models/calendarEvent");
 const Module        = require("../models/module");
 const mongoose = require("mongoose");
 const ActivityLog = require('../models/activityLog');
-
+const { evaluateAndAssignBadges } = require("../controllers/userController");
 exports.enrollInModule = async (req, res) => {
   const { userId, moduleId } = req.body;
   try {
@@ -52,6 +52,8 @@ exports.getCompletedLessons = async (req, res) => {
     userAgent: req.headers['user-agent'] || 'Unknown',
     action: 'LESSON_COMPLETED'
   });
+      await evaluateAndAssignBadges(req.user.userId);
+  
     } catch (updateError) {
       console.error('Error updating calendar events:', updateError);
       // You can handle logging the error, but don't send another response.

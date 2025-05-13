@@ -3,7 +3,8 @@ const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const FacebookStrategy = require('passport-facebook').Strategy;
 const jwt = require('jsonwebtoken');
 const { User ,Student} = require("../models/usersModel");
-
+const ActivityLog = require("../models/activityLog");
+const {evaluateAndAssignBadges} = require("../controllers/userController");
 const bcrypt = require('bcrypt');
 const { signin } = require("../controllers/authController");
 const fs = require("fs");
@@ -111,8 +112,18 @@ passport.use(
               disease: "",
               socialCase: false
             });
-
+            await ActivityLog.create({
+                  userId: user._id,
+                  email: user.email,
+                  ipAddress:  'Unknown',
+                  userAgent:  'Unknown',
+                  action: 'SIGNUP',
+                });
+                console.log("✅ Activity Log Created:", JSON.stringify(user, null, 2));
+                await evaluateAndAssignBadges(user._id);
             await user.save();
+             
+            
             console.log("✅ New Student Created:", JSON.stringify(user, null, 2));
           }
           else {
