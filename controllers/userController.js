@@ -1,11 +1,11 @@
 const { User } = require("../models/usersModel");
 const { Student } = require("../models/usersModel");
+const ActivityLog = require('../models/activityLog');
 
 const fs = require("fs");
 const path = require("path");
 const mongoose = require("mongoose");
-const badge = require("../models/badge");
-// Get all users
+const Badge = require("../models/badge");// 
 exports.getAllUsers = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -274,6 +274,81 @@ exports.affectBadge = async (req, res) => {
       .json({ success: false, message: "Internal server error" });
   }
 };
+const BADGE_RULES = [
+  {
+    action: 'CHECK_MODULE',
+    count: 10,
+    title: 'Explorateur de modules',
+  },
+  {
+    action: 'CHECK_LESSON',
+    count: 10,
+    title: 'Lecteur assidu',
+  },
+  {
+    action: 'START_EVALUATION',
+    count: 5,
+    title: 'Aventurier des quiz',
+  },
+  {
+    action: 'LOGIN',
+    count: 6,
+    title: 'Loyal User',
+  },
+  {
+    action: 'FORUM',
+    count: 1, 
+    title: 'Forum Expert',
+  },
+  {
+    action: 'REPLY_FORUM',
+    count: 4, 
+    title: 'Community Helper',
+  },
+
+];
+exports.evaluateAndAssignBadges = async (userId) => {
+  try {
+    const stats = await ActivityLog.aggregate([
+      { $match: { userId: new mongoose.Types.ObjectId(userId) } },
+      {
+        $group: {
+          _id: '$action',
+          count: { $sum: 1 },
+        },
+      },
+    ]);
+
+    const badgeIdsToAssign = [];
+
+    for (const rule of BADGE_RULES) {
+      const actionStat = stats.find((s) => s._id === rule.action);
+      if (actionStat && actionStat.count >= rule.count) {
+        const badge = await Badge.findOne({ title: rule.title });
+        if (badge) {
+          badgeIdsToAssign.push(badge._id);
+        }
+      }
+    }
+
+    const student = await Student.findById(userId);
+    const newBadges = badgeIdsToAssign.filter(
+      (badgeId) => !student.achievedBadges.includes(badgeId)
+    );
+
+    if (newBadges.length > 0) {
+      await Student.updateOne(
+        { _id: userId },
+        { $addToSet: { achievedBadges: { $each: newBadges } } }
+      );
+    }
+
+    return { assigned: newBadges.length, userId };
+  } catch (err) {
+    console.error("Erreur assignation badge:", err);
+  }
+};
+
 
 module.exports = {
   getAllUsers: exports.getAllUsers,
@@ -283,4 +358,5 @@ module.exports = {
   promoteToAdmin: exports.promoteToAdmin,
   affectBadge: exports.affectBadge,
   updateStudentFields: exports.updateStudentFields,
+  evaluateAndAssignBadges : exports.evaluateAndAssignBadges
 };

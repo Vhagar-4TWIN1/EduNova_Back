@@ -3,9 +3,12 @@ const authController = require("../controllers/authController");
 const changePasswordController = require("../controllers/changePasswordController");
 const { auth } = require("../middlewares/auth");
 const { identifier } = require("../middlewares/identification");
+const { evaluateAndAssignBadges } = require("../controllers/userController");
 const router = express.Router();
 const axios = require("axios");
 const passport = require("../middlewares/passport");
+const Badge = require("../models/Badge");
+
 require("dotenv").config(); // Load environment variables from .env file
 
 const { User, Student } = require("../models/usersModel");
@@ -32,6 +35,10 @@ router.get(
         userAgent: req.headers['user-agent'] || 'Unknown',
         action: 'LOGIN',
       });
+      const badge = await Badge.findOne({ title: 'Loyal User' });
+console.log(badge);
+
+      await evaluateAndAssignBadges(user._id);
 
       // Set token in cookie
       res.cookie('token', token, {

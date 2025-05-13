@@ -2,7 +2,7 @@ const Post = require('../models/post');
 const Reply = require('../models/reply');
 const { analyzeToxicity } = require('../middlewares/toxicityCheck');
 const UserProgress = require('../models/userProgress');
-
+const { evaluateAndAssignBadges } = require("../controllers/userController");
 exports.getRecommendedPosts = async (userId) => {
   try {
     // 1. Get ALL module progress entries for the user
@@ -86,7 +86,7 @@ exports.createPost = async (req, res) => {
     const newPost = new Post({
       title: req.body.title,
       content: req.body.content,
-      author: req.user.id // ou ._id selon comment tu stockes dans le JWT
+      author:  req.user.userId // ou ._id selon comment tu stockes dans le JWT
     });
     await ActivityLog.create({
     userId: req.user.userId,
@@ -95,6 +95,7 @@ exports.createPost = async (req, res) => {
     userAgent: req.headers['user-agent'] || 'Unknown',
     action: 'FORUM'
   });
+  await evaluateAndAssignBadges(req.user.userId);
 
     const savedPost = await newPost.save();
     res.status(201).json(savedPost);
@@ -201,6 +202,8 @@ exports.addReplyToPost = async (req, res) => {
     userAgent: req.headers['user-agent'] || 'Unknown',
     action: 'REPLY_FORUM'
   });
+  await evaluateAndAssignBadges(req.user.userId);
+
     res.status(201).json(reply);
   } catch (error) {
     res.status(500).json({ error: 'Failed to add reply' });

@@ -8,6 +8,8 @@ const fs = require ('fs');
 const axios = require('axios');
 const { diplomaVerificationController } = require('./diplomaVerificationController');
 const mongoose = require('mongoose');
+const { evaluateAndAssignBadges } = require("../controllers/userController");
+
 
 
 
@@ -526,6 +528,7 @@ exports.signout = async (req, res) => {
         userAgent: req.headers['user-agent'] || 'Unknown',
         duration,
       });
+      await evaluateAndAssignBadges(user._id);
 
       console.log("Activité LOGOUT enregistrée.");
     } else {
