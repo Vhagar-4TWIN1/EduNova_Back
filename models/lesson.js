@@ -25,6 +25,7 @@ const lessonSchema = new mongoose.Schema({
   fileUrl: { type: String, required: true },
   public_id: {type :String},
   LMScontent: { type: String },
+  module: { type: mongoose.Schema.Types.ObjectId, ref: "Module" },
   annotations: [annotationSchema],
 }, { timestamps: true });
 

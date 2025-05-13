@@ -197,7 +197,7 @@ exports.signup = async (req, res) => {
         bio,
         cv,
         experience,
-        cin :req.body.cin || null,
+        //cin :req.body.cin || null,
         workCertificate: req.body.workCertificate,
         verified: true,
       });

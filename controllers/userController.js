@@ -169,38 +169,43 @@ exports.updateStudentFields = async (req, res) => {
   console.log("🧾 Incoming data:", req.body);
 
   try {
-    // Use the correct Student model to ensure schema is respected
-    const update = {
-      identifier,
-      situation,
-      disease: disease === "Other" ? customDisease : disease,
-      customDisease: disease === "Other" ? customDisease : "",
-      socialCase,
-      learningPreference,
-      interests,
-    };
+    const update = {};
+
+    if (identifier !== undefined) update.identifier = identifier;
+    if (situation !== undefined) update.situation = situation;
+    if (disease !== undefined) {
+      update.disease = disease === "Other" ? customDisease : disease;
+      update.customDisease = disease === "Other" ? customDisease : "";
+    }
+    if (socialCase !== undefined) update.socialCase = socialCase === true || socialCase === "on";
+    if (learningPreference !== undefined) update.learningPreference = learningPreference;
+    if (Array.isArray(interests)) update.interests = interests;
+
+    console.log("🧱 Update object to apply:", update);
 
     const updatedStudent = await Student.findByIdAndUpdate(id, update, {
-      new: true,
-      runValidators: true,
-    }).select("-password");
+  new: true,
+  runValidators: true,
+}).select("-password");
 
-    if (!updatedStudent) {
-      console.log("❌ Student not found with ID:", id);
-      return res.status(404).json({ message: "Student not found" });
-    }
+if (!updatedStudent) {
+  console.log("❌ Student not found with ID:", id);
+  return res.status(404).json({ message: "Student not found" });
+}
 
-    console.log("✅ Student updated:", updatedStudent);
+console.log("✅ Student updated:", updatedStudent);
 
-    res.status(200).json({
-      message: "Student fields updated successfully",
-      data: updatedStudent,
-    });
-  } catch (error) {
+res.status(200).json({
+  message: "Student fields updated successfully",
+  data: updatedStudent,
+});
+  }
+  catch (error) {
     console.error("❌ Error updating student fields:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
 
 /*
 exports.updateStudentFields = async (req, res) => {

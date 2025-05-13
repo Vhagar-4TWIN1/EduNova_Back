@@ -209,7 +209,6 @@ exports.addReplyToPost = async (req, res) => {
 exports.upvoteReply = async (req, res) => {
   const replyId = req.params.id;
   const {userId} = req.user; // Requires auth middleware to set req.user
-  
 
   try {
     const reply = await Reply.findById(replyId);

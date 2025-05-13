@@ -411,7 +411,6 @@ router.get("/metadata/:filename", async (req, res) => {
 
 
 
-// Ajoutez ces routes supplémentaires
 
 // Sauvegarder les playlists personnalisées
 router.post("/playlists", async (req, res) => {

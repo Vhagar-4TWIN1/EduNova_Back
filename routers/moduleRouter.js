@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+
 const lessonController = require("../controllers/lessonController"); // ✅ Ajoutez cette ligne
 
 const {
@@ -9,6 +10,7 @@ const {
   deleteModule,
   getModuleWithId,
   getModuleWithUserId,
+  trackLessonDuration
 } = require("../controllers/moduleController");
 const { auth } = require("../middlewares/auth");
 router.get("/modules/",auth, getModuleWithUserId)
