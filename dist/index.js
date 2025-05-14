@@ -47,7 +47,7 @@ const GeminiRoutes = require("./routers/GeminiRoutes");
 // Setup Socket.IO
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:5173",
+    origin: "*",
     // allow your frontend
     credentials: true
   }
@@ -81,7 +81,7 @@ app.use(bodyParser.urlencoded({
   extended: true
 }));
 app.use(cors({
-  origin: "http://localhost:5173",
+  origin: "*",
   // CORS autorisé pour le frontend React
   credentials: true,
   // Autorise l'envoi de cookies
