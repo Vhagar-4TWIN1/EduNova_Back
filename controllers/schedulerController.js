@@ -21,14 +21,7 @@ async function autoSchedule(req, res) {
     userId,
   } = req.body;
 
-  // 0) Validate inputs
-  if (!moduleId) {
-    return res.status(400).json({ error: "Must provide moduleId" });
-  }
-  if (!dueDate) {
-    return res.status(400).json({ error: "Must provide dueDate" });
-  }
-
+  
   // 1) Prepare dates
   const now      = new Date();
   const deadline = new Date(dueDate);
@@ -182,10 +175,13 @@ REPLY WITH ONLY the JSON array of slot objects exactly as shown; no additional t
   const created = [];
   for (const slot of slots) {
     const { lessonId: lId, start: s, end: e } = slot;
-    const start = new Date(s);
-    const end   = new Date(e);
-    if (start <= now || end > deadline) continue;
-
+  const start = new Date(slot.start);
+  const end   = new Date(slot.end);
+    // if (start <= now || end > deadline) continue;
+ if (start.getTime() < now.getTime() || end.getTime() > deadline.getTime()) {
+    console.warn("Skipping out-of-range slot:", slot);
+    continue;
+  }
     try {
       const ev = await CalendarEvent.create({
         title,
