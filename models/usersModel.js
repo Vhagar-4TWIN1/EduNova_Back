@@ -116,7 +116,7 @@ const Teacher = User.discriminator("Teacher", teacherSchema);
 
 // Student Schema (Extends User)
 const studentSchema = new mongoose.Schema({
-identifier: { type: String, sparse: true, default: null },
+identifier: { type: String, unique: false, sparse: true, default: null },
   situation: { type: String },
   disease: { type: String },
   socialCase: { type: Boolean, default: false },

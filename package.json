@@ -7,7 +7,7 @@
 		"start": "node index.js --watch",
 		"dev": "node --watch --trace-warnings  index.js",
 		"test": "echo \"No test specified\" && exit 0",
-		"build-dev": "echo \"No build needed for backend\""
+		"build": "babel . --out-dir dist --ignore node_modules,dist"
 	},
 	"author": "Assil",
 	"license": "ISC",
@@ -73,6 +73,11 @@
 		"ytdl-core": "^4.11.5"
 	},
 	"devDependencies": {
+		"@babel/cli": "^7.27.2",
+		"@babel/core": "^7.27.1",
+		"@babel/plugin-proposal-optional-chaining": "^7.21.0",
+		"@babel/plugin-syntax-top-level-await": "^7.14.5",
+		"@babel/preset-env": "^7.27.2",
 		"webpack": "^5.99.3",
 		"webpack-cli": "^6.0.1"
 	}

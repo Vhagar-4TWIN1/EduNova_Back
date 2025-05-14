@@ -1,3 +1,5 @@
+"use strict";
+
 /********************************************
  * Imports & Setup
  ********************************************/
@@ -25,13 +27,12 @@ const FormData = require("form-data");
 const Lesson = require("../models/lesson");
 
 // Environment variables
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;         // for Whisper & Chat
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY; // for Whisper & Chat
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY; // for Chat (if using OpenRouter)
 
 // Configure ffmpeg paths
 ffmpeg.setFfmpegPath(ffmpegPath);
 ffmpeg.setFfprobePath(ffprobePath);
-
 
 /********************************************
  * Helper Functions to Extract Text and Audio
@@ -41,17 +42,17 @@ ffmpeg.setFfprobePath(ffprobePath);
 async function downloadFile(url, destPath) {
   try {
     console.log(`[downloadFile] Downloading file from: ${url}`);
-    const response = await axios.get(url, { responseType: "stream" });
+    const response = await axios.get(url, {
+      responseType: "stream"
+    });
     const writer = fs.createWriteStream(destPath);
-
     response.data.pipe(writer);
-
     return new Promise((resolve, reject) => {
       writer.on("finish", () => {
         console.log("[downloadFile] Download complete:", destPath);
         resolve();
       });
-      writer.on("error", (err) => {
+      writer.on("error", err => {
         console.error("[downloadFile] Error downloading file:", err);
         reject(err);
       });
@@ -76,22 +77,18 @@ async function extractAudioFromVideo(fileUrl) {
     console.log("[extractAudioFromVideo] File is local.");
     tempVideoPath = path.resolve(fileUrl);
   }
-
   console.log("[extractAudioFromVideo] Running FFmpeg...");
   return new Promise((resolve, reject) => {
-    ffmpeg(tempVideoPath)
-      .audioChannels(1) // Mono audio
-      .audioFrequency(16000) // 16kHz sample rate
-      .toFormat("wav") // Audio format (WAV)
-      .on("end", () => {
-        console.log("[extractAudioFromVideo] Audio extraction completed.");
-        resolve(audioOutputPath);
-      })
-      .on("error", (err) => {
-        console.error("[extractAudioFromVideo] Error extracting audio:", err.message);
-        reject(`Error extracting audio: ${err.message}`);
-      })
-      .save(audioOutputPath);
+    ffmpeg(tempVideoPath).audioChannels(1) // Mono audio
+    .audioFrequency(16000) // 16kHz sample rate
+    .toFormat("wav") // Audio format (WAV)
+    .on("end", () => {
+      console.log("[extractAudioFromVideo] Audio extraction completed.");
+      resolve(audioOutputPath);
+    }).on("error", err => {
+      console.error("[extractAudioFromVideo] Error extracting audio:", err.message);
+      reject(`Error extracting audio: ${err.message}`);
+    }).save(audioOutputPath);
   });
 }
 
@@ -100,16 +97,16 @@ async function extractFromPDF(pdfUrl) {
   console.log("[extractFromPDF] Attempting to extract PDF text...");
   try {
     let pdfBuffer;
-
     if (pdfUrl.startsWith("http")) {
       console.log("[extractFromPDF] PDF is remote. Downloading...");
-      const response = await axios.get(pdfUrl, { responseType: "arraybuffer" });
+      const response = await axios.get(pdfUrl, {
+        responseType: "arraybuffer"
+      });
       pdfBuffer = response.data;
     } else {
       console.log("[extractFromPDF] PDF is local.");
       pdfBuffer = fs.readFileSync(path.resolve(pdfUrl));
     }
-
     const data = await PDFParser(pdfBuffer);
     console.log("[extractFromPDF] PDF text extracted successfully.");
     return data.text;
@@ -124,34 +121,32 @@ async function extractFromImage(imageUrl) {
   console.log("[extractFromImage] Attempting to extract image text via OCR...");
   try {
     let imageBuffer;
-
     if (imageUrl.startsWith("http")) {
       console.log("[extractFromImage] Image is remote. Downloading...");
-      const response = await axios.get(imageUrl, { responseType: "arraybuffer" });
+      const response = await axios.get(imageUrl, {
+        responseType: "arraybuffer"
+      });
       imageBuffer = response.data;
     } else {
       console.log("[extractFromImage] Image is local.");
       imageBuffer = fs.readFileSync(path.resolve(imageUrl));
     }
-
     const ext = path.extname(imageUrl).toLowerCase();
     const tempDir = path.join(__dirname, "..", "temp");
     if (!fs.existsSync(tempDir)) {
-      fs.mkdirSync(tempDir, { recursive: true });
+      fs.mkdirSync(tempDir, {
+        recursive: true
+      });
     }
-
     const imagePath = path.join(tempDir, `temp_image${ext}`);
     fs.writeFileSync(imagePath, imageBuffer);
 
     // Pre-process the image using sharp
     const cleanedImagePath = path.join(tempDir, "cleaned.png");
     console.log("[extractFromImage] Pre-processing image...");
-    await sharp(imagePath)
-      .grayscale()
-      .normalize()
-      .resize({ width: 1200 })
-      .toFile(cleanedImagePath);
-
+    await sharp(imagePath).grayscale().normalize().resize({
+      width: 1200
+    }).toFile(cleanedImagePath);
     console.log("[extractFromImage] Running OCR with Tesseract...");
     const result = await Tesseract.recognize(cleanedImagePath, "eng");
     console.log("[extractFromImage] Image text extracted successfully via OCR.");
@@ -186,9 +181,10 @@ async function extractTextFromFile(fileUrl, typeLesson) {
   console.log("[extractTextFromFile] typeLesson:", typeLesson, ", fileUrl:", fileUrl);
   const ext = path.extname(fileUrl).toLowerCase();
   const tempDir = path.join(__dirname, "..", "temp");
-
   if (!fs.existsSync(tempDir)) {
-    fs.mkdirSync(tempDir, { recursive: true });
+    fs.mkdirSync(tempDir, {
+      recursive: true
+    });
   }
 
   // 1) Handle PDFs
@@ -197,19 +193,12 @@ async function extractTextFromFile(fileUrl, typeLesson) {
   }
 
   // 2) Handle images/photos
-  if (
-    ["photo", "image"].includes(typeLesson) ||
-    [".png", ".jpg", ".jpeg", ".webp"].includes(ext)
-  ) {
+  if (["photo", "image"].includes(typeLesson) || [".png", ".jpg", ".jpeg", ".webp"].includes(ext)) {
     return await extractFromImage(fileUrl);
   }
 
   // 3) Handle videos/audios
-  if (
-    typeLesson === "video" ||
-    typeLesson === "audio" ||
-    [".mp4", ".mov", ".avi", ".mkv", ".webm", ".mp3", ".wav"].includes(ext)
-  ) {
+  if (typeLesson === "video" || typeLesson === "audio" || [".mp4", ".mov", ".avi", ".mkv", ".webm", ".mp3", ".wav"].includes(ext)) {
     // Extract audio from video or skip if audio-only
     // (You could implement speech-to-text here if desired)
     await extractAudioFromVideo(fileUrl);
@@ -239,7 +228,6 @@ async function generateAnnotationsFromAI(fullText) {
     console.error("❌ [generateAnnotationsFromAI] No valid text provided. Using fallback.");
     fullText = "No valid text available"; // Provide a fallback text
   }
-
   const prompt = `
 You are EduNova’s AI annotation assistant. Read the following transcript and propose relevant highlights and notes.
 Respond ONLY with a JSON object in the following format:
@@ -254,7 +242,6 @@ Respond ONLY with a JSON object in the following format:
 
 Transcript: ${fullText}
 `.trim();
-
   let rawReply;
   try {
     console.log("🤖 [generateAnnotationsFromAI] Sending request to OpenRouter...");
@@ -262,32 +249,25 @@ Transcript: ${fullText}
       method: "POST",
       headers: {
         Authorization: `Bearer ${OPENROUTER_API_KEY}`,
-        "Content-Type": "application/json",
+        "Content-Type": "application/json"
       },
       body: JSON.stringify({
         model: "meta-llama/llama-4-maverick",
-        messages: [
-          {
-            role: "system",
-            content: "You are EduNova’s AI. Return ONLY valid JSON with highlights and notes.",
-          },
-          {
-            role: "user",
-            content: prompt,
-          },
-        ],
+        messages: [{
+          role: "system",
+          content: "You are EduNova’s AI. Return ONLY valid JSON with highlights and notes."
+        }, {
+          role: "user",
+          content: prompt
+        }],
         temperature: 0.0,
-        max_tokens: 1000,
-      }),
+        max_tokens: 1000
+      })
     });
-
     if (!orRes.ok) {
       const orError = await orRes.json();
-      throw new Error(
-        (orError.error && orError.error.message) || `OpenRouter responded with status ${orRes.status}`
-      );
+      throw new Error(orError.error && orError.error.message || `OpenRouter responded with status ${orRes.status}`);
     }
-
     const orJson = await orRes.json();
     rawReply = orJson.choices[0].message.content.trim();
     console.log("🤖 [generateAnnotationsFromAI] Received raw AI reply.");
@@ -295,16 +275,10 @@ Transcript: ${fullText}
     console.error("❌ [generateAnnotationsFromAI] AI request error:", err);
     throw new Error("AI annotation request failed");
   }
-
   try {
     // Strip out any code fences if present
-    const cleaned = rawReply
-      .replace(/^```json\s*/i, "")
-      .replace(/^```\s*/i, "")
-      .replace(/```$/i, "");
-
+    const cleaned = rawReply.replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/```$/i, "");
     const parsed = JSON.parse(cleaned);
-
     if (!parsed.highlights || !parsed.notes) {
       throw new Error("JSON must contain 'highlights' and 'notes'.");
     }
@@ -330,24 +304,28 @@ async function generateAIAnnotations(req, res) {
     const lesson = await Lesson.findById(lessonId);
     if (!lesson) {
       console.error("[generateAIAnnotations] Lesson not found");
-      return res.status(404).json({ error: "Lesson not found" });
+      return res.status(404).json({
+        error: "Lesson not found"
+      });
     }
-
-    const { fileUrl, typeLesson } = lesson;
+    const {
+      fileUrl,
+      typeLesson
+    } = lesson;
     console.log("[generateAIAnnotations] Lesson found, typeLesson:", typeLesson, ", fileUrl:", fileUrl);
-
     if (!typeLesson) {
       console.error("[generateAIAnnotations] Lesson has no typeLesson");
-      return res.status(400).json({ error: "Lesson has no typeLesson." });
+      return res.status(400).json({
+        error: "Lesson has no typeLesson."
+      });
     }
 
     // Extract text or audio from the file
     const extractedText = await extractTextFromFile(fileUrl, typeLesson);
-
     if (!extractedText || extractedText.trim().length < 10) {
       console.warn("[generateAIAnnotations] Extracted text too short for annotation generation");
       return res.status(400).json({
-        error: "Extracted text is too short or empty for annotation generation.",
+        error: "Extracted text is too short or empty for annotation generation."
       });
     }
 
@@ -359,29 +337,26 @@ async function generateAIAnnotations(req, res) {
     const newAnnotation = {
       userId,
       highlights: annotations.highlights || [],
-      notes: annotations.notes || [],
+      notes: annotations.notes || []
     };
-
     console.log("[generateAIAnnotations] Saving annotations to lesson...");
     lesson.annotations.push(newAnnotation);
     await lesson.save();
-
     console.log("[generateAIAnnotations] Annotations saved successfully.");
     return res.status(200).json({
       message: "Annotations added successfully",
       added: newAnnotation,
-      allAnnotations: lesson.annotations,
+      allAnnotations: lesson.annotations
     });
   } catch (err) {
     console.error("❌ [generateAIAnnotations] Error:", err);
     return res.status(500).json({
       error: "Failed to generate annotations",
-      details: err.message,
+      details: err.message
     });
   }
 }
-
 module.exports = {
   generateAIAnnotations,
-  generateAnnotationsFromAI,
+  generateAnnotationsFromAI
 };
