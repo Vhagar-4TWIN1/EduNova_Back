@@ -38,7 +38,13 @@ const GeminiRoutes = require("./routers/GeminiRoutes");
 // Setup Socket.IO
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:5173", // allow your frontend
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
   },
 });
@@ -68,12 +74,19 @@ const VideoCall = require("./models/videoCall");
 console.log("MongoDB URI:", process.env.MONGODB_URI); // Debugging
 console.log("Port:", process.env.PORT);
 console.log("Session Secret:", process.env.SESSION_SECRET);
+const allowedOrigins = ["http://localhost:5173", "https://edunova.moodlecloud.com"];
 
 app.use(bodyParser.json({ limit: "50mb" })); // Adjust size as needed
 app.use(bodyParser.urlencoded({ limit: "50mb", extended: true }));
 app.use(
   cors({
-    origin: "http://localhost:5173", // CORS autorisé pour le frontend React
+   origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true, // Autorise l'envoi de cookies
     allowedHeaders: [
       "Authorization",

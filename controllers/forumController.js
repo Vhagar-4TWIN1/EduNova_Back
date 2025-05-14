@@ -97,8 +97,7 @@ exports.createPost = async (req, res) => {
   });
   await evaluateAndAssignBadges(req.user.userId);
 
-    const savedPost = await newPost.save();
-    res.status(201).json(savedPost);
+    
   } catch (error) {
     console.error('Erreur dans createPost:', error.message);
     res.status(500).json({ error: 'Erreur serveur lors de la création du post.' });
