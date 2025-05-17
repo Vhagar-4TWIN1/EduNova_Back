@@ -112,5 +112,5 @@ whisper "C:\path\to\your\video.mp4" --model base --language en
 
 ## ❤️ Credits
 
-Thanks to the **Vhagar** team, our guide **Prof. Assma Ayari**, and all contributors.  
+Thanks to the **Vhagar** team, our guide **Prof. Asma Ayari**, and all contributors.  
 > Built with passion — *by learners, for learners*.
